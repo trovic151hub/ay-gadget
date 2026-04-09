@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Cart</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+  <!-- Breadcrumb -->
+  <nav class="bg-white h-20 flex items-center justify-center text-sm text-gray-500 gap-2">
+    <span id="bc-cart" class="cursor-pointer">Shopping Cart</span>
+    <i class="fas fa-chevron-right text-xs"></i>
+    <span id="bc-checkout" class="cursor-pointer">Secure Checkout</span>
+    <i class="fas fa-chevron-right text-xs"></i>
+    <span id="bc-complete" class="cursor-pointer">Order Complete</span>
+  </nav>
+
+  <!-- Main Cart Wrapper -->
+  <main class="max-w-6xl mx-auto p-4 flex md:gap-6" id="cart-container">
+
+    <!-- Products List -->
+    <div class="flex-1 space-y-4">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Shopping Cart</h2>
+      </div>
+      <div id="cart-items" class="space-y-4"></div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="w-full md:w-1/3 bg-white p-6 rounded-lg mt-8 shadow space-y-4 h-fit">
+      <h3 class="text-lg font-bold border-b pb-5">Order summary</h3>
+      <div class="flex justify-between py-2">
+        <span>Cart Subtotal</span>
+        <span id="cart-subtotal-checkout">₦0.00</span>
+      </div>
+      <div class="flex justify-between text-lg font-bold border-t pt-5">
+        <span>Estimated total</span>
+        <!-- <span id="cart-total-checkout">₦0.00</span> -->
+        <span class="text-lg font-semibold" id="cart-subtotal-main">₦0.00</span>
+      </div>
+      <button id="checkout-btn" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">Checkout</button>
+      <button id="continue-btn" class="w-full border border-blue-600 text-blue-600 py-2 rounded hover:bg-blue-50 transition">Continue shopping</button>
+    </div>
+
+  </main>
+
+  <!-- Checkout Step -->
+<section id="checkout-step" class="hidden max-w-6xl mx-auto p-4">
+  <div class="grid md:grid-cols-3 gap-6">
+
+    <!-- Left Column: Shipping / Form -->
+    <div class="bg-white p-6 rounded shadow md:col-span-2">
+
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6 border-b pb-3">
+        <h3 class="font-bold text-lg">Shipping Address</h3>
+        <button
+          id="edit-address"
+          class="hidden text-sm border px-3 py-1 rounded hover:bg-gray-100"
+        >
+          Edit
+        </button>
+      </div>
+
+      <!-- ================= FORM STATE ================= -->
+      <div id="address-form">
+
+        <!-- Email -->
+        <div class="my-2">
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+            Email Address <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="Email Address"
+            class="w-full h-[52px] p-3 rounded-lg bg-gray-100 focus:outline-none"
+          />
+        </div>
+
+        <!-- First & Last Name -->
+        <div class="grid grid-cols-2 gap-3 my-2">
+          <div>
+            <label for="first-name" class="block text-sm font-medium text-gray-700 mb-1">
+              First Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="first-name"
+              placeholder="First Name"
+              class="w-full h-[52px] p-3 rounded-lg bg-gray-100 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label for="last-name" class="block text-sm font-medium text-gray-700 mb-1">
+              Last Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="last-name"
+              placeholder="Last Name"
+              class="w-full h-[52px] p-3 rounded-lg bg-gray-100 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Street Address -->
+        <div class="my-2">
+          <label for="street" class="block text-sm font-medium text-gray-700 mb-1">
+            Street Address <span class="text-red-500">*</span>
+          </label>
+          <input
+            id="street"
+            placeholder="Street Address"
+            class="w-full h-[52px] p-3 rounded-lg bg-gray-100 focus:outline-none"
+          />
+        </div>
+
+        <!-- State & LGA -->
+        <div class="grid grid-cols-2 gap-3 my-2">
+          <div>
+            <label for="state" class="block text-sm font-medium text-gray-700 mb-1">
+              State <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="state"
+              class="w-full h-[52px] p-3 rounded-lg bg-gray-100 focus:outline-none"
+            >
+              <option value=""></option>
+              <option value="Lagos">Lagos</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="lga" class="block text-sm font-medium text-gray-700 mb-1">
+              LGA <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="lga"
+              class="w-full h-[52px] p-3 rounded-lg bg-gray-100 focus:outline-none"
+            >
+              <option value=""></option>
+              <!-- populated via JS -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Phone -->
+        <div class="flex gap-3 my-3">
+          <div style="flex-basis:25%">
+            <label for="area-code" class="block text-sm font-medium text-gray-700 mb-1">
+              Area Code <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="area-code"
+              value="+234"
+              class="w-full h-[52px] p-3 rounded-lg bg-gray-100 focus:outline-none"
+            />
+          </div>
+
+          <div class="flex-1">
+            <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="phone"
+              placeholder="Phone Number"
+              class="w-full h-[52px] p-3 rounded-lg bg-gray-100 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <button
+          id="place-order"
+          class="mt-6 w-full max-w-md mx-auto flex justify-center bg-blue-500 text-white py-3 rounded-full transition"
+        >
+          Continue
+        </button>
+      </div>
+
+      <!-- ================= SUMMARY STATE ================= -->
+      <div id="shipping-summary-card" class="hidden border-blue-400 bg-blue-50  border rounded-lg p-4 shadow relative mt-6">
+        <span id="shipping-edit-btn" class="absolute top-2 right-2 text-sm text-blue-600 cursor-pointer hidden">Edit</span>
+        <h4 class="font-semibold mb-2">Shipping Address</h4>
+        <p><strong>Contact:</strong> <span id="sum-email"></span></p>
+        <p><strong>Name:</strong> <span id="sum-name"></span></p>
+        <p><strong>Phone:</strong> <span id="sum-phone"></span></p>
+        <p><strong>Ship to:</strong> <span id="sum-address"></span></p>
+      </div>
+
+      <div id="shipment-summary-card" class="hidden bg-white border rounded-lg p-4 shadow mt-4">
+        <h4 class="font-semibold mb-2 border-b pb-5">Shipment Method</h4>
+        <div id="sum-shipment" class="p-4 mt-4 mb-2 rounded-lg border-blue-400 bg-blue-50 border">
+          <!-- JS will populate content here -->
+        </div>
+      </div>
+
+      <div id="payment-summary-card" class="hidden bg-white border rounded-lg p-4 shadow mt-4">
+  <h4 class="font-semibold mb-2 border-b pb-2">Payment Method</h4>
+
+  <!-- Paystack option -->
+  <div
+    id="paystack-option"
+    class="p-4 mt-2 rounded-lg border cursor-pointer hover:bg-blue-50"
+  >
+    <div class="flex justify-between items-center">
+      <!-- <span class="font-medium">Paystack Card</span> -->
+       <span class="p-2 bg-white border border-gray-100 rounded">
+       <img class="w-20 h-6" src="https://cdn.brandfetch.io/idM5mrwtDs/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1667559828449" alt="Paystack">
+       </span>
+      <i class="fas fa-credit-card text-blue-500"></i>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+    <!-- Right Column: Order Summary -->
+    <div class="bg-white p-4 rounded shadow max-h-[700px] overflow-auto space-y-4">
+      <h3 class="font-bold text-lg border-b pb-5">My Order</h3>
+
+      <!-- Products List -->
+      <div id="summary-items" class="space-y-3">
+        <!-- JS will populate items here -->
+      </div>
+
+      <!-- Totals -->
+      <div class="border-t pt-2 space-y-2 text-sm">
+        <div class="flex justify-between">
+          <span>Cart Subtotal</span>
+          <span id="summary-subtotal">₦0</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Shipping</span>
+          <span id="summary-shipping">₦0</span>
+        </div>
+      </div>
+
+      <div class="border-t pt-3 flex justify-between font-bold text-lg">
+        <span>Total</span>
+        <span id="summary-total">₦0</span>
+      </div>
+
+      <button id="summary-place-order" class="mt-4 w-full bg-gray-400 text-white text-lg font-bold py-3 rounded-lg cursor-not-allowed">
+        PLACE ORDER
+      </button>
+    </div>
+
+  </div>
+</section>
+
+
+  <!-- Complete Step -->
+  <section id="complete-step" class="hidden text-center py-20">
+    <h2 class="text-2xl font-bold">🎉 Order Successful</h2>
+    <p class="text-gray-500 mt-2">Thank you for your purchase</p>
+  </section>
+
+  <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+// --- Firebase config ---
+const firebaseConfig = {
+  apiKey: "AIzaSyALavEworgb8ks3iMPaCgkXCcDBJiC_1mM",
+  authDomain: "ay-s-gadget.firebaseapp.com",
+  projectId: "ay-s-gadget",
+  storageBucket: "ay-s-gadget.firebasestorage.app",
+  messagingSenderId: "34300968590",
+  appId: "1:34300968590:web:6fc04bbf948601afe593df"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// --- Checkout state ---
+// let checkoutState = { addressLocked: false, shippingFee: 0, address: null };
+let checkoutState = {
+  addressLocked: false,
+  shippingFee: 0,
+  address: null,
+  paymentMethod: null // 🔥 NEW
+};
+let currentCartItems = [];
+
+// --- Elements ---
+const cartContainer = document.getElementById("cart-container");
+const cartItemsContainer = document.getElementById("cart-items");
+const cartSubtotalMain = document.getElementById("cart-subtotal-main");
+const cartTotalMain = document.getElementById("cart-total-main");
+const cartSubtotalCheckout = document.getElementById("cart-subtotal-checkout");
+const cartTotalCheckout = document.getElementById("cart-total-checkout");
+
+const checkoutStep = document.getElementById("checkout-step");
+const completeStep = document.getElementById("complete-step");
+
+// BREADCRUMB NAVIGATION
+const steps = {
+  cart: document.getElementById("bc-cart"),
+  checkout: document.getElementById("bc-checkout"),
+  complete: document.getElementById("bc-complete")
+};
+
+function setBreadcrumb(activeStep) {
+  Object.values(steps).forEach(el => el.classList.remove("font-semibold", "text-gray-900"));
+  steps[activeStep].classList.add("font-semibold", "text-gray-900");
+}
+
+setBreadcrumb("cart");
+
+// --- Guest ID ---
+let guestId = localStorage.getItem("guestId");
+if(!guestId){
+  guestId = 'guest-' + Date.now() + '-' + Math.floor(Math.random()*1000);
+  localStorage.setItem("guestId", guestId);
+}
+
+// --- CART FIREBASE HELPERS ---
+async function saveGuestCart(items, address = null){
+  const cartRef = collection(db, "carts");
+  const q = query(cartRef, where("guestId", "==", guestId));
+  const snapshot = await getDocs(q);
+
+  const dataToSave = { guestId, items };
+  if(address) dataToSave.address = address;  // include shipping address if provided
+
+  if(snapshot.empty){
+    await setDoc(doc(cartRef), dataToSave);
+  } else {
+    const docId = snapshot.docs[0].id;
+    await setDoc(doc(db, "carts", docId), dataToSave);
+  }
+}
+
+// --- Listen to cart changes ---
+const cartRef = collection(db, "carts");
+const qCart = query(cartRef, where("guestId", "==", guestId));
+
+onSnapshot(qCart, snapshot => {
+  if(snapshot.empty){
+    renderCart([]);
+    renderOrderSummary([]);
+    return;
+  }
+  const items = snapshot.docs[0].data().items || [];
+  renderCart(items);
+  renderOrderSummary(items);
+});
+
+// --- Render cart ---
+function renderCart(cart){
+  cartItemsContainer.innerHTML = "";
+  if(!cart.length){
+    cartItemsContainer.innerHTML = `<p class="text-gray-500 text-center">Your cart is empty</p>`;
+    updateTotals(0);
+    return;
+  }
+
+  let subtotal = 0;
+
+  cart.forEach(item => {
+    subtotal += (item.price || 0) * item.quantity;
+
+    const card = document.createElement("div");
+    card.className = "flex bg-white p-4 rounded-lg shadow mb-3 gap-4";
+    card.innerHTML = `
+      <img src="${item.image || item.images?.[0] || ''}" alt="${item.name}" class="w-28 h-28 object-cover rounded">
+      <div class="flex-1 flex flex-col justify-between">
+        <div class="flex justify-between items-start">
+          <h4 class="font-medium text-gray-700 leading-tight">${item.name}</h4>
+          <button class="remove-btn text-gray-400" data-id="${item.id}"><i class="fas fa-trash-can"></i></button>
+        </div>
+        <p class="text-sm text-gray-500 mt-1">${item.color || ''}</p>
+        <div class="flex justify-between items-center mt-3">
+          <p class="font-bold text-lg text-gray-900">₦${(item.price || 0).toLocaleString()}</p>
+          <div class="flex items-center gap-2">
+            <button class="decrement-btn text-gray-500 px-2 py-1 bg-gray-100 hover:text-gray-900" data-id="${item.id}">−</button>
+            <span class="font-medium">${item.quantity}</span>
+            <button class="increment-btn text-gray-500 px-2 py-1 bg-gray-100 hover:text-gray-900" data-id="${item.id}">+</button>
+          </div>
+        </div>
+      </div>
+    `;
+    cartItemsContainer.appendChild(card);
+  });
+
+  updateTotals(subtotal);
+  attachCartEvents(cart);
+}
+
+// OnSnapShot
+onSnapshot(qCart, snapshot => {
+  if(snapshot.empty){
+    currentCartItems = [];  // <--- update here
+    renderCart([]);
+    renderOrderSummary([]);
+    return;
+  }
+  const items = snapshot.docs[0].data().items || [];
+  currentCartItems = items; // <--- update here
+  renderCart(items);
+  renderOrderSummary(items);
+});
+
+
+// --- Order summary ---
+const summaryItems = document.getElementById("summary-items");
+const summarySubtotal = document.getElementById("summary-subtotal");
+const summaryShipping = document.getElementById("summary-shipping");
+const summaryTotal = document.getElementById("summary-total");
+const summaryPlaceOrderBtn = document.getElementById("summary-place-order");
+
+function renderOrderSummary(cart){
+  summaryItems.innerHTML = "";
+  let subtotal = 0;
+
+  cart.forEach(item => {
+    subtotal += (item.price || 0) * item.quantity;
+
+    const div = document.createElement("div");
+    div.className = "flex items-center justify-between";
+    div.innerHTML = `
+      <div class="flex items-center gap-3">
+        <img src="${item.image || item.images?.[0] || ''}" class="w-24 h-24 object-cover rounded">
+        <div>
+          <p class="text-gray-800 font-medium">${item.name}</p>
+          <p class="text-sm text-gray-500">Qty: ${item.quantity}${item.color ? " | " + item.color : ""}</p>
+          <p class="font-bold text-gray-900">₦${((item.price || 0) * item.quantity).toLocaleString()}</p>
+        </div>
+      </div>
+    `;
+    summaryItems.appendChild(div);
+  });
+
+  const shipping = checkoutState.shippingFee || 0;
+  summarySubtotal.textContent = `₦${subtotal.toLocaleString()}`;
+  summaryShipping.textContent = `₦${shipping.toLocaleString()}`;
+  summaryTotal.textContent = `₦${(subtotal + shipping).toLocaleString()}`;
+
+  summaryPlaceOrderBtn.disabled = cart.length === 0;
+  summaryPlaceOrderBtn.classList.toggle("bg-gray-400", cart.length === 0);
+  summaryPlaceOrderBtn.classList.toggle("cursor-not-allowed", cart.length === 0);
+  summaryPlaceOrderBtn.classList.toggle("bg-blue-500", cart.length > 0);
+  summaryPlaceOrderBtn.classList.toggle("cursor-pointer", cart.length > 0);
+}
+
+// --- Update totals in UI ---
+function updateTotals(subtotal){
+  const formatted = `₦${subtotal.toLocaleString()}`;
+  cartSubtotalMain.textContent = formatted;
+  cartSubtotalCheckout.textContent = formatted;
+}
+
+// --- Cart item events ---
+function attachCartEvents(cart){
+  document.querySelectorAll(".increment-btn").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      const item = cart.find(i => i.id === id);
+      if(item){ item.quantity += 1; await saveGuestCart(cart); }
+    };
+  });
+
+  document.querySelectorAll(".decrement-btn").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      const item = cart.find(i => i.id === id);
+      if(item){
+        if(item.quantity > 1){ item.quantity -= 1; }
+        else { cart = cart.filter(i => i.id !== id); }
+        await saveGuestCart(cart);
+      }
+    };
+  });
+
+  document.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.onclick = async () => {
+      const id = btn.dataset.id;
+      cart = cart.filter(i => i.id !== id);
+      await saveGuestCart(cart);
+    };
+  });
+}
+
+// --- Address & checkout ---
+const continueBtn = document.getElementById("place-order");
+const editBtn = document.getElementById("edit-address");
+const addressForm = document.getElementById("address-form");
+const addressSummary = document.getElementById("shipping-summary-card");
+
+
+// Lagos LGA shipping fees
+const lagosLGAFees = {
+  "Agege":3000,"Ajeromi-Ifelodun":3000,"Alimosho":3000,"Amuwo-Odofin":3000,
+  "Apapa":3000,"Epe":6000,"Eti-Osa":5000,"Ibeju-Lekki":5000,"Lekki Phase":4000,
+  "Sangotedo":4000,"Ajah":4000,"Ifako-Ijaiye":3000,"Ikeja":3000,"Ikorodu":4000,
+  "Kosofe":4000,"Lagos Island":4000,"Lagos Mainland":4000,"Mushin":3000,
+  "Ojo":3000,"Oshodi-Isolo":3000,"Shomolu":3000,"Surulere":3000
+};
+
+// --- Populate LGA based on state ---
+const stateSelect = document.getElementById("state");
+const lgaSelect = document.getElementById("lga");
+
+stateSelect?.addEventListener("change", () => {
+  const state = stateSelect.value;
+  lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+  if(state === "Lagos"){
+    Object.keys(lagosLGAFees).forEach(lga => {
+      const option = document.createElement("option");
+      option.value = lga;
+      option.textContent = lga;
+      lgaSelect.appendChild(option);
+    });
+  }
+});
+
+editBtn?.addEventListener("click", ()=>{
+  checkoutState.addressLocked = false;
+  addressSummary.classList.add("hidden");
+  addressForm.classList.remove("hidden");
+  editBtn.classList.add("hidden");
+  summaryPlaceOrderBtn.disabled = true;
+  summaryPlaceOrderBtn.classList.add("bg-gray-400","cursor-not-allowed");
+  summaryPlaceOrderBtn.classList.remove("bg-blue-500","cursor-pointer");
+});
+
+// --- Checkout step flow ---
+document.getElementById("checkout-btn")?.addEventListener("click", ()=>{
+  cartContainer.classList.add("hidden");
+  checkoutStep.classList.remove("hidden");
+  completeStep.classList.add("hidden");
+  setBreadcrumb("checkout");
+});
+
+// Summary Place Order
+summaryPlaceOrderBtn.addEventListener("click", async () => {
+  if (!checkoutState.addressLocked) {
+    alert("Please confirm shipping address first");
+    return;
+  }
+
+  if (!currentCartItems.length) {
+  alert("Your cart is empty.");
+  return;
+}
+
+if (!checkoutState.paymentMethod) {
+  alert("Please select a payment method");
+  return;
+}
+
+  const totalAmount =
+    Number(summaryTotal.textContent.replace(/[₦,]/g, "")) * 100;
+
+  window.triggerPaystackPayment({
+    email: checkoutState.address.email,
+    amount: totalAmount,
+    name: checkoutState.address.name,
+    phone: checkoutState.address.phone
+  });
+});
+
+const shippingSummaryCard = document.getElementById("shipping-summary-card"); // correct element
+const shipmentSummaryCard = document.getElementById("shipment-summary-card");
+const paymentSummaryCard = document.getElementById("payment-summary-card");
+
+const paystackOption = document.getElementById("paystack-option");
+
+paystackOption?.addEventListener("click", () => {
+  checkoutState.paymentMethod = "Paystack";
+
+  // Visual selection
+  paystackOption.classList.add("border-blue-500", "bg-blue-50");
+  paystackOption.classList.remove("border-gray-300");
+
+  // Enable place order button
+  summaryPlaceOrderBtn.disabled = false;
+  summaryPlaceOrderBtn.classList.remove("bg-gray-400", "cursor-not-allowed");
+  summaryPlaceOrderBtn.classList.add("bg-blue-500", "cursor-pointer");
+});
+
+// Hide payment summary initially
+paymentSummaryCard.classList.add("hidden");
+
+// --- Place order button ---
+continueBtn?.addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+  const first = document.getElementById("first-name").value.trim();
+  const last = document.getElementById("last-name").value.trim();
+  const street = document.getElementById("street").value.trim();
+  const state = stateSelect.value;
+  const lga = lgaSelect.value;
+  const phone = document.getElementById("phone").value.trim();
+  const code = document.getElementById("area-code").value.trim();
+
+  // if(!email || !first || !last || !street || !state || !lga || !phone){
+  //   alert("Please fill all required fields");
+  //   return;
+  // }
+  if (!email || !first || !last || !street || !state || !lga || !phone) {
+  alert("Please fill all required fields");
+  return;
+}
+
+if (!isPhoneValid()) {
+  alert("Phone number must be at least 10 digits");
+  return;
+}
+
+
+  const shippingFee = state === "Lagos" && lagosLGAFees[lga] ? lagosLGAFees[lga] : 0;
+
+  checkoutState = {
+    addressLocked: true,
+    shippingFee,
+    address: { email, name:`${first} ${last}`, phone:`${code}${phone}`, full:`${street}, ${lga}, ${state}` }
+  };
+
+  // Save cart + shipping info together
+await saveGuestCart(currentCartItems, checkoutState.address);
+
+  // Populate summary card (existing code)
+  document.getElementById("sum-email").textContent = email;
+  document.getElementById("sum-name").textContent = `${first} ${last}`;
+  document.getElementById("sum-phone").textContent = `${code}${phone}`;
+  document.getElementById("sum-address").textContent = `${street}, ${lga}, ${state}`;
+  document.getElementById("sum-shipment").innerHTML = `
+    <div class="flex justify-between items-center">
+      <span>Standard Shipment: ${street}, ${lga}</span>
+      <span class="font-bold">₦${shippingFee.toLocaleString()}</span>
+    </div>
+  `;
+
+  shippingSummaryCard.classList.remove("hidden");
+  shipmentSummaryCard.classList.remove("hidden");
+  paymentSummaryCard.classList.remove("hidden");
+  addressForm.classList.add("hidden");
+  editBtn.classList.remove("hidden");
+
+  const subtotal = Number(summarySubtotal.textContent.replace(/[₦,]/g,""));
+  summaryShipping.textContent = `₦${shippingFee.toLocaleString()}`;
+  summaryTotal.textContent = `₦${(subtotal+shippingFee).toLocaleString()}`;
+  summaryPlaceOrderBtn.disabled = false;
+  summaryPlaceOrderBtn.classList.remove("bg-gray-400","cursor-not-allowed");
+  summaryPlaceOrderBtn.classList.add("bg-blue-500","cursor-pointer");
+});
+
+// --- Edit button functionality ---
+editBtn?.addEventListener("click", ()=>{
+  checkoutState.addressLocked = false;
+  shippingSummaryCard.classList.add("hidden");
+  shipmentSummaryCard.classList.add("hidden");
+  paymentSummaryCard.classList.add("hidden"); // hide payment
+  addressForm.classList.remove("hidden");
+  editBtn.classList.add("hidden");
+
+  // Disable place order until address is confirmed again
+  summaryPlaceOrderBtn.disabled = true;
+  summaryPlaceOrderBtn.classList.add("bg-gray-400","cursor-not-allowed");
+  summaryPlaceOrderBtn.classList.remove("bg-blue-500","cursor-pointer");
+});
+
+// Save Shipping Info To Firebase
+async function saveShippingInfoToFirebase(addressObj) {
+  const addressesRef = collection(db, "guestAddresses");
+  const q = query(addressesRef, where("guestId", "==", guestId));
+  const snapshot = await getDocs(q);
+
+  if(snapshot.empty){
+    await setDoc(doc(addressesRef), {
+      guestId,
+      address: addressObj,
+      updatedAt: new Date()
+    });
+  } else {
+    const docId = snapshot.docs[0].id;
+    await setDoc(doc(addressesRef, docId), {
+      guestId,
+      address: addressObj,
+      updatedAt: new Date()
+    });
+  }
+}
+
+const requiredFields = [
+  "email",
+  "first-name",
+  "last-name",
+  "street",
+  "state",
+  "lga",
+  "phone"
+].map(id => document.getElementById(id));
+
+// Check Required Field
+function checkRequiredFields() {
+  const allFilled = requiredFields.every(input => input.value.trim() !== "");
+  summaryPlaceOrderBtn.disabled = !allFilled || !checkoutState.addressLocked;
+
+  summaryPlaceOrderBtn.classList.toggle("bg-gray-400", !allFilled || !checkoutState.addressLocked);
+  summaryPlaceOrderBtn.classList.toggle("cursor-not-allowed", !allFilled || !checkoutState.addressLocked);
+  summaryPlaceOrderBtn.classList.toggle("bg-blue-500", allFilled && checkoutState.addressLocked);
+  summaryPlaceOrderBtn.classList.toggle("cursor-pointer", allFilled && checkoutState.addressLocked);
+}
+
+function isPhoneValid() {
+  const phoneInput = document.getElementById("phone");
+  const phone = phoneInput.value.replace(/\D/g, ""); // numbers only
+
+  return phone.length >= 10;
+}
+
+// Add event listeners to all required inputs
+requiredFields.forEach(input => {
+  input.addEventListener("input", checkRequiredFields);
+});
+
+// Auto go to checkout if triggered from homepage
+window.addEventListener("DOMContentLoaded", () => {
+    const gotoCheckout = localStorage.getItem("gotoCheckout");
+
+    if (gotoCheckout === "true") {
+        localStorage.removeItem("gotoCheckout");
+
+        // Hide cart view and show checkout step
+        cartContainer.classList.add("hidden");
+        checkoutStep.classList.remove("hidden");
+        completeStep.classList.add("hidden");
+        setBreadcrumb("checkout");
+
+        // Optional: scroll to checkout section
+        checkoutStep.scrollIntoView({ behavior: "smooth" });
+    }
+});
+
+// --- Breadcrumb clicks ---
+steps.cart?.addEventListener("click", ()=>{
+  cartContainer.classList.remove("hidden");
+  checkoutStep.classList.add("hidden");
+  completeStep.classList.add("hidden");
+  setBreadcrumb("cart");
+});
+
+steps.checkout?.addEventListener("click", ()=>{
+  cartContainer.classList.add("hidden");
+  checkoutStep.classList.remove("hidden");
+  completeStep.classList.add("hidden");
+  setBreadcrumb("checkout");
+});
+
+// Save Order To Firebase
+async function saveOrderToFirebase(paymentRef) {
+  // Use currentCartItems and checkoutState.address
+  const orderRef = collection(db, "orders");
+
+  await setDoc(doc(orderRef), {
+    guestId,
+    items: currentCartItems,
+    shipping: checkoutState.address,
+    shippingFee: checkoutState.shippingFee,
+    total: Number(summaryTotal.textContent.replace(/[₦,]/g,"")),
+    paymentMethod: "Paystack",
+    paymentReference: paymentRef,
+    status: "paid",
+    createdAt: new Date()
+  });
+
+  // Clear guest cart
+  await saveGuestCart([]);
+  currentCartItems = [];
+  renderCart([]);
+  renderOrderSummary([]);
+
+  // 🔒 Disable place order button completely
+summaryPlaceOrderBtn.disabled = true;
+summaryPlaceOrderBtn.classList.add("bg-gray-400", "cursor-not-allowed");
+summaryPlaceOrderBtn.classList.remove("bg-blue-500", "cursor-pointer");
+}
+
+// ✅ Paystack success handler (MUST be global)
+window.addEventListener("paystack-success", async (e) => {
+  const paymentRef = e.detail;
+
+  await saveOrderToFirebase(paymentRef);
+
+  checkoutStep.classList.add("hidden");
+  completeStep.classList.remove("hidden");
+  setBreadcrumb("complete");
+});
+
+function resetCheckoutState() {
+  checkoutState = {
+    addressLocked: false,
+    shippingFee: 0,
+    address: null
+  };
+
+  function clearAddressForm() {
+  addressForm.reset();
+}
+
+resetCheckoutState();
+clearAddressForm();
+}
+</script>
+
+<script>
+  function triggerPaystackPayment(data) {
+    const handler = PaystackPop.setup({
+      key: "pk_test_0ed65a8011643dd303600706cb990c9ba067f199",
+      email: data.email,
+      amount: data.amount,
+      currency: "NGN",
+      ref: "PS_" + Math.floor(Math.random() * 1000000000 + 1),
+      metadata: {
+        custom_fields: [
+          { display_name: "Name", variable_name: "name", value: data.name },
+          { display_name: "Phone", variable_name: "phone", value: data.phone }
+        ]
+      },
+      callback: function (response) {
+        window.dispatchEvent(
+          new CustomEvent("paystack-success", {
+            detail: response.reference
+          })
+        );
+      },
+      onClose: function () {
+        alert("Payment was not completed.");
+      }
+    });
+
+    handler.openIframe();
+  }
+</script>
+</body>
+</html>

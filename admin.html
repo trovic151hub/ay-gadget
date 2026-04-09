@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - PhoneStore</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- GSAP -->
+ <!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> -->
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, setDoc, doc, deleteDoc, serverTimestamp, query, orderBy, updateDoc, limit, startAfter, where, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+// Firebase config
+const firebaseConfig = {
+      apiKey: "AIzaSyALavEworgb8ks3iMPaCgkXCcDBJiC_1mM",
+      authDomain: "ay-s-gadget.firebaseapp.com",
+      projectId: "ay-s-gadget",
+      storageBucket: "ay-s-gadget.firebasestorage.app",
+      messagingSenderId: "34300968590",
+      appId: "1:34300968590:web:6fc04bbf948601afe593df"
+    };
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+    // --- Utility Functions ---
+function shortText(text, words = 5) {
+  if (!text) return "";
+  const split = text.split(" ");
+  return split.length > words
+    ? split.slice(0, words).join(" ") + "..."
+    : text;
+}
+
+// ================= State =================
+let editingProductId = null;
+let editingGadgetId = null;
+
+let productsList = [];
+let allProducts = [];
+let filteredProducts = [];
+let lastProductVisible = null;
+const productsPerPage = 10;
+
+let gadgetsList = [];
+let lastGadgetVisible = null;
+const gadgetsPerPage = 8;
+
+let orders = [];
+let lastOrderVisible = null;
+const ordersPerPage = 10;
+
+// let allProducts = [];
+let currentProducts = [];
+let displayedCount = 0;
+
+let heroSlides = [];
+
+// ================= Hero DOM refs =================
+const heroHeadline = document.getElementById('hero-headline');
+const heroSubheadline = document.getElementById('hero-subheadline');
+const heroCta1 = document.getElementById('hero-cta1');
+const heroCta2 = document.getElementById('hero-cta2');
+const heroType = document.getElementById('hero-type');
+const heroUrl = document.getElementById('hero-url');
+const heroDocId = document.getElementById('hero-doc-id');
+const heroActive = document.getElementById('hero-active');
+
+const heroForm = document.getElementById('hero-form');
+const heroId = document.getElementById('hero-id');
+const heroPreview = document.getElementById('hero-preview');
+const heroTable = document.getElementById('hero-table');
+
+// // --- Sidebar navigation ---
+function showSection(section) {
+  // 1️⃣ Hide all sections
+  document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
+  document.getElementById(section).classList.remove('hidden');
+
+  // 2️⃣ Remove active class & hide dots from all buttons
+  document.querySelectorAll('.sidebar-link').forEach(btn => {
+    btn.classList.remove('bg-gray-200', 'font-bold');
+    const dot = btn.querySelector('.sidebar-dot');
+    if (dot) dot.classList.add('hidden');
+  });
+
+  // 3️⃣ Find the button for the active section
+  const activeBtn = Array.from(document.querySelectorAll('.sidebar-link'))
+    .find(btn => btn.getAttribute('onclick')?.includes(section));
+
+  if (activeBtn) {
+    activeBtn.classList.add('bg-gray-200', 'font-bold');
+    const dot = activeBtn.querySelector('.sidebar-dot');
+    if (dot) dot.classList.remove('hidden');
+  }
+
+  // 4️⃣ Save active section to localStorage
+  localStorage.setItem('activeAdminSection', section);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const lastSection = localStorage.getItem('activeAdminSection') || 'products-section';
+  showSection(lastSection);
+});
+
+// ================= Products =================
+async function fetchProducts(loadMore = false) {
+  let q;
+
+  if (loadMore && lastProductVisible) {
+    q = query(
+      collection(db, 'products'),
+      orderBy('name'),
+      startAfter(lastProductVisible),
+      limit(productsPerPage)
+    );
+  } else {
+    q = query(
+      collection(db, 'products'),
+      orderBy('name'),
+      limit(productsPerPage)
+    );
+  }
+
+  const snapshot = await getDocs(q);
+
+  if (!loadMore) {
+    productsList = [];
+  }
+
+  snapshot.docs.forEach(docSnap => {
+    const prod = { id: docSnap.id, ...docSnap.data() };
+    productsList.push(prod);
+  });
+
+  // Update global allProducts for search
+  allProducts = loadMore ? allProducts.concat(snapshot.docs.map(d => ({ id: d.id, ...d.data() }))) : snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  renderProducts(productsList);
+
+  // Save last visible for pagination
+  lastProductVisible = snapshot.docs[snapshot.docs.length - 1];
+
+  // Show/hide Load More button
+  const btn = document.getElementById('load-more-products-btn');
+  if (snapshot.size === productsPerPage) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+}
+
+// Render products table
+function renderProducts(products) {
+  const container = document.getElementById('products-list');
+  container.innerHTML = '';
+  products.forEach(p => {
+    const row = document.createElement('tr');
+    row.className = 'border-b';
+    row.innerHTML = `
+      <td class="p-2">${p.name}</td>
+      <td class="p-2">
+        ${p.images?.[0] ? `<img src="${p.images[0]}" class="w-16 h-16 object-cover rounded">` : '-'}
+      </td>
+      <td class="p-2">${p.brand || '-'}</td>
+      <td class="p-2">₦${Number(p.price).toLocaleString()}</td>
+      <td class="p-2">${p.condition || '-'}</td>
+      <td class="p-2 max-w-xs truncate" title="${p.description || ''}">
+        ${shortText(p.description, 5)}
+      </td>
+      <td class="p-2">
+        <button class="bg-blue-600 text-white px-2 py-1 rounded mr-2" onclick="editProduct('${p.id}')">Edit</button>
+        <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteProduct('${p.id}')">Delete</button>
+      </td>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// ================= Search =================
+const productSearchToggleBtn = document.getElementById('product-search-toggle-btn');
+const productSearchContainer = document.getElementById('product-search-container');
+const productCloseSearchBtn = document.getElementById('product-close-search');
+const productSearchInput = document.getElementById('product-search-input');
+
+// Show search input
+productSearchToggleBtn.addEventListener('click', () => {
+  productSearchToggleBtn.classList.add('hidden');
+  productSearchContainer.classList.remove('hidden');
+  productSearchInput.focus();
+});
+
+// Hide search input
+productCloseSearchBtn.addEventListener('click', () => {
+  productSearchContainer.classList.add('hidden');
+  productSearchToggleBtn.classList.remove('hidden');
+  productSearchInput.value = '';
+  renderProducts(allProducts.slice(0, productsPerPage));
+  lastProductVisible = allProducts[productsPerPage - 1] || null;
+  document.getElementById('load-more-products-btn').classList.toggle(allProducts.length > productsPerPage, true);
+});
+
+// Filter products on input
+productSearchInput.addEventListener('input', () => {
+  const query = productSearchInput.value.toLowerCase();
+  filteredProducts = allProducts.filter(p =>
+    p.name.toLowerCase().includes(query) ||
+    (p.description?.toLowerCase().includes(query) ?? false) ||
+    (p.brand?.toLowerCase().includes(query) ?? false)
+  );
+
+  renderProducts(filteredProducts.slice(0, productsPerPage));
+
+  // Show Load More if filtered list is bigger than page
+  const btn = document.getElementById('load-more-products-btn');
+  if (filteredProducts.length > productsPerPage) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+
+  // Reset last visible for filtered list
+  lastProductVisible = filteredProducts[productsPerPage - 1] || null;
+});
+
+// Load more button
+document.getElementById('load-more-products-btn').addEventListener('click', () => {
+  let nextProducts;
+  if (productSearchInput.value) {
+    // Loading more for filtered search
+    const start = productsList.length;
+    nextProducts = filteredProducts.slice(start, start + productsPerPage);
+    productsList = productsList.concat(nextProducts);
+    renderProducts(productsList);
+
+    // Update last visible
+    lastProductVisible = productsList[productsList.length - 1] || null;
+
+    if (productsList.length >= filteredProducts.length) {
+      document.getElementById('load-more-products-btn').classList.add('hidden');
+    }
+  } else {
+    fetchProducts(true);
+  }
+});
+
+async function addProduct(e) {
+  e.preventDefault();
+  const name = document.getElementById('product-name').value;
+  const brand = document.getElementById('product-brand').value;
+  const price = parseFloat(document.getElementById('product-price').value);
+  const condition = document.getElementById('product-condition').value;
+  const image = document.getElementById('product-image').value;
+  const description = document.getElementById('product-description').value;
+
+  try {
+    if (editingProductId) {
+      // UPDATE existing product
+      await setDoc(doc(db, 'products', editingProductId), {
+        name, brand, price, condition, description, images: [image]
+      });
+      editingProductId = null;
+      document.querySelector('#product-form button').textContent = 'Add';
+    } else {
+      // ADD new product
+      await addDoc(collection(db, 'products'), { name, brand, price, condition, description, images: [image] });
+    }
+    e.target.reset();
+    fetchProducts();
+  } catch(err) {
+    console.error("Error adding/updating product:", err);
+    alert(err.message);
+  }
+}
+
+async function deleteProduct(id) {
+  if(confirm('Are you sure you want to delete this product?')) {
+    await deleteDoc(doc(db, 'products', id));
+    fetchProducts();
+  }
+}
+
+function editProduct(id) {
+  const row = Array.from(document.querySelectorAll('#products-list tr'))
+    .find(r => r.querySelector('button')?.onclick?.toString().includes(id));
+
+  // fetch product data from Firestore
+  getDocs(collection(db, 'products')).then(snapshot => {
+    const docData = snapshot.docs.find(d => d.id === id);
+    if (!docData) return;
+    const data = docData.data();
+    document.getElementById('product-name').value = data.name;
+    document.getElementById('product-brand').value = data.brand || '';
+    document.getElementById('product-price').value = data.price;
+    document.getElementById('product-condition').value = data.condition || '';
+    document.getElementById('product-description').value = data.description || '';
+    document.getElementById('product-image').value = data.images?.[0] || '';
+
+    editingProductId = id;
+    document.querySelector('#product-form button').textContent = 'Update';
+  });
+}
+
+// ================= Gadgets =================
+async function fetchGadgets(loadMore = false) {
+
+  let q;
+
+  if (loadMore && lastGadgetVisible) {
+    q = query(
+      collection(db, 'gadgets'),
+      orderBy('name'),
+      startAfter(lastGadgetVisible),
+      limit(gadgetsPerPage)
+    );
+  } else {
+    q = query(
+      collection(db, 'gadgets'),
+      orderBy('name'),
+      limit(gadgetsPerPage)
+    );
+  }
+
+  const snapshot = await getDocs(q);
+
+  if (!loadMore) {
+    gadgetsList = [];
+  }
+
+  snapshot.docs.forEach(docSnap => {
+    gadgetsList.push({
+      id: docSnap.id,
+      ...docSnap.data()
+    });
+  });
+
+  renderGadgets(gadgetsList);
+
+  // Save last visible
+  lastGadgetVisible = snapshot.docs[snapshot.docs.length - 1];
+
+  // Show/hide button
+  const btn = document.getElementById('load-more-gadgets-btn');
+
+  if (snapshot.size === gadgetsPerPage) {
+    btn.classList.remove('hidden');
+  } else {
+    btn.classList.add('hidden');
+  }
+}
+
+function renderGadgets(gadgets) {
+  const container = document.getElementById('gadgets-list');
+  container.innerHTML = '';
+  gadgets.forEach(g => {
+    const row = document.createElement('tr');
+    row.className = 'border-b';
+    row.innerHTML = `
+      <td class="p-2">${g.name}</td>
+      <td class="p-2">
+        ${g.images?.[0] ? `<img src="${g.images[0]}" class="w-16 h-16 object-cover rounded">` : '-'}
+      </td>
+      <td class="p-2">₦${g.price}</td>
+      <td class="p-2">${shortText(g.description, 5)}</td>
+      <td class="p-2">
+        <button class="bg-blue-600 text-white px-2 py-1 rounded mr-2" onclick="editGadget('${g.id}')">Edit</button>
+        <button class="bg-red-500 text-white px-2 py-1 rounded" onclick="deleteGadget('${g.id}')">Delete</button>
+      </td>
+    `;
+    container.appendChild(row);
+  });
+}
+
+async function addGadget(e) {
+  e.preventDefault();
+  const name = document.getElementById('gadget-name').value;
+  const price = parseFloat(document.getElementById('gadget-price').value);
+  const description = document.getElementById('gadget-description').value;
+  const image = document.getElementById('gadget-image').value;
+
+  try {
+    if (editingGadgetId) {
+      await setDoc(doc(db, 'gadgets', editingGadgetId), { name, price, description, images: [image] });
+      editingGadgetId = null;
+      document.querySelector('#gadget-form button').textContent = 'Add';
+    } else {
+      await addDoc(collection(db, 'gadgets'), { name, price, description, images: [image] });
+    }
+    e.target.reset();
+    fetchGadgets();
+  } catch(err) {
+    console.error("Error adding/updating gadget:", err);
+    alert(err.message);
+  }
+}
+
+async function deleteGadget(id) {
+  if(confirm('Delete gadget?')) {
+    await deleteDoc(doc(db, 'gadgets', id));
+    fetchGadgets();
+  }
+}
+
+function editGadget(id) {
+  getDocs(collection(db, 'gadgets')).then(snapshot => {
+    const docData = snapshot.docs.find(d => d.id === id);
+    if (!docData) return;
+    const data = docData.data();
+    document.getElementById('gadget-name').value = data.name;
+    document.getElementById('gadget-price').value = data.price;
+     document.getElementById('gadget-description').value = data.description || '';
+    document.getElementById('gadget-image').value = data.images?.[0] || '';
+
+    editingGadgetId = id;
+    document.querySelector('#gadget-form button').textContent = 'Update';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('load-more-gadgets-btn')
+    .addEventListener('click', () => {
+      fetchGadgets(true);
+    });
+});
+
+const gadgetSearchToggleBtn = document.getElementById('gadget-search-toggle-btn');
+const gadgetSearchContainer = document.getElementById('gadget-search-container');
+const gadgetCloseSearchBtn = document.getElementById('gadget-close-search');
+const gadgetSearchInput = document.getElementById('gadget-search-input');
+
+// Show input
+gadgetSearchToggleBtn.addEventListener('click', () => {
+  gadgetSearchToggleBtn.classList.add('hidden');
+  gadgetSearchContainer.classList.remove('hidden');
+  gadgetSearchInput.focus();
+});
+
+// Hide input
+gadgetCloseSearchBtn.addEventListener('click', () => {
+  gadgetSearchContainer.classList.add('hidden');
+  gadgetSearchToggleBtn.classList.remove('hidden');
+  gadgetSearchInput.value = '';
+  renderGadgets(gadgetsList); // reset table to full list
+});
+
+gadgetSearchInput.addEventListener('input', () => {
+  const query = gadgetSearchInput.value.toLowerCase();
+  const filtered = gadgetsList.filter(g => 
+    g.name.toLowerCase().includes(query) ||
+    (g.description?.toLowerCase().includes(query) ?? false)
+  );
+  renderGadgets(filtered);
+});
+
+
+// ================= Hero =================
+async function fetchHero() {
+  const snapshot = await getDocs(collection(db, 'hero'));
+
+  heroSlides = snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
+  }));
+
+  renderHeroList();
+}
+
+// Render hero slides
+function renderHeroList() {
+  const container = document.getElementById('hero-list');
+  container.innerHTML = '';
+
+  if (heroSlides.length === 0) {
+    container.innerHTML = `<p class="text-gray-500 text-sm">No hero slides yet.</p>`;
+    return;
+  }
+
+  heroSlides.forEach(slide => {
+    const div = document.createElement('div');
+    div.className = "border p-3 rounded flex justify-between items-center";
+
+        // Determine if the URL is an image (simple check)
+    const mediaHtml = slide.url
+      ? slide.url.match(/\.(jpeg|jpg|gif|png|webp)$/i)
+        ? `<img src="${slide.url}" class="w-24 h-16 object-cover rounded" alt="Hero Image">`
+        : `<video src="${slide.url}" class="w-24 h-16 object-cover rounded" controls></video>`
+      : `<div class="w-24 h-16 bg-gray-200 flex items-center justify-center text-gray-400 text-xs">No Media</div>`;
+
+      div.innerHTML = `
+      <div class="flex items-center space-x-4">
+        ${mediaHtml}
+        <div>
+          <strong>${slide.headline}</strong>
+          <div class="text-sm text-gray-500">${slide.type}</div>
+        </div>
+      </div>
+      <div class="space-x-2">
+        <button class="bg-yellow-500 text-white px-2 py-1 rounded" data-edit="${slide.id}">Edit</button>
+        <button class="bg-red-500 text-white px-2 py-1 rounded" data-delete="${slide.id}">Delete</button>
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+
+  bindHeroButtons();
+}
+
+let draggedId = null;
+
+function enableDrag() {
+  document.querySelectorAll('tr[draggable]').forEach(row => {
+
+    row.addEventListener('dragstart', () => {
+      draggedId = row.dataset.id;
+      row.classList.add('opacity-50');
+    });
+
+    row.addEventListener('dragend', () => {
+      row.classList.remove('opacity-50');
+    });
+
+    row.addEventListener('dragover', e => e.preventDefault());
+
+    row.addEventListener('drop', async () => {
+      const targetId = row.dataset.id;
+      if (draggedId === targetId) return;
+
+      const draggedIndex = heroSlides.findIndex(s => s.id === draggedId);
+      const targetIndex = heroSlides.findIndex(s => s.id === targetId);
+
+      const temp = heroSlides[draggedIndex].order;
+      heroSlides[draggedIndex].order = heroSlides[targetIndex].order;
+      heroSlides[targetIndex].order = temp;
+
+      await Promise.all([
+        setDoc(doc(db, 'hero', draggedId), { order: heroSlides[draggedIndex].order }, { merge: true }),
+        setDoc(doc(db, 'hero', targetId), { order: heroSlides[targetIndex].order }, { merge: true })
+      ]);
+
+      fetchHero();
+    });
+
+  });
+}
+
+// Attach button events
+function bindHeroButtons() {
+  document.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => editHeroSlide(btn.dataset.edit));
+  });
+
+  document.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', () => deleteHeroSlide(btn.dataset.delete));
+  });
+}
+
+// Fill form for editing
+function editHeroSlide(id) {
+  const slide = heroSlides.find(h => h.id === id);
+  if (!slide) return;
+
+  document.getElementById('hero-doc-id').value = slide.id;
+  document.getElementById('hero-headline').value = slide.headline;
+  document.getElementById('hero-subheadline').value = slide.subheadline;
+  document.getElementById('hero-cta1').value = slide.cta_primary_text;
+  document.getElementById('hero-cta2').value = slide.cta_secondary_text;
+  document.getElementById('hero-type').value = slide.type;
+  document.getElementById('hero-url').value = slide.url;
+}
+
+// Delete hero slide
+async function deleteHeroSlide(id) {
+  if (!confirm('Delete this hero slide?')) return;
+
+  await deleteDoc(doc(db, 'hero', id));
+  fetchHero();
+}
+
+// Add or Update hero slide (ONE FORM)
+document.getElementById('hero-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!heroHeadline.value.trim() && !heroUrl.value.trim()) {
+  alert('Hero slide must have at least a headline or media URL');
+  return;
+}
+
+  const id = document.getElementById('hero-doc-id').value;
+
+  const data = {
+  headline: heroHeadline.value.trim(),
+  subheadline: heroSubheadline.value.trim(),
+  cta_primary_text: heroCta1.value.trim(),
+  cta_secondary_text: heroCta2.value.trim(),
+  type: heroType.value,
+  url: heroUrl.value.trim(),
+  active: heroActive.checked,
+  createdAt: serverTimestamp()
+};
+
+  if (id) {
+    await setDoc(doc(db, 'hero', id), data);
+    alert('Hero slide updated!');
+  } else {
+    await addDoc(collection(db, 'hero'), data);
+    alert('Hero slide added!');
+  }
+
+  e.target.reset();
+  document.getElementById('hero-doc-id').value = '';
+  fetchHero();
+});
+
+document.getElementById('order-search').addEventListener('input', (e) => {
+  const searchTerm = e.target.value.toLowerCase();
+
+  const filtered = orders.filter(o => {
+    const customer = o.shipping?.name || '';
+    return customer.toLowerCase().includes(searchTerm);
+  });
+
+  renderOrders(filtered);
+});
+
+
+// ================= Orders =================
+async function fetchOrders(loadMore = false) {
+
+  let q;
+
+  if (loadMore && lastOrderVisible) {
+    q = query(
+      collection(db, 'orders'),
+      orderBy('createdAt', 'desc'),
+      startAfter(lastOrderVisible),
+      limit(ordersPerPage)
+    );
+  } else {
+    q = query(
+      collection(db, 'orders'),
+      orderBy('createdAt', 'desc'),
+      limit(ordersPerPage)
+    );
+  }
+
+  const snapshot = await getDocs(q);
+
+  if (!loadMore) {
+    orders = [];
+  }
+
+  snapshot.docs.forEach(docSnap => {
+    orders.push({
+      id: docSnap.id,
+      ...docSnap.data()
+    });
+  });
+
+  renderOrders(orders);
+
+  // Save last visible document
+  lastOrderVisible = snapshot.docs[snapshot.docs.length - 1];
+
+  // Show or hide Load More button
+  const loadBtn = document.getElementById('load-more-btn');
+
+  if (snapshot.size === ordersPerPage) {
+    loadBtn.classList.remove('hidden');
+  } else {
+    loadBtn.classList.add('hidden');
+  }
+}
+
+// Render orders table
+function renderOrders(orders) {
+  const container = document.getElementById('orders-list');
+  container.innerHTML = '';
+
+  if (orders.length === 0) {
+    container.innerHTML =
+      `<tr><td colspan="7" class="text-gray-500 text-center py-4">
+        No orders yet
+      </td></tr>`;
+    return;
+  }
+
+  orders.forEach(o => {
+    const row = document.createElement('tr');
+    row.className = 'border-b hover:bg-gray-50';
+    row.dataset.id = o.id;
+    row.classList.add('cursor-pointer');
+    row.addEventListener('click', () => openOrderModal(o));
+
+    const date = o.createdAt?.seconds
+      ? new Date(o.createdAt.seconds * 1000).toLocaleDateString()
+      : '-';
+
+    const guestId = o.guestId || '-';
+    const customer = o.shipping?.name || 'No Name';
+    const total = Number(o.total || 0).toLocaleString();
+    const shipment = o.shipment || 'Pending';
+    const status = o.status || 'Pending';
+
+    row.innerHTML = `
+      <td class="p-2 text-sm">${date}</td>
+      <td class="p-2 text-sm">${guestId}</td>
+      <td class="p-2 font-medium">
+    ${customer} 
+    ${o.viewed ? '' : '<span class="ml-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded">New</span>'}
+  </td>
+      <td class="p-2 font-semibold">₦${total}</td>
+      <td class="p-2">${shipment}</td>
+      <td class="p-2">
+        <span class="px-2 py-1 rounded text-xs ${
+          status === 'Shipped'
+            ? 'bg-green-100 text-green-700'
+            : 'bg-yellow-100 text-yellow-700'
+        }">
+          ${status}
+        </span>
+      </td>
+      <td class="p-2 space-x-2">
+        <button class="mark-shipped bg-green-500 text-white px-2 py-1 rounded text-xs"  onclick="event.stopPropagation()">
+          Mark Shipped
+        </button>
+        <button class="delete-order bg-red-500 text-white px-2 py-1 rounded text-xs" onclick="event.stopPropagation()">
+          Delete
+        </button>
+      </td>
+    `;
+
+    container.appendChild(row);
+  });
+
+  bindOrderButtons();
+}
+
+// Attach event listeners for buttons
+function bindOrderButtons() {
+  document.querySelectorAll('.mark-shipped').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const row = e.target.closest('tr');
+      const orderId = row.dataset.id;
+      if (!confirm('Mark this order as shipped?')) return;
+      await setDoc(doc(db, 'orders', orderId), {
+  status: 'Shipped',
+  shipment: 'In Transit',
+  shippedAt: serverTimestamp()
+}, { merge: true });
+      fetchOrders();
+    });
+  });
+
+  document.querySelectorAll('.delete-order').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const row = e.target.closest('tr');
+      const orderId = row.dataset.id;
+      if (!confirm('Delete this order?')) return;
+      await deleteDoc(doc(db, 'orders', orderId));
+      fetchOrders();
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('load-more-btn')
+    .addEventListener('click', () => {
+      fetchOrders(true);
+    });
+});
+
+// Open Order Modal
+async function openOrderModal(order) {
+  const modal = document.getElementById('order-modal');
+  const content = document.getElementById('order-modal-content');
+
+  const date = order.createdAt?.seconds
+    ? new Date(order.createdAt.seconds * 1000).toLocaleString()
+    : '-';
+
+  const itemsHtml = order.items?.map(item => `
+    <div class="border p-2 rounded flex justify-between">
+      <div>
+        <div class="font-medium">${item.name}</div>
+        <div class="text-xs text-gray-500">Qty: ${item.quantity}</div>
+      </div>
+      <div>₦${Number(item.price).toLocaleString()}</div>
+    </div>
+  `).join('') || '<p>No items found</p>';
+
+  content.innerHTML = `
+    <div><strong>Date:</strong> ${date}</div>
+    <div class="flex items-center gap-3">
+      <strong>Status:</strong>
+      <select id="order-status-select"
+              class="border px-2 py-1 rounded text-sm">
+        <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
+        <option value="Processing" ${order.status === 'Processing' ? 'selected' : ''}>Processing</option>
+        <option value="Shipped" ${order.status === 'Shipped' ? 'selected' : ''}>Shipped</option>
+        <option value="Delivered" ${order.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+        <option value="Cancelled" ${order.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+      </select>
+
+      <button id="save-status-btn"
+              class="bg-black text-white px-3 py-1 rounded text-xs">
+        Update
+      </button>
+    </div>
+
+    <div><strong>Payment:</strong> ${order.paymentMethod || '-'}</div>
+    <div><strong>Reference:</strong> ${order.paymentReference || '-'}</div>
+
+    <hr>
+
+    <div><strong>Customer:</strong> ${order.shipping?.name || '-'}</div>
+    <div><strong>Email:</strong> ${order.shipping?.email || '-'}</div>
+    <div><strong>Phone:</strong> ${order.shipping?.phone || '-'}</div>
+    <div><strong>Address:</strong> ${order.shipping?.full || '-'}</div>
+
+    <hr>
+
+    <div><strong>Items:</strong></div>
+    ${itemsHtml}
+
+    <hr>
+
+    <div><strong>Shipping Fee:</strong> ₦${Number(order.shippingFee || 0).toLocaleString()}</div>
+    <div class="text-lg font-bold">
+      Total: ₦${Number(order.total || 0).toLocaleString()}
+    </div>
+
+    <div class="flex gap-3 mt-4">
+  <button id="downloadPdfBtn"
+          class="bg-pink-600 text-white px-4 py-2 rounded text-sm">
+    Download Receipt
+  </button>
+</div>
+  `;
+
+    // 👇 PLACE IT HERE
+  document.getElementById('downloadPdfBtn')
+    .addEventListener('click', () => {
+      downloadPdf(order);
+    });
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+
+  // --- Mark order as viewed ---
+  if (!order.viewed) {
+    try {
+      await updateDoc(doc(db, 'orders', order.id), { viewed: true });
+      order.viewed = true;
+      renderOrders(orders);
+    } catch (err) {
+      console.error('Failed to mark order as viewed', err);
+    }
+  }
+
+  // --- Save status button ---
+  document.getElementById('save-status-btn')
+    .addEventListener('click', async () => {
+      const newStatus = document.getElementById('order-status-select').value;
+
+      try {
+        await updateDoc(doc(db, "orders", order.id), {
+          status: newStatus
+        });
+
+        alert("Status updated successfully ✅");
+
+        // Update local object so table refresh reflects change
+        order.status = newStatus;
+
+        closeOrderModal();
+
+        // Fetch and render orders again
+        fetchOrders();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to update status ❌");
+      }
+    });
+}
+
+document.getElementById('close-order-modal')
+  .addEventListener('click', closeOrderModal);
+
+function closeOrderModal() {
+  const modal = document.getElementById('order-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('order-modal')
+  .addEventListener('click', (e) => {
+    if (e.target.id === 'order-modal') closeOrderModal();
+  });
+
+// ===== LOGIN & LOGOUT =====
+document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+  const errorDiv = document.getElementById('login-error');
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    errorDiv.textContent = '';
+  } catch(err) {
+    console.error("Login error:", err);
+    errorDiv.textContent = err.message;
+  }
+});
+
+// Logout
+document.getElementById('logout-btn')?.addEventListener('click', async () => {
+  await signOut(auth);
+});
+
+// Monitor auth state
+onAuthStateChanged(auth, async (user) => {
+  const loginSection = document.getElementById('login-section');
+  const mainPanel = document.querySelector('main');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  if (user) {
+    try {
+      // Check if admin doc exists in Firestore
+      const adminDoc = await getDoc(doc(db, "admins", user.uid));
+
+      if (!adminDoc.exists()) {
+        alert("You are not authorized!");
+        await signOut(auth);
+        return;
+      }
+
+      // Admin is authorized, show dashboard
+      loginSection.classList.add('hidden');
+      mainPanel.classList.remove('hidden');
+      logoutBtn.classList.remove('hidden');
+
+      // Fetch all admin data
+      fetchProducts();
+      fetchGadgets();
+      fetchHero();
+      fetchOrders();
+      fetchAdmins();
+
+    } catch (err) {
+      console.error("Admin check failed:", err);
+      alert("Access denied");
+      await signOut(auth);
+    }
+  } else {
+    // No user logged in
+    loginSection.classList.remove('hidden');
+    mainPanel.classList.add('hidden');
+    logoutBtn.classList.add('hidden');
+  }
+});
+
+// ================= Admin Accounts =================
+document.getElementById("create-admin-form")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  
+  const email = document.getElementById("admin-new-email").value.trim();
+  const password = document.getElementById("admin-new-password").value.trim();
+  
+  if (!email || !password) {
+    alert("Please enter both email and password");
+    return;
+  }
+
+  try {
+    // Create Firebase Auth user
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const newAdmin = userCredential.user;
+
+    // Save admin in Firestore with UID as doc ID
+    await setDoc(doc(db, "admins", newAdmin.uid), {
+      uid: newAdmin.uid,           // Important for permissions
+      email: newAdmin.email,
+      createdAt: serverTimestamp()
+    });
+
+    alert(`Admin account created: ${email}`);
+    e.target.reset();
+
+    fetchAdmins(); // Refresh admin list
+
+  } catch(err) {
+    console.error("Error creating admin:", err);
+    alert(err.message);
+  }
+});
+
+async function fetchAdmins() {
+  const snapshot = await getDocs(collection(db, "admins"));
+  const listContainer = document.getElementById("admin-users-list");
+  if(!listContainer) return;
+  listContainer.innerHTML = "";
+  snapshot.docs.forEach(doc => {
+    listContainer.innerHTML += `<div>${doc.data().email}</div>`;
+  });
+}
+
+// PDF Download
+async function downloadPdf(order) {
+  if (!order) return;
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("p", "mm", "a4");
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
+    let y = 20;
+
+    // ===== TITLE =====
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(18);
+    doc.text("ORDER RECEIPT", margin, y);
+    y += 10;
+
+    // ===== CUSTOMER INFO =====
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(12);
+
+    doc.text(`Name: ${order.shipping?.name || ""}`, margin, y); y+=7;
+    doc.text(`Email: ${order.shipping?.email || ""}`, margin, y); y+=7;
+    doc.text(`Phone: ${order.shipping?.phone || ""}`, margin, y); y+=7;
+    doc.text(`Payment Ref: ${order.paymentReference || ""}`, margin, y);
+    y += 10;
+
+    // ===== ITEMS =====
+    doc.setFont("helvetica","bold");
+    doc.text("Items:", margin, y);
+    y += 7;
+
+    doc.setFont("helvetica","normal");
+
+    order.items?.forEach(item => {
+      doc.text(
+        `${item.name}  x${item.quantity}  - ₦${(item.price * item.quantity).toLocaleString()}`,
+        margin,
+        y
+      );
+      y += 7;
+    });
+
+    y += 5;
+    doc.setFont("helvetica","bold");
+    doc.text(`Shipping Fee: ₦${Number(order.shippingFee || 0).toLocaleString()}`, margin, y);
+    y += 7;
+    doc.text(`Total: ₦${Number(order.total || 0).toLocaleString()}`, margin, y);
+
+    doc.save(`Order_${order.id}.pdf`);
+
+  } catch(err) {
+    console.error(err);
+    alert("Failed to generate PDF");
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  // 1️⃣ Get last active section from localStorage, default to 'products-section'
+  const lastSection = localStorage.getItem('activeAdminSection') || 'products-section';
+  
+  // 2️⃣ Show the last active section
+  showSection(lastSection);
+
+  // 3️⃣ Fetch data
+  fetchProducts();
+  fetchGadgets();
+  fetchHero();
+  fetchOrders();
+  fetchAdmins();
+});
+
+// ===== Make module functions global =====
+window.showSection = showSection;
+window.addProduct = addProduct;
+window.deleteProduct = deleteProduct;
+window.editProduct = editProduct;
+window.addGadget = addGadget;
+window.deleteGadget = deleteGadget;
+window.editGadget = editGadget;
+
+window.fetchProducts = fetchProducts;
+window.fetchGadgets = fetchGadgets;
+window.fetchHero = fetchHero;
+window.fetchOrders = fetchOrders;
+window.fetchAdmins = fetchAdmins;
+</script>
+
+</head>
+<body class="bg-gray-100">
+<div class="flex h-screen">
+
+<!-- Sidebar -->
+ <aside class="w-64 bg-white shadow p-4">
+  <h2 class="text-xl font-bold mb-6">Admin Panel</h2>
+  <ul class="space-y-2">
+    <li>
+      <button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded flex items-center" onclick="showSection('products-section')">
+        <span class="sidebar-dot w-2 h-2 bg-blue-500 rounded-full mr-2 hidden"></span>
+        Products
+      </button>
+    </li>
+    <li>
+      <button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded flex items-center" onclick="showSection('gadgets-section')">
+        <span class="sidebar-dot w-2 h-2 bg-blue-500 rounded-full mr-2 hidden"></span>
+        Gadgets
+      </button>
+    </li>
+    <li>
+      <button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded flex items-center" onclick="showSection('hero-section')">
+        <span class="sidebar-dot w-2 h-2 bg-blue-500 rounded-full mr-2 hidden"></span>
+        Hero
+      </button>
+    </li>
+    <li>
+      <button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded flex items-center" onclick="showSection('orders-section')">
+        <span class="sidebar-dot w-2 h-2 bg-blue-500 rounded-full mr-2 hidden"></span>
+        Orders
+      </button>
+    </li>
+    <li>
+      <button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded flex items-center" onclick="showSection('admin-users-section')">
+        <span class="sidebar-dot w-2 h-2 bg-blue-500 rounded-full mr-2 hidden"></span>
+        Admins
+      </button>
+    </li>
+    <li>
+      <button id="logout-btn" class="w-full text-left px-2 py-1 hover:bg-gray-200 rounded hidden">Logout</button>
+    </li>
+  </ul>
+</aside>
+
+ <!-- <aside class="w-64 bg-white shadow p-4">
+  <h2 class="text-xl font-bold mb-6">Admin Panel</h2>
+  <ul class="space-y-2">
+    <li><button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded" onclick="showSection('products-section')">Products</button></li>
+    <li><button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded" onclick="showSection('gadgets-section')">Gadgets</button></li>
+    <li><button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded" onclick="showSection('hero-section')">Hero</button></li>
+    <li><button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded" onclick="showSection('orders-section')">Orders</button></li>
+    <li><button class="sidebar-link w-full text-left px-2 py-1 hover:bg-gray-200 rounded" onclick="showSection('admin-users-section')">Admins</button></li>
+    <li><button id="logout-btn" class="w-full text-left px-2 py-1 hover:bg-gray-200 rounded hidden">Logout</button></li>
+  </ul>
+</aside> -->
+
+<!-- <aside class="w-64 bg-white shadow p-4">
+  <h2 class="text-xl font-bold mb-6">Admin Panel</h2>
+  <ul class="space-y-2">
+    <li><button class="sidebar-link" onclick="showSection('products-section')" class="w-full text-left px-2 py-1 hover:bg-gray-200 rounded">Products</button></li>
+    <li><button class="sidebar-link" onclick="showSection('gadgets-section')" class="w-full text-left px-2 py-1 hover:bg-gray-200 rounded">Gadgets</button></li>
+    <li><button class="sidebar-link" onclick="showSection('hero-section')" class="w-full text-left px-2 py-1 hover:bg-gray-200 rounded">Hero</button></li>
+    <li><button class="sidebar-link" onclick="showSection('orders-section')" class="w-full text-left px-2 py-1 hover:bg-gray-200 rounded">Orders</button></li>
+    <li><button class="sidebar-link" onclick="showSection('admin-users-section')" class="w-full text-left px-2 py-1 hover:bg-gray-200 rounded">Admins</button></li>
+    <li><button id="logout-btn" class="w-full text-left px-2 py-1 hover:bg-gray-200 rounded hidden">Logout</button></li>
+  </ul>
+</aside> -->
+
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto p-6">
+
+  <!-- Products Section -->
+  <section id="products-section" class="admin-section">
+    <div class="flex space-x-2">
+    <h2 class="text-2xl font-bold mb-4">Products</h2>
+    <button id="product-search-toggle-btn"
+    class="font-bold hover:text-blue-700 transition mb-2">
+    <!-- <i class="fas fa-search text-xl"></i> -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M9.539 15.23q-2.398 0-4.065-1.666Q3.808 11.899 3.808 9.5t1.666-4.065T9.539 3.77t4.064 1.666T15.269 9.5q0 1.042-.369 2.017t-.97 1.668l5.909 5.907q.14.14.15.345q.009.203-.15.363q-.16.16-.354.16t-.354-.16l-5.908-5.908q-.75.639-1.725.989t-1.96.35m0-1q1.99 0 3.361-1.37q1.37-1.37 1.37-3.361T12.9 6.14T9.54 4.77q-1.991 0-3.361 1.37T4.808 9.5t1.37 3.36t3.36 1.37"/></svg>
+  </button>
+  </div>
+    <div class="">
+    <form id="product-form" class="mb-4" onsubmit="addProduct(event)">
+      <input id="product-name" placeholder="Name" class="border p-1 mr-2">
+      <input id="product-brand" placeholder="Brand" class="border p-1 mr-2">
+      <input id="product-price" type="number" placeholder="Price" class="border p-1 mr-2">
+      <input id="product-condition" placeholder="Condition" class="border p-1 mr-2">
+      <input id="product-description" placeholder="Description" class="border p-1 mr-2">
+      <input id="product-image" placeholder="Image URL" class="border p-1 mr-2">
+      <div class="my-3">
+      <button class="bg-blue-600 text-white px-2 py-1 rounded">Add</button>
+      </div>
+      </div>
+      
+    </form>
+
+  
+    <div class="flex  items-center mb-4">
+  <!-- Search Input -->
+  <div id="product-search-container"
+    class="hidden flex items-center bg-white border border-blue-200 rounded-full px-3 py-1 shadow-md">
+
+    <input id="product-search-input"
+      type="text"
+      placeholder="Search customer..."
+      class="outline-none text-sm px-2 py-1 w-48" />
+
+    <button id="product-close-search"
+      class="text-gray-400 hover:text-blue-500 text-lg">
+      ✕
+    </button>
+  </div>
+</div>
+
+    <table class="w-full text-left">
+      <thead class="bg-gray-200">
+      <tr>
+        <th class="p-2">Name</th>
+        <th class="p-2">Image</th>
+        <th class="p-2">Brand</th>
+        <th class="p-2">Price</th>
+        <th class="p-2">Condition</th>
+        <th class="p-2">Description</th>
+        <th class="p-2">Actions</th>
+      </tr>
+    </thead>
+      <tbody id="products-list"></tbody>
+    </table>
+
+    <div class="flex justify-center mt-4">
+  <button id="load-more-products-btn"
+    class="hidden bg-white border border-gray-400 hover:bg-blue-700 text-gray-900 hover:text-white px-6 py-2 rounded-full text-sm shadow transition">
+    Load More Gadgets
+  </button>
+</div>
+  </section>
+
+  <!-- Gadgets Section -->
+  <section id="gadgets-section" class="admin-section hidden">
+    <div class="flex space-x-2">
+    <h2 class="text-2xl font-bold mb-4">Gadgets</h2>
+  <button id="gadget-search-toggle-btn"
+    class="font-bold hover:text-blue-700 transition mb-2">
+    <!-- <i class="fas fa-search text-xl"></i> -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M9.539 15.23q-2.398 0-4.065-1.666Q3.808 11.899 3.808 9.5t1.666-4.065T9.539 3.77t4.064 1.666T15.269 9.5q0 1.042-.369 2.017t-.97 1.668l5.909 5.907q.14.14.15.345q.009.203-.15.363q-.16.16-.354.16t-.354-.16l-5.908-5.908q-.75.639-1.725.989t-1.96.35m0-1q1.99 0 3.361-1.37q1.37-1.37 1.37-3.361T12.9 6.14T9.54 4.77q-1.991 0-3.361 1.37T4.808 9.5t1.37 3.36t3.36 1.37"/></svg>
+  </button>
+  </div>
+    <form id="gadget-form" class="mb-4" onsubmit="addGadget(event)">
+      <input id="gadget-name" placeholder="Name" class="border p-1 mr-2">
+      <input id="gadget-price" type="number" placeholder="Price" class="border p-1 mr-2">
+      <input id="gadget-description" placeholder="Description" class="border p-1 mr-2">
+      <input id="gadget-image" placeholder="Image URL" class="border p-1 mr-2">
+      <button class="bg-blue-600 text-white px-2 py-1 rounded">Add</button>
+    </form>
+
+    <div class="flex  items-center mb-4">
+  <!-- Search Input -->
+  <div id="gadget-search-container"
+    class="hidden flex items-center bg-white border border-blue-200 rounded-full px-3 py-1 shadow-md">
+
+    <input id="gadget-search-input"
+      type="text"
+      placeholder="Search customer..."
+      class="outline-none text-sm px-2 py-1 w-48" />
+
+    <button id="gadget-close-search"
+      class="text-gray-400 hover:text-blue-500 text-lg">
+      ✕
+    </button>
+  </div>
+</div>
+
+    <table class="w-full text-left">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="p-2">Name</th>
+          <th class="p-2">Image</th>
+          <th class="p-2">Price</th>
+          <th class="p-2">Description</th>
+          <th class="p-2">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="gadgets-list"></tbody>
+    </table>
+
+    <div class="flex justify-center mt-4">
+  <button id="load-more-gadgets-btn"
+    class="hidden bg-white border border-gray-400 hover:bg-blue-700 text-gray-900 hover:text-white px-6 py-2 rounded-full text-sm shadow transition">
+    Load More Gadgets
+  </button>
+</div>
+  </section>
+
+   <!-- Hero Section -->
+<section id="hero-section" class="admin-section hidden">
+  <h2 class="text-2xl font-bold mb-4">Hero Slides</h2>
+
+  <!-- Hero Form -->
+  <form id="hero-form" class="mb-4">
+    <input type="hidden" id="hero-doc-id">
+
+    <input id="hero-headline" placeholder="Headline" class="border p-1 mr-2 mb-2 w-full">
+    <input id="hero-subheadline" placeholder="Subheadline" class="border p-1 mr-2 mb-2 w-full">
+    <input id="hero-cta1" placeholder="CTA Primary" class="border p-1 mr-2 mb-2">
+    <input id="hero-cta2" placeholder="CTA Secondary" class="border p-1 mr-2 mb-2">
+    <select id="hero-type" class="border p-1 mr-2 mb-2">
+      <option value="image">Image</option>
+      <option value="video">Video</option>
+      <label class="flex items-center gap-2 mt-3">
+  <input type="checkbox" id="hero-active" checked />
+  <span>Active slide</span>
+</label>
+    </select>
+    <input id="hero-url" placeholder="Media URL" class="border p-1 mr-2 mb-2 w-full">
+
+    <button class="bg-blue-600 text-white px-2 py-1 rounded mr-2" type="submit">
+      Save Slide
+    </button>
+    <button type="button" id="clear-hero-form" class="bg-gray-500 text-white px-2 py-1 rounded">
+      Clear Form
+    </button>
+  </form>
+
+  <!-- Hero Slides List -->
+  <div id="hero-list" class="space-y-2"></div>
+</section>
+
+  <!-- Orders Section -->
+  <section id="orders-section" class="admin-section hidden">
+    <div class="mb-4">
+  <input type="text" id="order-search" placeholder="Search by customer name..." 
+         class="border px-2 py-1 rounded w-full sm:w-1/3">
+</div>
+
+    <h2 class="text-2xl font-bold mb-4">Orders</h2>
+    <table class="w-full text-left">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="p-2">Date</th>
+          <th class="p-2">Guest ID</th>
+          <th class="p-2">Customer</th>
+          <th class="p-2">Total</th>
+          <th class="p-2">Shipment</th>
+          <th class="p-2">Status</th>
+          <th class="p-2">Actions</th>
+          
+        </tr>
+      </thead>
+      <tbody id="orders-list"></tbody>
+    </table>
+
+      <div class="flex justify-center mt-6">
+  <button id="load-more-btn"
+    class="hidden bg-white border border-gray-400 hover:bg-blue-700 text-gray-900 hover:text-white px-6 py-2 rounded-full text-sm shadow transition">
+    Load More Orders
+  </button>
+</div>
+  </section>
+
+  <!-- Order Details Modal -->
+<div id="order-modal"
+     class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50">
+
+  <div class="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg p-6 relative">
+
+    <button id="close-order-modal"
+            class="absolute top-3 right-3 text-gray-500 hover:text-black text-xl">
+      ✕
+    </button>
+
+    <h2 class="text-xl font-bold mb-4">Order Details</h2>
+
+    <div id="order-modal-content" class="space-y-3 text-sm"></div>
+
+  </div>
+</div>
+
+  <!-- Admin Users Section -->
+  <section id="admin-users-section" class="admin-section hidden">
+    <h2 class="text-2xl font-bold mb-4">Admin Accounts</h2>
+    <form id="create-admin-form" class="mb-4">
+      <input id="admin-new-email" type="email" placeholder="Admin Email" class="border p-1 mr-2">
+      <input id="admin-new-password" type="password" placeholder="Password" class="border p-1 mr-2">
+      <button class="bg-green-600 text-white px-2 py-1 rounded">Create Admin</button>
+    </form>
+    <div id="admin-users-list" class="text-sm text-gray-700"></div>
+  </section>
+</main>
+
+  <section id="login-section" class="p-6 max-w-sm mx-auto mt-20 hidden">
+  <h2 class="text-2xl font-bold mb-4">Admin Login</h2>
+  <form id="login-form" class="mb-4">
+    <input id="login-email" type="email" placeholder="Email" class="border p-2 mb-2 w-full">
+    <input id="login-password" type="password" placeholder="Password" class="border p-2 mb-2 w-full">
+    <button class="bg-blue-600 text-white px-4 py-2 rounded w-full">Login</button>
+  </form>
+  <div id="login-error" class="text-red-500 text-sm"></div>
+</section>
+</div>
+</body>
+</html>
