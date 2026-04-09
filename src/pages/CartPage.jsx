@@ -15,6 +15,7 @@ const LAGOS_LGA_FEES = {
 }
 
 const STEPS = ['cart', 'checkout', 'complete']
+const STEP_LABELS = { cart: 'Shopping Cart', checkout: 'Secure Checkout', complete: 'Order Complete' }
 
 export default function CartPage() {
   const { cartItems, cartSubtotal, removeFromCart, changeQuantity, clearCart, guestId } = useCart()
@@ -69,7 +70,12 @@ export default function CartPage() {
         await addDoc(collection(db, 'orders'), {
           guestId,
           items: cartItems,
-          address: { email: form.email, name: `${form.firstName} ${form.lastName}`, phone: `${form.areaCode}${form.phone}`, full: `${form.street}, ${form.lga}, ${form.state}` },
+          address: {
+            email: form.email,
+            name: `${form.firstName} ${form.lastName}`,
+            phone: `${form.areaCode}${form.phone}`,
+            full: `${form.street}, ${form.lga}, ${form.state}`
+          },
           subtotal: cartSubtotal,
           shippingFee,
           total,
@@ -85,89 +91,118 @@ export default function CartPage() {
     handler.openIframe()
   }
 
+  const inputClass = "w-full h-14 px-5 rounded-2xl bg-surface-800 border border-surface-700/60 text-white font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-all placeholder:font-normal placeholder:text-surface-500 [&_option]:bg-surface-800 [&_option]:text-white"
+  const labelClass = "block text-sm font-bold text-surface-400 mb-2"
+
   if (step === 'complete') {
     return (
-      <div className="min-h-screen bg-surface-50 flex items-center justify-center p-4">
-        <div className="text-center bg-white p-12 rounded-[32px] shadow-soft max-w-lg mx-auto w-full border border-surface-100 animate-fade-up">
-          <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-8 border-[8px] border-green-50/50">
-            <i className="fas fa-check text-green-500 text-4xl" />
+      <div className="min-h-screen bg-surface-950 flex items-center justify-center p-4">
+        <NotificationContainer />
+        <div className="text-center bg-surface-900 border border-surface-700/50 p-12 rounded-[32px] max-w-lg mx-auto w-full animate-fade-up">
+          <div className="w-24 h-24 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
+            <i className="fas fa-check text-green-400 text-4xl" />
           </div>
-          <h2 className="text-3xl font-bold font-display text-surface-900 tracking-tight mb-4">Order Successful!</h2>
-          <p className="text-surface-500 text-lg mb-10 max-w-sm mx-auto">Thank you for shopping with AY's Store. We've received your order and will process it shortly.</p>
-          <a href="/" className="inline-block bg-surface-950 text-white px-10 py-4 rounded-full font-bold hover:bg-brand-500 transition-colors transform hover:-translate-y-1 shadow-md">
+          <h2 className="text-3xl font-bold font-display text-white tracking-tight mb-4">Order Successful!</h2>
+          <p className="text-surface-400 text-lg mb-10 max-w-sm mx-auto leading-relaxed">
+            Thank you for shopping with AY's Store. We've received your order and will process it shortly.
+          </p>
+          <Link
+            to="/"
+            className="inline-block bg-brand-500 hover:bg-brand-400 text-white px-10 py-4 rounded-full font-bold transition-colors shadow-[0_0_24px_rgba(255,98,0,0.3)]"
+          >
             Continue Shopping
-          </a>
+          </Link>
         </div>
       </div>
     )
   }
 
-  const inputClass = "w-full h-14 px-5 rounded-2xl bg-surface-50 border border-surface-200 text-surface-900 font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:bg-white transition-all placeholder:font-normal placeholder:text-surface-400"
-  const labelClass = "block text-sm font-bold text-surface-700 mb-2"
-
   return (
-    <div className="min-h-screen bg-surface-50 font-sans pb-20">
+    <div className="min-h-screen bg-surface-950 font-sans pb-24">
       <NotificationContainer />
 
       {/* Top Nav */}
-      <nav className="bg-white border-b border-surface-100 h-20 flex items-center justify-between px-6 sticky top-0 z-40">
-        <a href="/" className="text-2xl font-bold text-surface-900 font-display tracking-tight flex items-center gap-2 group">
+      <nav className="bg-surface-900 border-b border-surface-700/50 h-20 flex items-center justify-between px-6 sticky top-0 z-40">
+        <Link to="/" className="text-xl font-bold text-white font-display tracking-tight flex items-center gap-2 group">
           <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white group-hover:bg-brand-400 transition-colors">
             <i className="fas fa-bolt text-sm" />
           </div>
           AY&apos;s Store
-        </a>
-        <div className="hidden sm:flex items-center gap-4 text-sm font-bold">
-          {['cart', 'checkout', 'complete'].map((s, i) => (
-            <span key={s} className={`flex items-center gap-4 ${step === s ? 'text-brand-600' : STEPS.indexOf(step) > i ? 'text-surface-900' : 'text-surface-300'}`}>
-              {i > 0 && <i className="fas fa-chevron-right text-[10px] text-surface-200" />}
-              <span className="flex items-center gap-2">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === s ? 'bg-brand-100 text-brand-600' : STEPS.indexOf(step) > i ? 'bg-surface-100 text-surface-900' : 'bg-surface-50 text-surface-300'}`}>
-                  {STEPS.indexOf(step) > i ? <i className="fas fa-check"></i> : i + 1}
+        </Link>
+
+        <div className="hidden sm:flex items-center gap-3 text-sm font-semibold">
+          {STEPS.map((s, i) => {
+            const done = STEPS.indexOf(step) > i
+            const active = step === s
+            return (
+              <span key={s} className="flex items-center gap-3">
+                {i > 0 && <i className="fas fa-chevron-right text-[10px] text-surface-600" />}
+                <span className={`flex items-center gap-2 transition-colors ${active ? 'text-brand-500' : done ? 'text-surface-300' : 'text-surface-600'}`}>
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors ${active ? 'bg-brand-500 border-brand-500 text-white' : done ? 'bg-surface-700 border-surface-700 text-white' : 'bg-transparent border-surface-700 text-surface-600'}`}>
+                    {done ? <i className="fas fa-check text-[10px]" /> : i + 1}
+                  </span>
+                  {STEP_LABELS[s]}
                 </span>
-                <span className="capitalize tracking-wide">{s === 'cart' ? 'Shopping Cart' : s === 'checkout' ? 'Secure Checkout' : 'Complete'}</span>
               </span>
-            </span>
-          ))}
+            )
+          })}
         </div>
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 pt-10">
         {step === 'cart' ? (
           <div className="flex flex-col lg:flex-row gap-8">
+
             {/* Cart Items */}
-            <div className="flex-1 animate-fade-up">
-              <h2 className="text-3xl font-bold font-display text-surface-900 tracking-tight mb-8">Review your bag.</h2>
+            <div className="flex-1">
+              <h2 className="text-3xl font-bold font-display text-white tracking-tight mb-8">Review your bag.</h2>
+
               {cartItems.length === 0 ? (
-                <div className="bg-white rounded-[32px] p-16 text-center text-surface-400 border border-surface-100 shadow-soft">
-                  <div className="w-24 h-24 bg-surface-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i className="fas fa-shopping-bag text-4xl text-surface-300" />
+                <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-16 text-center">
+                  <div className="w-24 h-24 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <i className="fas fa-bag-shopping text-4xl text-surface-600" />
                   </div>
-                  <p className="text-xl font-medium text-surface-600 mb-2">Your bag is empty</p>
-                  <p className="text-surface-400 mb-8">Time to fill it up with amazing tech.</p>
-                  <a href="/" className="inline-block bg-surface-950 text-white px-8 py-3.5 rounded-full font-bold hover:bg-brand-500 transition-colors">Continue Shopping</a>
+                  <p className="text-xl font-semibold text-white mb-2">Your bag is empty</p>
+                  <p className="text-surface-500 mb-8">Time to fill it up with amazing tech.</p>
+                  <Link to="/products" className="inline-block bg-brand-500 hover:bg-brand-400 text-white px-8 py-3.5 rounded-full font-bold transition-colors">
+                    Browse Products
+                  </Link>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {cartItems.map(item => (
-                    <div key={item.id} className="flex gap-6 bg-white p-6 rounded-[24px] shadow-soft border border-surface-100 group">
-                      <div className="w-32 h-32 bg-surface-50 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2">
-                        <img src={item.image || item.images?.[0] || ''} alt={item.name} className="w-full h-full object-contain mix-blend-multiply" />
+                    <div key={item.id} className="flex gap-5 bg-surface-900 border border-surface-700/50 p-5 rounded-[24px] group">
+                      <div className="w-28 h-28 bg-surface-800 rounded-2xl flex-shrink-0 flex items-center justify-center p-2 overflow-hidden">
+                        {item.image || item.images?.[0]
+                          ? <img src={item.image || item.images?.[0]} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                          : <i className="fas fa-image text-surface-600 text-2xl" />
+                        }
                       </div>
-                      <div className="flex-1 flex flex-col justify-between py-2">
-                        <div className="flex justify-between gap-4">
-                          <h4 className="font-bold text-lg text-surface-900 leading-tight">{item.name}</h4>
-                          <button onClick={() => removeFromCart(item.id)} className="text-surface-300 hover:text-red-500 transition-colors p-2 -mr-2 -mt-2 rounded-full hover:bg-red-50">
-                            <i className="fas fa-trash-can" />
+                      <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
+                        <div className="flex justify-between gap-3">
+                          <h4 className="font-bold text-base text-white leading-tight line-clamp-2">{item.name}</h4>
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-surface-600 hover:text-red-400 transition-colors p-1 shrink-0 mt-0.5"
+                          >
+                            <i className="fas fa-xmark" />
                           </button>
                         </div>
-                        <div className="flex justify-between items-end mt-4">
-                          <div className="flex items-center gap-1 bg-surface-50 rounded-full p-1 border border-surface-200">
-                            <button onClick={() => changeQuantity(item.id, -1)} className="text-surface-500 hover:text-surface-900 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm font-medium">−</button>
-                            <span className="font-bold w-8 text-center text-surface-900">{item.quantity}</span>
-                            <button onClick={() => changeQuantity(item.id, 1)} className="text-surface-500 hover:text-surface-900 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm font-medium">+</button>
+                        <div className="flex justify-between items-center mt-3">
+                          <div className="flex items-center gap-2 bg-surface-800 border border-surface-700/50 rounded-xl px-3 py-2">
+                            <button
+                              onClick={() => changeQuantity(item.id, -1)}
+                              className="text-surface-400 hover:text-white transition-colors w-5 h-5 flex items-center justify-center text-base leading-none"
+                            >−</button>
+                            <span className="font-bold text-sm text-white w-5 text-center">{item.quantity}</span>
+                            <button
+                              onClick={() => changeQuantity(item.id, 1)}
+                              className="text-surface-400 hover:text-white transition-colors w-5 h-5 flex items-center justify-center text-base leading-none"
+                            >+</button>
                           </div>
-                          <p className="font-bold font-display text-2xl tracking-tight text-surface-900">₦{item.price.toLocaleString()}</p>
+                          <p className="font-bold font-display text-xl tracking-tight text-brand-500">
+                            ₦{(item.price * item.quantity).toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -176,48 +211,55 @@ export default function CartPage() {
               )}
             </div>
 
-            {/* Summary */}
-            <div className="w-full lg:w-[400px] animate-fade-up" style={{animationDelay: '100ms'}}>
-              <div className="bg-white rounded-[32px] p-8 shadow-soft border border-surface-100 sticky top-28">
-                <h3 className="font-bold font-display text-2xl text-surface-900 tracking-tight mb-6">Order Summary</h3>
-                <div className="space-y-4 text-surface-600 font-medium">
-                  <div className="flex justify-between pb-4 border-b border-surface-100">
+            {/* Order Summary */}
+            <div className="w-full lg:w-[380px]">
+              <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 sticky top-28">
+                <h3 className="font-bold font-display text-xl text-white tracking-tight mb-6">Order Summary</h3>
+                <div className="space-y-4 font-medium">
+                  <div className="flex justify-between text-surface-400 pb-4 border-b border-surface-700/50">
                     <span>Subtotal</span>
-                    <span className="text-surface-900">₦{cartSubtotal.toLocaleString()}</span>
+                    <span className="text-white">₦{cartSubtotal.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between pb-4 border-b border-surface-100">
+                  <div className="flex justify-between text-surface-400 pb-4 border-b border-surface-700/50">
                     <span>Shipping</span>
-                    <span className="text-surface-400 font-normal">Calculated at checkout</span>
+                    <span className="text-surface-500 font-normal text-sm">Calculated at checkout</span>
                   </div>
-                  <div className="flex justify-between pt-2">
-                    <span className="text-lg text-surface-900">Total</span>
-                    <span className="font-bold font-display text-3xl tracking-tight text-surface-900">₦{cartSubtotal.toLocaleString()}</span>
+                  <div className="flex justify-between pt-1">
+                    <span className="text-white font-semibold">Total</span>
+                    <span className="font-bold font-display text-2xl tracking-tight text-white">₦{cartSubtotal.toLocaleString()}</span>
                   </div>
                 </div>
-                
+
                 <button
                   onClick={() => { if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }; setStep('checkout') }}
-                  className="mt-8 w-full bg-surface-950 text-white py-4 rounded-2xl font-bold text-lg hover:bg-brand-500 hover:shadow-glow transition-all transform hover:-translate-y-1"
+                  className="mt-8 w-full bg-brand-500 hover:bg-brand-400 text-white py-4 rounded-2xl font-bold text-base transition-colors shadow-[0_0_20px_rgba(255,98,0,0.2)] hover:shadow-[0_0_30px_rgba(255,98,0,0.4)]"
                 >
-                  Checkout
+                  Proceed to Checkout
                 </button>
-                <a href="/" className="block mt-4 w-full bg-surface-50 text-surface-700 py-4 rounded-2xl text-center font-bold hover:bg-surface-100 transition-colors">
+                <Link
+                  to="/products"
+                  className="block mt-3 w-full bg-surface-800 hover:bg-surface-700 border border-surface-700/50 text-surface-300 hover:text-white py-4 rounded-2xl text-center font-semibold text-sm transition-colors"
+                >
                   Continue Shopping
-                </a>
+                </Link>
               </div>
             </div>
           </div>
+
         ) : (
           <div className="flex flex-col lg:flex-row gap-8">
+
             {/* Checkout Form */}
-            <div className="flex-1 space-y-8 animate-fade-up">
-              
-              {/* Shipping Section */}
-              <div className="bg-white rounded-[32px] p-8 shadow-soft border border-surface-100">
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="font-bold text-2xl font-display tracking-tight text-surface-900">1. Shipping details</h3>
+            <div className="flex-1 space-y-6">
+
+              {/* Shipping */}
+              <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                <div className="flex items-center justify-between mb-7">
+                  <h3 className="font-bold text-xl font-display tracking-tight text-white">1. Shipping details</h3>
                   {addressLocked && (
-                    <button onClick={() => setAddressLocked(false)} className="text-sm font-bold text-brand-600 hover:text-brand-700">Edit</button>
+                    <button onClick={() => setAddressLocked(false)} className="text-sm font-bold text-brand-500 hover:text-brand-400 transition-colors">
+                      Edit
+                    </button>
                   )}
                 </div>
 
@@ -257,110 +299,121 @@ export default function CartPage() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <div className="w-24">
+                      <div className="w-28">
                         <label className={labelClass}>Code</label>
-                        <input name="areaCode" value={form.areaCode} onChange={handleFormChange} className={inputClass} disabled />
+                        <input name="areaCode" value={form.areaCode} onChange={handleFormChange} className={`${inputClass} opacity-50 cursor-not-allowed`} disabled />
                       </div>
                       <div className="flex-1">
                         <label className={labelClass}>Phone Number</label>
                         <input name="phone" value={form.phone} onChange={handleFormChange} placeholder="801 234 5678" className={inputClass} />
                       </div>
                     </div>
-                    <div className="pt-4">
-                      <button onClick={handleConfirmAddress} className="bg-surface-950 text-white px-8 py-4 rounded-2xl font-bold hover:bg-brand-500 transition-colors">
+                    <div className="pt-2">
+                      <button onClick={handleConfirmAddress} className="bg-brand-500 hover:bg-brand-400 text-white px-8 py-4 rounded-2xl font-bold transition-colors">
                         Confirm Address
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-surface-50 rounded-2xl p-6 border border-surface-200">
-                    <p className="text-surface-900 font-medium text-lg mb-1">{form.firstName} {form.lastName}</p>
-                    <p className="text-surface-500 mb-4">{form.email} &bull; {form.areaCode} {form.phone}</p>
-                    <p className="text-surface-700 leading-relaxed max-w-md">{form.street}<br/>{form.lga}, {form.state}</p>
+                  <div className="bg-surface-800 border border-surface-700/50 rounded-2xl p-6">
+                    <p className="text-white font-semibold text-base mb-1">{form.firstName} {form.lastName}</p>
+                    <p className="text-surface-400 text-sm mb-3">{form.email} &bull; {form.areaCode} {form.phone}</p>
+                    <p className="text-surface-300 text-sm leading-relaxed">{form.street}<br />{form.lga}, {form.state}</p>
                   </div>
                 )}
               </div>
 
-              {/* Delivery Section */}
-              <div className={`bg-white rounded-[32px] p-8 shadow-soft border border-surface-100 transition-opacity duration-300 ${!addressLocked ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                <h3 className="font-bold text-2xl font-display tracking-tight text-surface-900 mb-6">2. Delivery method</h3>
-                <div className="border-2 border-brand-500 bg-brand-50 rounded-2xl p-5 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-16 h-16 bg-brand-100 rounded-bl-full flex items-center justify-center -mr-2 -mt-2">
-                    <i className="fas fa-check text-brand-500 pl-2 pb-2"></i>
-                  </div>
+              {/* Delivery */}
+              <div className={`bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 transition-opacity duration-300 ${!addressLocked ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">2. Delivery method</h3>
+                <div className="border border-brand-500/60 bg-brand-500/8 rounded-2xl p-5 relative overflow-hidden">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-brand-500 shadow-sm">
-                      <i className="fas fa-truck-fast text-lg"></i>
+                    <div className="w-11 h-11 bg-brand-500/15 border border-brand-500/30 rounded-xl flex items-center justify-center text-brand-500">
+                      <i className="fas fa-truck-fast" />
                     </div>
-                    <div>
-                      <p className="font-bold text-surface-900 text-lg">Standard Delivery</p>
-                      <p className="text-surface-600 font-medium">₦{shippingFee.toLocaleString()}</p>
+                    <div className="flex-1">
+                      <p className="font-bold text-white">Standard Delivery</p>
+                      <p className="text-surface-400 text-sm mt-0.5">₦{shippingFee.toLocaleString()}</p>
+                    </div>
+                    <div className="w-5 h-5 rounded-full bg-brand-500 border border-brand-500 flex items-center justify-center">
+                      <i className="fas fa-check text-white text-[9px]" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Payment Section */}
-              <div className={`bg-white rounded-[32px] p-8 shadow-soft border border-surface-100 transition-opacity duration-300 ${!addressLocked ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                <h3 className="font-bold text-2xl font-display tracking-tight text-surface-900 mb-6">3. Payment method</h3>
+              {/* Payment */}
+              <div className={`bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 transition-opacity duration-300 ${!addressLocked ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">3. Payment method</h3>
                 <div
                   onClick={() => setPaymentMethod('Paystack')}
-                  className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${paymentMethod === 'Paystack' ? 'border-brand-500 bg-brand-50 shadow-sm' : 'border-surface-200 bg-surface-50 hover:border-surface-300'}`}
+                  className={`p-5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-4 ${paymentMethod === 'Paystack' ? 'border-brand-500/60 bg-brand-500/8' : 'border-surface-700/50 bg-surface-800 hover:border-surface-600'}`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'Paystack' ? 'border-brand-500' : 'border-surface-300'}`}>
-                      {paymentMethod === 'Paystack' && <div className="w-3 h-3 bg-brand-500 rounded-full" />}
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${paymentMethod === 'Paystack' ? 'border-brand-500' : 'border-surface-600'}`}>
+                      {paymentMethod === 'Paystack' && <div className="w-2.5 h-2.5 bg-brand-500 rounded-full" />}
                     </div>
-                    <span className="font-bold text-surface-900 text-lg">Pay with Card or Transfer</span>
+                    <span className="font-bold text-white">Pay with Card or Transfer</span>
                   </div>
-                  <img className="h-8" src="https://cdn.brandfetch.io/idM5mrwtDs/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX" alt="Paystack" />
+                  <img className="h-7 shrink-0" src="https://cdn.brandfetch.io/idM5mrwtDs/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX" alt="Paystack" />
                 </div>
               </div>
-
             </div>
 
-            {/* Order Summary Sidebar */}
-            <div className="w-full lg:w-[400px] animate-fade-up" style={{animationDelay: '100ms'}}>
-              <div className="bg-surface-950 rounded-[32px] p-8 shadow-xl sticky top-28 text-white">
-                <h3 className="font-bold text-2xl font-display tracking-tight mb-8">Summary</h3>
-                
-                <div className="space-y-4 mb-8">
+            {/* Summary Sidebar */}
+            <div className="w-full lg:w-[380px]">
+              <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 sticky top-28">
+                <h3 className="font-bold text-xl font-display tracking-tight text-white mb-7">Summary</h3>
+
+                <div className="space-y-4 mb-7">
                   {cartItems.map(item => (
-                    <div key={item.id} className="flex gap-4">
-                      <div className="w-16 h-16 bg-white rounded-xl overflow-hidden p-1 flex-shrink-0">
-                        <img src={item.image || ''} alt={item.name} className="w-full h-full object-contain" />
+                    <div key={item.id} className="flex gap-3 items-center">
+                      <div className="w-14 h-14 bg-surface-800 border border-surface-700/50 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden p-1.5">
+                        {item.image
+                          ? <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
+                          : <i className="fas fa-image text-surface-600 text-sm" />
+                        }
                       </div>
-                      <div className="flex-1">
-                        <p className="font-bold text-sm text-white line-clamp-2 leading-tight">{item.name}</p>
-                        <p className="text-surface-400 text-xs mt-1">Qty: {item.quantity}</p>
-                        <p className="font-bold text-brand-400 mt-1">₦{(item.price * item.quantity).toLocaleString()}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-white line-clamp-1 leading-tight">{item.name}</p>
+                        <p className="text-surface-500 text-xs mt-0.5">Qty: {item.quantity}</p>
+                        <p className="font-bold text-brand-500 text-sm mt-0.5">₦{(item.price * item.quantity).toLocaleString()}</p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="border-t border-surface-800 pt-6 space-y-4 text-surface-300 font-medium">
-                  <div className="flex justify-between"><span>Subtotal</span><span className="text-white">₦{cartSubtotal.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span>Shipping</span><span className="text-white">₦{shippingFee.toLocaleString()}</span></div>
+                <div className="border-t border-surface-700/50 pt-5 space-y-3 text-sm font-medium">
+                  <div className="flex justify-between text-surface-400">
+                    <span>Subtotal</span>
+                    <span className="text-white">₦{cartSubtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-surface-400">
+                    <span>Shipping</span>
+                    <span className="text-white">₦{shippingFee.toLocaleString()}</span>
+                  </div>
                 </div>
-                
-                <div className="border-t border-surface-800 mt-6 pt-6 flex justify-between items-end">
-                  <span className="text-lg text-surface-300">Total</span>
-                  <span className="font-bold font-display text-4xl tracking-tight text-white">₦{total.toLocaleString()}</span>
+
+                <div className="border-t border-surface-700/50 mt-5 pt-5 flex justify-between items-center">
+                  <span className="text-surface-300 font-medium">Total</span>
+                  <span className="font-bold font-display text-3xl tracking-tight text-white">₦{total.toLocaleString()}</span>
                 </div>
-                
+
                 <button
                   onClick={handlePlaceOrder}
                   disabled={!addressLocked || !paymentMethod}
-                  className={`mt-8 w-full py-4 rounded-2xl font-bold text-lg transition-all ${addressLocked && paymentMethod ? 'bg-brand-500 text-white hover:bg-brand-400 hover:shadow-glow transform hover:-translate-y-1' : 'bg-surface-800 text-surface-500 cursor-not-allowed'}`}
+                  className={`mt-6 w-full py-4 rounded-2xl font-bold text-base transition-all ${addressLocked && paymentMethod ? 'bg-brand-500 hover:bg-brand-400 text-white shadow-[0_0_24px_rgba(255,98,0,0.3)] hover:shadow-[0_0_36px_rgba(255,98,0,0.45)]' : 'bg-surface-800 text-surface-600 cursor-not-allowed border border-surface-700/50'}`}
                 >
                   Pay ₦{total.toLocaleString()}
                 </button>
-                <div className="mt-4 flex items-center justify-center gap-2 text-surface-500 text-xs">
-                  <i className="fas fa-lock"></i> Payments are secure and encrypted
+
+                <div className="mt-4 flex items-center justify-center gap-2 text-surface-600 text-xs">
+                  <i className="fas fa-lock" />
+                  <span>Payments are secure and encrypted</span>
                 </div>
               </div>
             </div>
+
           </div>
         )}
       </div>
