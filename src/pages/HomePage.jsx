@@ -127,7 +127,7 @@ export default function HomePage() {
 
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-                {Array(8).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+                {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-20 text-surface-500">
@@ -136,7 +136,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-                {products.slice(0, 8).map((p, i) => (
+                {products.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
                     className="animate-fade-up"
@@ -178,7 +178,7 @@ export default function HomePage() {
 
             {loading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-                {Array(8).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+                {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : gadgets.length === 0 ? (
               <div className="text-center py-20 text-surface-500">
@@ -187,7 +187,7 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-                {gadgets.slice(0, 8).map((p, i) => (
+                {gadgets.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
                     className="animate-fade-up"
