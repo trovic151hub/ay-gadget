@@ -65,6 +65,14 @@ export default function Navbar() {
         {/* Right icons */}
         <div className="flex items-center gap-6">
 
+          {/* Search */}
+          <button
+            className="text-surface-400 hover:text-white transition-colors hidden md:block"
+            aria-label="Search"
+          >
+            <i className="fas fa-search text-lg" />
+          </button>
+
           {/* Cart */}
           <button
             onClick={() => setCartOpen(true)}
@@ -79,11 +87,11 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* User icon — direct link to dashboard */}
+          {/* User icon — customer account */}
           <Link
-            to="/admin"
+            to="/account"
             className="text-surface-400 hover:text-white transition-colors"
-            aria-label="Dashboard"
+            aria-label="My Account"
           >
             <i className="far fa-user text-xl" />
           </Link>
