@@ -16,7 +16,7 @@ export default function ProductCard({ product, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="group relative bg-surface-900 rounded-[20px] overflow-hidden cursor-pointer border border-surface-700/50 hover:border-brand-500/30 flex flex-col h-full transition-all duration-350 hover:-translate-y-2 hover:shadow-[0_24px_48px_rgba(0,0,0,0.5)] hover:shadow-brand-500/5"
+      className="group relative bg-surface-900 rounded-[20px] overflow-hidden cursor-pointer border border-surface-700/50 hover:border-brand-500/30 flex flex-col h-full transition-all duration-300 hover:shadow-[0_24px_48px_rgba(0,0,0,0.5)]"
     >
       {/* Image area */}
       <div className="relative overflow-hidden bg-surface-800 h-52 flex items-center justify-center">
