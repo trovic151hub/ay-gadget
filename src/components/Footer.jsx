@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export default function Footer() {
   return (
     <footer className="bg-surface-950 text-surface-300 py-16 border-t border-surface-800 mt-auto">
@@ -14,14 +16,17 @@ export default function Footer() {
               Nigeria's premium destination for top-tier phones, gadgets, and accessories. Experience shopping redefined.
             </p>
           </div>
+
           <div>
             <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-sm">Quick Links</h4>
             <div className="flex flex-col gap-3">
-              <a href="/" className="hover:text-brand-500 transition-colors">Smartphones</a>
-              <a href="/products" className="hover:text-brand-500 transition-colors">Accessories</a>
-              <a href="#" className="hover:text-brand-500 transition-colors">Track Order</a>
+              <Link to="/products?tab=products" className="hover:text-brand-500 transition-colors">Smartphones</Link>
+              <Link to="/products?tab=gadgets" className="hover:text-brand-500 transition-colors">Gadgets</Link>
+              <Link to="/products" className="hover:text-brand-500 transition-colors">All Products</Link>
+              <Link to="/account" className="hover:text-brand-500 transition-colors">Track Order</Link>
             </div>
           </div>
+
           <div>
             <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-sm">Legal</h4>
             <div className="flex flex-col gap-3">
@@ -31,13 +36,13 @@ export default function Footer() {
             </div>
           </div>
         </div>
-        
+
         <div className="pt-8 border-t border-surface-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-surface-500">
           <p>&copy; {new Date().getFullYear()} AY&apos;s Gadget Store. All rights reserved.</p>
           <div className="flex gap-4 text-lg">
-            <a href="#" className="hover:text-brand-500 transition-colors"><i className="fab fa-twitter"></i></a>
-            <a href="#" className="hover:text-brand-500 transition-colors"><i className="fab fa-instagram"></i></a>
-            <a href="#" className="hover:text-brand-500 transition-colors"><i className="fab fa-facebook"></i></a>
+            <a href="#" className="hover:text-brand-500 transition-colors"><i className="fab fa-twitter" /></a>
+            <a href="#" className="hover:text-brand-500 transition-colors"><i className="fab fa-instagram" /></a>
+            <a href="#" className="hover:text-brand-500 transition-colors"><i className="fab fa-facebook" /></a>
           </div>
         </div>
       </div>
