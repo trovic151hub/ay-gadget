@@ -16,53 +16,63 @@ export default function ProductCard({ product, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="group relative bg-white rounded-[24px] overflow-hidden cursor-pointer shadow-soft hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-surface-100/50 flex flex-col h-full"
+      className="group relative bg-surface-900 rounded-[20px] overflow-hidden cursor-pointer border border-surface-700/50 hover:border-brand-500/30 flex flex-col h-full transition-all duration-350 hover:-translate-y-2 hover:shadow-[0_24px_48px_rgba(0,0,0,0.5)] hover:shadow-brand-500/5"
     >
-      <div className="relative overflow-hidden bg-surface-50 h-56 p-6 flex items-center justify-center">
+      {/* Image area */}
+      <div className="relative overflow-hidden bg-surface-800 h-52 flex items-center justify-center">
+        {/* Subtle top gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-500/5 to-transparent pointer-events-none z-10" />
+
         {image ? (
           <img
             src={image}
             alt={product.name}
-            className="w-full h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-500 ease-out"
+            className="w-full h-full object-contain p-5 group-hover:scale-105 transition-transform duration-500 ease-out relative z-0"
           />
         ) : (
-          <div className="text-surface-300">
+          <div className="text-surface-600 z-0">
             <i className="fas fa-image text-5xl" />
           </div>
         )}
 
-        <div className="absolute top-4 left-4">
-          {product.brand && (
-            <span className="bg-white/80 backdrop-blur-sm text-surface-800 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
+        {/* Brand badge */}
+        {product.brand && (
+          <div className="absolute top-3 left-3 z-20">
+            <span className="bg-surface-900/80 backdrop-blur-sm text-surface-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-surface-700/50">
               {product.brand}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Add to cart button */}
+        {/* Add to cart — slides in on hover */}
         <button
           onClick={handleAddToCart}
-          className="absolute bottom-4 right-4 w-12 h-12 bg-surface-950 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-brand-500 transition-all opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 duration-300 hover:scale-110"
+          className="absolute bottom-3 right-3 z-20 w-11 h-11 bg-brand-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-brand-400 transition-all opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 duration-300 hover:scale-110"
         >
           <i className="fas fa-cart-plus text-sm" />
         </button>
       </div>
 
-      <div className="p-5 flex flex-col flex-1">
-        <h3 className="text-base font-bold text-surface-900 line-clamp-2 leading-tight tracking-tight mb-1">{product.name}</h3>
-        
+      {/* Info */}
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="text-sm font-semibold text-white line-clamp-2 leading-snug tracking-tight mb-1">
+          {product.name}
+        </h3>
+
         <div className="mt-auto pt-4 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-surface-400 font-semibold uppercase tracking-wider mb-0.5">Price</span>
-            <p className="text-brand-600 font-display font-bold text-lg tracking-tight leading-none">₦{Number(product.price).toLocaleString()}</p>
+          <div>
+            <span className="text-[9px] text-surface-500 font-semibold uppercase tracking-wider block mb-0.5">Price</span>
+            <p className="text-brand-500 font-display font-bold text-base tracking-tight leading-none">
+              ₦{Number(product.price).toLocaleString()}
+            </p>
           </div>
-          
+
           {/* Mobile add to cart */}
           <button
             onClick={handleAddToCart}
-            className="w-10 h-10 bg-surface-50 text-surface-900 rounded-full flex items-center justify-center md:hidden active:scale-95"
+            className="w-9 h-9 bg-surface-800 text-brand-500 rounded-full flex items-center justify-center md:hidden active:scale-90 border border-surface-700/50"
           >
-            <i className="fas fa-plus text-sm" />
+            <i className="fas fa-plus text-xs" />
           </button>
         </div>
       </div>
