@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
 import { NotificationProvider } from './context/NotificationContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import HomePage from './pages/HomePage'
 import ProductsPage from './pages/ProductsPage'
 import CartPage from './pages/CartPage'
@@ -11,6 +12,7 @@ import AccountPage from './pages/AccountPage'
 export default function App() {
   return (
     <BrowserRouter>
+      <ErrorBoundary>
       <NotificationProvider>
         <CartProvider>
           <Routes>
@@ -23,6 +25,7 @@ export default function App() {
           </Routes>
         </CartProvider>
       </NotificationProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

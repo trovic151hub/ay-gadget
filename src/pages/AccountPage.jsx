@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { db } from '../firebase'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import Navbar from '../components/Navbar'
 import MiniCart from '../components/MiniCart'
 import NotificationContainer from '../components/NotificationContainer'
@@ -32,24 +32,20 @@ export default function AccountPage() {
     setError('')
     setSearched(false)
     try {
-      const q = query(
-        collection(db, 'orders'),
-        where('phone', '==', cleaned),
-        orderBy('createdAt', 'desc')
-      )
+      const q = query(collection(db, 'orders'), where('phone', '==', cleaned))
       const snap = await getDocs(q)
-      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      const results = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const ta = a.createdAt?.toMillis?.() ?? 0
+          const tb = b.createdAt?.toMillis?.() ?? 0
+          return tb - ta
+        })
+      setOrders(results)
       setSearched(true)
-    } catch {
-      try {
-        const q2 = query(collection(db, 'orders'), where('phone', '==', cleaned))
-        const snap2 = await getDocs(q2)
-        setOrders(snap2.docs.map(d => ({ id: d.id, ...d.data() })))
-        setSearched(true)
-      } catch (err) {
-        setError('Unable to look up orders right now. Please try again.')
-        console.warn('Order lookup error:', err.message)
-      }
+    } catch (err) {
+      setError('Unable to look up orders right now. Please try again.')
+      console.warn('Order lookup error:', err.message)
     } finally {
       setLoading(false)
     }
