@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, getDocs } from 'firebase/firestore'
 import Navbar from '../components/Navbar'
@@ -8,123 +9,170 @@ import NotificationContainer from '../components/NotificationContainer'
 import Footer from '../components/Footer'
 import ProductModal from '../components/ProductModal'
 
+function SkeletonCard() {
+  return (
+    <div className="rounded-[20px] bg-surface-800 overflow-hidden animate-pulse">
+      <div className="h-52 bg-surface-700" />
+      <div className="p-4 space-y-3">
+        <div className="h-3 bg-surface-700 rounded-full w-3/4" />
+        <div className="h-3 bg-surface-700 rounded-full w-1/2" />
+        <div className="h-4 bg-surface-700 rounded-full w-1/3 mt-4" />
+      </div>
+    </div>
+  )
+}
+
 export default function ProductsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState([])
   const [gadgets, setGadgets] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('products')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'products')
   const [search, setSearch] = useState('')
   const [selectedProduct, setSelectedProduct] = useState(null)
 
   useEffect(() => {
     async function fetchData() {
-      const [productsSnap, gadgetsSnap] = await Promise.all([
-        getDocs(collection(db, 'products')),
-        getDocs(collection(db, 'gadgets'))
-      ])
-      setProducts(productsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
-      setGadgets(gadgetsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
-      setLoading(false)
+      try {
+        const [productsSnap, gadgetsSnap] = await Promise.all([
+          getDocs(collection(db, 'products')),
+          getDocs(collection(db, 'gadgets'))
+        ])
+        setProducts(productsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+        setGadgets(gadgetsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+      } catch (err) {
+        console.warn('ProductsPage fetch error:', err.message)
+      } finally {
+        setLoading(false)
+      }
     }
     fetchData()
   }, [])
 
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'gadgets') setActiveTab('gadgets')
+    else setActiveTab('products')
+  }, [searchParams])
+
+  function handleTabChange(tab) {
+    setActiveTab(tab)
+    setSearch('')
+    setSearchParams({ tab })
+  }
+
   const data = activeTab === 'products' ? products : gadgets
   const filtered = search
-    ? data.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()))
+    ? data.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()) || p.brand?.toLowerCase().includes(search.toLowerCase()))
     : data
 
   return (
-    <div className="min-h-screen bg-surface-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-surface-950 flex flex-col font-sans">
       <NotificationContainer />
       <Navbar />
       <MiniCart />
 
-      {/* Page Header */}
-      <div className="bg-surface-950 pt-32 pb-16 px-6 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold font-display text-white tracking-tight mb-4 animate-fade-up">Our Collection</h1>
-        <p className="text-surface-300 text-lg max-w-2xl mx-auto animate-fade-up" style={{animationDelay: '100ms'}}>
-          Discover our curated selection of premium smartphones, gadgets, and accessories.
+      {/* Page header */}
+      <div className="pt-32 pb-14 px-6 text-center border-b border-surface-800">
+        <span className="inline-block py-1 px-3 rounded-full bg-brand-500/15 text-brand-400 text-xs font-bold uppercase tracking-widest mb-4 border border-brand-500/20">
+          Collection
+        </span>
+        <h1 className="text-4xl md:text-5xl font-bold font-display text-white tracking-tight mb-3">
+          {activeTab === 'products' ? 'Smartphones' : 'Gadgets & Accessories'}
+        </h1>
+        <p className="text-surface-400 text-base max-w-xl mx-auto">
+          {activeTab === 'products'
+            ? 'New, UK-used, and Nigeria-used phones — all verified.'
+            : 'Accessories and gadgets to elevate your everyday experience.'}
         </p>
       </div>
 
-      <main className="flex-1 px-6 max-w-[90rem] mx-auto py-12 w-full">
+      <main className="flex-1 px-6 max-w-[88rem] mx-auto py-12 w-full">
+
         {/* Breadcrumb */}
-        <nav className="text-sm text-surface-500 mb-8 flex items-center gap-2">
-          <a href="/" className="hover:text-brand-600 transition-colors"><i className="fas fa-home"></i> Home</a>
-          <i className="fas fa-chevron-right text-[10px]"></i>
-          <span className="font-semibold text-surface-900">
+        <nav className="text-xs text-surface-500 mb-8 flex items-center gap-2">
+          <a href="/" className="hover:text-brand-500 transition-colors">
+            <i className="fas fa-home" /> Home
+          </a>
+          <i className="fas fa-chevron-right text-[10px]" />
+          <span className="text-surface-300 font-semibold">
             {activeTab === 'products' ? 'Smartphones' : 'Accessories'}
           </span>
         </nav>
 
         {/* Tabs + Search */}
-        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between mb-10 bg-white p-4 rounded-3xl shadow-soft border border-surface-100">
-          <div className="flex gap-2 w-full lg:w-auto p-1 bg-surface-50 rounded-2xl">
-            <button
-              onClick={() => setActiveTab('products')}
-              className={`flex-1 lg:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${
-                activeTab === 'products'
-                  ? 'bg-white text-brand-600 shadow-sm border border-surface-100'
-                  : 'text-surface-500 hover:text-surface-900'
-              }`}
-            >
-              Smartphones
-            </button>
-            <button
-              onClick={() => setActiveTab('gadgets')}
-              className={`flex-1 lg:flex-none px-8 py-3 rounded-xl text-sm font-bold transition-all duration-300 ${
-                activeTab === 'gadgets'
-                  ? 'bg-white text-brand-600 shadow-sm border border-surface-100'
-                  : 'text-surface-500 hover:text-surface-900'
-              }`}
-            >
-              Accessories
-            </button>
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-10">
+          {/* Tabs */}
+          <div className="flex gap-1 p-1 bg-surface-900 border border-surface-700/50 rounded-2xl">
+            {[
+              { label: 'Smartphones', value: 'products' },
+              { label: 'Accessories', value: 'gadgets' },
+            ].map(tab => (
+              <button
+                key={tab.value}
+                onClick={() => handleTabChange(tab.value)}
+                className={`px-7 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  activeTab === tab.value
+                    ? 'bg-brand-500 text-white shadow-sm'
+                    : 'text-surface-400 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          <div className="relative w-full lg:w-96">
-            <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-surface-400 text-sm" />
+          {/* Search */}
+          <div className="relative w-full lg:w-80">
+            <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-surface-500 text-sm" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by name, brand..."
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-surface-200 bg-surface-50 text-surface-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium placeholder:font-normal"
+              placeholder="Search by name or brand..."
+              className="w-full pl-11 pr-10 py-3 rounded-xl border border-surface-700/50 bg-surface-900 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all placeholder:text-surface-500"
             />
             {search && (
-              <button 
+              <button
                 onClick={() => setSearch('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors"
               >
-                <i className="fas fa-times"></i>
+                <i className="fas fa-times text-xs" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Product Grid */}
+        {/* Grid */}
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {Array(10).fill(0).map((_, i) => <div key={i} className="h-[360px] rounded-[24px] skeleton" />)}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+            {Array(10).fill(0).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-32 bg-white rounded-[32px] border border-surface-100 shadow-soft flex flex-col items-center">
-            <div className="w-24 h-24 bg-surface-50 rounded-full flex items-center justify-center mb-6">
-              <i className="fas fa-search text-3xl text-surface-300" />
+          <div className="text-center py-32 flex flex-col items-center">
+            <div className="w-20 h-20 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mb-6">
+              <i className="fas fa-search text-2xl text-surface-500" />
             </div>
-            <h3 className="text-2xl font-bold font-display text-surface-900 tracking-tight mb-2">No results found</h3>
-            <p className="text-surface-500 max-w-md">We couldn't find any products matching "{search}". Try checking your spelling or using less specific terms.</p>
-            <button 
-              onClick={() => setSearch('')}
-              className="mt-6 text-brand-600 font-bold hover:underline"
-            >
-              Clear search
-            </button>
+            <h3 className="text-xl font-bold font-display text-white mb-2">
+              {search ? 'No results found' : 'Nothing here yet'}
+            </h3>
+            <p className="text-surface-500 max-w-sm text-sm">
+              {search
+                ? `We couldn't find anything matching "${search}". Try a different term.`
+                : 'Products will appear here once added from the admin panel.'}
+            </p>
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="mt-5 text-brand-500 font-semibold text-sm hover:text-brand-400 transition-colors"
+              >
+                Clear search
+              </button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {filtered.map((p, i) => (
-              <div key={p.id} className="animate-fade-up" style={{animationDelay: `${(i % 10) * 50}ms`}}>
+              <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${(i % 10) * 40}ms` }}>
                 <ProductCard product={p} onClick={() => setSelectedProduct(p)} />
               </div>
             ))}
