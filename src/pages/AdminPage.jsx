@@ -44,19 +44,34 @@ export default function AdminPage() {
     fetchAll()
   }, [])
 
+  const emptySnap = { docs: [] }
+
+  async function safeGet(col, q) {
+    try {
+      return q ? await getDocs(q) : await getDocs(col)
+    } catch {
+      try { return await getDocs(col) } catch { return emptySnap }
+    }
+  }
+
   async function fetchAll() {
     setLoading(true)
-    const [p, g, h, o] = await Promise.all([
-      getDocs(query(collection(db, 'products'), orderBy('createdAt', 'desc'))).catch(() => getDocs(collection(db, 'products'))),
-      getDocs(query(collection(db, 'gadgets'), orderBy('createdAt', 'desc'))).catch(() => getDocs(collection(db, 'gadgets'))),
-      getDocs(collection(db, 'hero')),
-      getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'))).catch(() => getDocs(collection(db, 'orders')))
-    ])
-    setProducts(p.docs.map(d => ({ id: d.id, ...d.data() })))
-    setGadgets(g.docs.map(d => ({ id: d.id, ...d.data() })))
-    setHeroSlides(h.docs.map(d => ({ id: d.id, ...d.data() })))
-    setOrders(o.docs.map(d => ({ id: d.id, ...d.data() })))
-    setLoading(false)
+    try {
+      const [p, g, h, o] = await Promise.all([
+        safeGet(collection(db, 'products'), query(collection(db, 'products'), orderBy('createdAt', 'desc'))),
+        safeGet(collection(db, 'gadgets'), query(collection(db, 'gadgets'), orderBy('createdAt', 'desc'))),
+        safeGet(collection(db, 'hero'), null),
+        safeGet(collection(db, 'orders'), query(collection(db, 'orders'), orderBy('createdAt', 'desc')))
+      ])
+      setProducts(p.docs.map(d => ({ id: d.id, ...d.data() })))
+      setGadgets(g.docs.map(d => ({ id: d.id, ...d.data() })))
+      setHeroSlides(h.docs.map(d => ({ id: d.id, ...d.data() })))
+      setOrders(o.docs.map(d => ({ id: d.id, ...d.data() })))
+    } catch (err) {
+      console.warn('Admin fetchAll error:', err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSaveProduct() {

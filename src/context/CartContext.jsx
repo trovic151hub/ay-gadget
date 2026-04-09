@@ -28,6 +28,8 @@ export function CartProvider({ children }) {
       }
       const data = snapshot.docs[0].data()
       setCartItems(data.items || [])
+    }, (error) => {
+      console.warn('Cart snapshot error:', error.message)
     })
     return unsubscribe
   }, [guestId])
