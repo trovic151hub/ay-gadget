@@ -60,7 +60,7 @@ export default function CartPage() {
     if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }
 
     const handler = window.PaystackPop.setup({
-      key: 'pk_test_xxxxxxxxxxxxxxxxxxxxxx',
+      key: 'pk_test_0ed65a8011643dd303600706cb990c9ba067f199',
       email: form.email,
       amount: total * 100,
       currency: 'NGN',
