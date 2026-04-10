@@ -4,7 +4,7 @@ import {
   collection, getDocs, addDoc, setDoc, doc, deleteDoc,
   serverTimestamp, query, orderBy, updateDoc, onSnapshot
 } from 'firebase/firestore'
-import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
+import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
 
 const SECTIONS = ['products', 'gadgets', 'hero', 'orders', 'settings']
@@ -71,6 +71,7 @@ export default function AdminPage() {
   const [createAdminError, setCreateAdminError] = useState('')
   const [createAdminSuccess, setCreateAdminSuccess] = useState('')
   const [creatingAdmin, setCreatingAdmin] = useState(false)
+  const [pendingNewAdmin, setPendingNewAdmin] = useState(null)
   const [changePwCurrent, setChangePwCurrent] = useState('')
   const [changePwNew, setChangePwNew] = useState('')
   const [changePwConfirm, setChangePwConfirm] = useState('')
@@ -170,11 +171,13 @@ export default function AdminPage() {
         uid: cred.user.uid,
         createdAt: serverTimestamp()
       })
-      setCreateAdminSuccess(`Admin "${newAdminEmail.trim()}" created successfully.`)
+      const createdEmail = newAdminEmail.trim()
+      const createdPassword = newAdminPassword
       setNewAdminEmail('')
       setNewAdminPassword('')
       setNewAdminConfirm('')
-      fetchAdmins()
+      setCreateAdminError('')
+      setPendingNewAdmin({ email: createdEmail, password: createdPassword })
     } catch (err) {
       const msgs = {
         'auth/email-already-in-use': 'That email is already registered.',
@@ -185,6 +188,21 @@ export default function AdminPage() {
     } finally {
       setCreatingAdmin(false)
     }
+  }
+
+  async function handleSwitchToNewAdmin() {
+    if (!pendingNewAdmin) return
+    try {
+      await signInWithEmailAndPassword(auth, pendingNewAdmin.email, pendingNewAdmin.password)
+      setPendingNewAdmin(null)
+    } catch (err) {
+      alert(`Could not switch account: ${err.message}`)
+    }
+  }
+
+  function handleStayAsCurrent() {
+    setPendingNewAdmin(null)
+    setCreateAdminSuccess(`Admin "${pendingNewAdmin?.email}" created successfully.`)
   }
 
   async function handleDeleteAdmin(adminId, adminEmail) {
@@ -1022,56 +1040,91 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="p-6 space-y-4">
-                      {createAdminError && (
-                        <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-medium">
-                          <i className="fas fa-circle-exclamation flex-shrink-0" /> {createAdminError}
+                      {pendingNewAdmin ? (
+                        <div className="bg-surface-950 border border-brand-500/30 rounded-2xl p-5 space-y-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-brand-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <i className="fas fa-user-check text-brand-400 text-sm" />
+                            </div>
+                            <div>
+                              <p className="text-white font-bold text-sm">Admin created!</p>
+                              <p className="text-surface-400 text-xs mt-0.5 break-all">{pendingNewAdmin.email}</p>
+                            </div>
+                          </div>
+                          <p className="text-surface-400 text-xs leading-relaxed">Would you like to stay logged in as your current account or switch to the newly created admin?</p>
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={handleSwitchToNewAdmin}
+                              className="w-full h-10 rounded-xl bg-brand-500 text-white font-bold text-xs hover:bg-brand-400 transition-all flex items-center justify-center gap-2"
+                            >
+                              <i className="fas fa-right-to-bracket" /> Switch to new admin
+                            </button>
+                            <button
+                              onClick={handleStayAsCurrent}
+                              className="w-full h-10 rounded-xl bg-surface-800 text-surface-300 font-bold text-xs hover:bg-surface-700 hover:text-white transition-all flex items-center justify-center gap-2"
+                            >
+                              <i className="fas fa-user-shield" /> Stay as current admin
+                            </button>
+                          </div>
                         </div>
+                      ) : (
+                        <>
+                          {createAdminError && (
+                            <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-medium">
+                              <i className="fas fa-circle-exclamation flex-shrink-0" /> {createAdminError}
+                            </div>
+                          )}
+                          {createAdminSuccess && (
+                            <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm font-medium">
+                              <i className="fas fa-circle-check flex-shrink-0" /> {createAdminSuccess}
+                            </div>
+                          )}
+                        </>
                       )}
-                      {createAdminSuccess && (
-                        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm font-medium">
-                          <i className="fas fa-circle-check flex-shrink-0" /> {createAdminSuccess}
-                        </div>
+                      {!pendingNewAdmin && (
+                        <>
+                          <div>
+                            <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Admin Email *</label>
+                            <input
+                              type="email"
+                              value={newAdminEmail}
+                              onChange={e => setNewAdminEmail(e.target.value)}
+                              placeholder="admin@example.com"
+                              className="w-full h-12 px-5 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                            />
+                          </div>
+                          <div className="relative">
+                            <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Password *</label>
+                            <input
+                              type={showNewPw ? 'text' : 'password'}
+                              value={newAdminPassword}
+                              onChange={e => setNewAdminPassword(e.target.value)}
+                              placeholder="Min 6 characters"
+                              className="w-full h-12 px-5 pr-12 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                            />
+                            <button type="button" onClick={() => setShowNewPw(v => !v)} className="absolute right-4 top-[34px] text-surface-500 hover:text-white transition-colors">
+                              <i className={`fas ${showNewPw ? 'fa-eye-slash' : 'fa-eye'}`} />
+                            </button>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Confirm Password *</label>
+                            <input
+                              type="password"
+                              value={newAdminConfirm}
+                              onChange={e => setNewAdminConfirm(e.target.value)}
+                              placeholder="Repeat password"
+                              className="w-full h-12 px-5 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                            />
+                          </div>
+                          <button
+                            onClick={handleCreateAdmin}
+                            disabled={creatingAdmin}
+                            className="w-full h-12 rounded-2xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-blue-500 disabled:hover:-translate-y-0 flex items-center justify-center gap-2"
+                          >
+                            {creatingAdmin ? <><i className="fas fa-circle-notch fa-spin" /> Creating…</> : <><i className="fas fa-user-plus" /> Create Admin</>}
+                          </button>
+                        </>
                       )}
-                      <div>
-                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Admin Email *</label>
-                        <input
-                          type="email"
-                          value={newAdminEmail}
-                          onChange={e => setNewAdminEmail(e.target.value)}
-                          placeholder="admin@example.com"
-                          className="w-full h-12 px-5 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
-                        />
-                      </div>
-                      <div className="relative">
-                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Password *</label>
-                        <input
-                          type={showNewPw ? 'text' : 'password'}
-                          value={newAdminPassword}
-                          onChange={e => setNewAdminPassword(e.target.value)}
-                          placeholder="Min 6 characters"
-                          className="w-full h-12 px-5 pr-12 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
-                        />
-                        <button type="button" onClick={() => setShowNewPw(v => !v)} className="absolute right-4 top-[34px] text-surface-500 hover:text-white transition-colors">
-                          <i className={`fas ${showNewPw ? 'fa-eye-slash' : 'fa-eye'}`} />
-                        </button>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Confirm Password *</label>
-                        <input
-                          type="password"
-                          value={newAdminConfirm}
-                          onChange={e => setNewAdminConfirm(e.target.value)}
-                          placeholder="Repeat password"
-                          className="w-full h-12 px-5 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
-                        />
-                      </div>
-                      <button
-                        onClick={handleCreateAdmin}
-                        disabled={creatingAdmin}
-                        className="w-full h-12 rounded-2xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-blue-500 disabled:hover:-translate-y-0 flex items-center justify-center gap-2"
-                      >
-                        {creatingAdmin ? <><i className="fas fa-circle-notch fa-spin" /> Creating…</> : <><i className="fas fa-user-plus" /> Create Admin</>}
-                      </button>
                     </div>
                   </div>
 
