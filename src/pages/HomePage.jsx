@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, getDocs } from 'firebase/firestore'
 import Navbar from '../components/Navbar'
@@ -10,9 +11,9 @@ import Footer from '../components/Footer'
 import ProductModal from '../components/ProductModal'
 
 const CATEGORIES = [
-  { label: 'New Phones', icon: 'fa-box', desc: 'Brand new sealed phones with full manufacturer warranty.' },
-  { label: 'UK-Used Phones', icon: 'fa-plane-departure', desc: 'Premium pre-owned phones imported from the UK, tested and trusted.' },
-  { label: 'Nigeria-Used Phones', icon: 'fa-check-circle', desc: 'Locally used phones verified by our expert technicians.' },
+  { label: 'New Phones', icon: 'fa-box', desc: 'Brand new sealed phones with full manufacturer warranty.', category: 'new' },
+  { label: 'UK-Used Phones', icon: 'fa-plane-departure', desc: 'Premium pre-owned phones imported from the UK, tested and trusted.', category: 'uk-used' },
+  { label: 'Nigeria-Used Phones', icon: 'fa-check-circle', desc: 'Locally used phones verified by our expert technicians.', category: 'nigeria-used' },
 ]
 
 const TRUST_BADGES = [
@@ -36,6 +37,7 @@ function SkeletonCard() {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate()
   const [products, setProducts] = useState([])
   const [gadgets, setGadgets] = useState([])
   const [heroSlides, setHeroSlides] = useState([])
@@ -87,6 +89,7 @@ export default function HomePage() {
             {CATEGORIES.map((cat, i) => (
               <div
                 key={i}
+                onClick={() => navigate(`/products?tab=products&category=${cat.category}`)}
                 className="group bg-surface-900 border border-surface-700/50 hover:border-brand-500/30 rounded-2xl p-7 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
               >
                 <div className="w-14 h-14 bg-surface-800 group-hover:bg-brand-500/15 border border-surface-700/50 group-hover:border-brand-500/30 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300">
@@ -94,6 +97,9 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-white font-bold text-lg font-display tracking-tight mb-2">{cat.label}</h3>
                 <p className="text-surface-400 text-sm leading-relaxed">{cat.desc}</p>
+                <span className="inline-flex items-center gap-1.5 mt-4 text-brand-500 text-xs font-semibold group-hover:gap-2.5 transition-all duration-200">
+                  Shop now <i className="fas fa-arrow-right text-[10px]" />
+                </span>
               </div>
             ))}
           </div>

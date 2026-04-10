@@ -28,6 +28,7 @@ export default function ProductsPage() {
   const [gadgets, setGadgets] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'products')
+  const [activeCategory, setActiveCategory] = useState(searchParams.get('category') || '')
   const [search, setSearch] = useState('')
   const [selectedProduct, setSelectedProduct] = useState(null)
 
@@ -51,20 +52,41 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const tab = searchParams.get('tab')
+    const cat = searchParams.get('category') || ''
     if (tab === 'gadgets') setActiveTab('gadgets')
     else setActiveTab('products')
+    setActiveCategory(cat)
+    setSearch('')
   }, [searchParams])
+
+  const PHONE_CATEGORIES = [
+    { value: '', label: 'All Phones' },
+    { value: 'new', label: 'New' },
+    { value: 'uk-used', label: 'UK-Used' },
+    { value: 'nigeria-used', label: 'Nigeria-Used' },
+  ]
 
   function handleTabChange(tab) {
     setActiveTab(tab)
+    setActiveCategory('')
     setSearch('')
     setSearchParams({ tab })
   }
 
+  function handleCategoryChange(cat) {
+    setActiveCategory(cat)
+    setSearch('')
+    const params = { tab: 'products' }
+    if (cat) params.category = cat
+    setSearchParams(params)
+  }
+
   const data = activeTab === 'products' ? products : gadgets
-  const filtered = search
-    ? data.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()) || p.brand?.toLowerCase().includes(search.toLowerCase()))
-    : data
+  const filtered = data.filter(p => {
+    const matchesSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.brand?.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = !activeCategory || (p.condition?.toLowerCase().replace(/\s+/g, '-') === activeCategory)
+    return matchesSearch && matchesCategory
+  })
 
   return (
     <div className="min-h-screen bg-surface-950 flex flex-col font-sans">
@@ -101,7 +123,7 @@ export default function ProductsPage() {
         </nav>
 
         {/* Tabs + Search */}
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-10">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
           {/* Tabs */}
           <div className="flex gap-1 p-1 bg-surface-900 border border-surface-700/50 rounded-2xl">
             {[
@@ -142,6 +164,25 @@ export default function ProductsPage() {
           </div>
         </div>
 
+        {/* Category filter chips — phones only */}
+        {activeTab === 'products' && (
+          <div className="flex flex-wrap gap-2 mb-8">
+            {PHONE_CATEGORIES.map(cat => (
+              <button
+                key={cat.value}
+                onClick={() => handleCategoryChange(cat.value)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${
+                  activeCategory === cat.value
+                    ? 'bg-brand-500 border-brand-500 text-white'
+                    : 'bg-surface-900 border-surface-700/50 text-surface-400 hover:text-white hover:border-surface-600'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Grid */}
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -153,19 +194,21 @@ export default function ProductsPage() {
               <i className="fas fa-search text-2xl text-surface-500" />
             </div>
             <h3 className="text-xl font-bold font-display text-white mb-2">
-              {search ? 'No results found' : 'Nothing here yet'}
+              {search || activeCategory ? 'No results found' : 'Nothing here yet'}
             </h3>
             <p className="text-surface-500 max-w-sm text-sm">
               {search
                 ? `We couldn't find anything matching "${search}". Try a different term.`
+                : activeCategory
+                ? `No ${PHONE_CATEGORIES.find(c => c.value === activeCategory)?.label} phones listed yet.`
                 : 'Products will appear here once added from the admin panel.'}
             </p>
-            {search && (
+            {(search || activeCategory) && (
               <button
-                onClick={() => setSearch('')}
+                onClick={() => { setSearch(''); handleCategoryChange('') }}
                 className="mt-5 text-brand-500 font-semibold text-sm hover:text-brand-400 transition-colors"
               >
-                Clear search
+                Clear filters
               </button>
             )}
           </div>

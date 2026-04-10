@@ -18,7 +18,7 @@ const STATUS_CONFIG = {
   cancelled:  { label: 'Cancelled',  color: 'text-red-400',      bg: 'bg-red-500/15',        border: 'border-red-500/20' },
 }
 
-const emptyProduct = { name: '', brand: '', description: '', price: '', images: [''] }
+const emptyProduct = { name: '', brand: '', description: '', price: '', condition: '', images: [''] }
 const emptyHero = { headline: '', subheadline: '', cta_primary_text: '', cta_secondary_text: '', type: 'image', url: '', active: true }
 
 export default function AdminPage() {
@@ -261,13 +261,13 @@ export default function AdminPage() {
   }
 
   function openEditProduct(p) {
-    setProductForm({ name: p.name || '', brand: p.brand || '', description: p.description || '', price: p.price || '', images: p.images?.length ? p.images : [''] })
+    setProductForm({ name: p.name || '', brand: p.brand || '', description: p.description || '', price: p.price || '', condition: p.condition || '', images: p.images?.length ? p.images : [''] })
     setEditingProductId(p.id)
     setProductModal(true)
   }
 
   function openEditGadget(g) {
-    setGadgetForm({ name: g.name || '', brand: g.brand || '', description: g.description || '', price: g.price || '', images: g.images?.length ? g.images : [''] })
+    setGadgetForm({ name: g.name || '', brand: g.brand || '', description: g.description || '', price: g.price || '', condition: g.condition || '', images: g.images?.length ? g.images : [''] })
     setEditingGadgetId(g.id)
     setGadgetModal(true)
   }
@@ -1186,6 +1186,18 @@ function ItemForm({ form, setForm }) {
       <div className="grid grid-cols-2 gap-5">
         <div><label className={labelClass}>Brand</label><input name="brand" value={form.brand} onChange={handleChange} placeholder="e.g. Apple" className={inputClass} /></div>
         <div><label className={labelClass}>Price (₦) *</label><input name="price" type="number" value={form.price} onChange={handleChange} placeholder="0" className={inputClass} /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-5">
+        <div>
+          <label className={labelClass}>Condition</label>
+          <select name="condition" value={form.condition} onChange={handleChange} className={inputClass + ' cursor-pointer'}>
+            <option value="">Select condition</option>
+            <option value="New">New</option>
+            <option value="UK-Used">UK-Used</option>
+            <option value="Nigeria-Used">Nigeria-Used</option>
+          </select>
+        </div>
+        <div></div>
       </div>
       <div><label className={labelClass}>Description</label><textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder="Product details..." className="w-full p-5 rounded-2xl bg-surface-950 border border-surface-800 text-white font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700 placeholder:font-normal resize-none" /></div>
       
