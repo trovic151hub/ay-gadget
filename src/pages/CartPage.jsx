@@ -121,7 +121,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-950 font-sans pb-24">
+    <div className="min-h-screen bg-surface-950 font-sans">
       <NotificationContainer />
 
       {/* Top Nav */}
@@ -166,7 +166,7 @@ export default function CartPage() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-10 pb-16">
         {step === 'cart' ? (
           <div className="flex flex-col lg:flex-row gap-8">
 
