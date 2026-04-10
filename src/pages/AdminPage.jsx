@@ -4,10 +4,10 @@ import {
   collection, getDocs, addDoc, setDoc, doc, deleteDoc,
   serverTimestamp, query, orderBy, updateDoc, onSnapshot
 } from 'firebase/firestore'
-import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
 
-const SECTIONS = ['products', 'gadgets', 'hero', 'orders']
+const SECTIONS = ['products', 'gadgets', 'hero', 'orders', 'settings']
 
 const STATUS_CONFIG = {
   paid:       { label: 'Paid',       color: 'text-white',        bg: 'bg-surface-700',       border: 'border-surface-600' },
@@ -49,6 +49,22 @@ export default function AdminPage() {
   const [orderSearch, setOrderSearch] = useState('')
   const [orderStatusFilter, setOrderStatusFilter] = useState('all')
   const [orderLimit, setOrderLimit] = useState(10)
+  const [adminsList, setAdminsList] = useState([])
+  const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [newAdminPassword, setNewAdminPassword] = useState('')
+  const [newAdminConfirm, setNewAdminConfirm] = useState('')
+  const [showNewPw, setShowNewPw] = useState(false)
+  const [createAdminError, setCreateAdminError] = useState('')
+  const [createAdminSuccess, setCreateAdminSuccess] = useState('')
+  const [creatingAdmin, setCreatingAdmin] = useState(false)
+  const [changePwCurrent, setChangePwCurrent] = useState('')
+  const [changePwNew, setChangePwNew] = useState('')
+  const [changePwConfirm, setChangePwConfirm] = useState('')
+  const [changePwError, setChangePwError] = useState('')
+  const [changePwSuccess, setChangePwSuccess] = useState('')
+  const [changingPw, setChangingPw] = useState(false)
+  const [showCurrPw, setShowCurrPw] = useState(false)
+  const [showChangePw, setShowChangePw] = useState(false)
   const unsubOrdersRef = useRef(null)
 
   useEffect(() => {
@@ -67,6 +83,97 @@ export default function AdminPage() {
     }, err => console.warn('Orders listener error:', err.message))
     return () => { if (unsubOrdersRef.current) unsubOrdersRef.current() }
   }, [])
+
+  async function fetchAdmins() {
+    try {
+      const snap = await getDocs(collection(db, 'admins'))
+      setAdminsList(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    } catch (err) {
+      console.warn('fetchAdmins error:', err.message)
+    }
+  }
+
+  useEffect(() => {
+    if (section === 'settings') fetchAdmins()
+  }, [section])
+
+  async function handleCreateAdmin() {
+    setCreateAdminError('')
+    setCreateAdminSuccess('')
+    if (!newAdminEmail.trim() || !newAdminPassword) return setCreateAdminError('Email and password are required.')
+    if (newAdminPassword !== newAdminConfirm) return setCreateAdminError('Passwords do not match.')
+    if (newAdminPassword.length < 6) return setCreateAdminError('Password must be at least 6 characters.')
+    setCreatingAdmin(true)
+    try {
+      const secondaryApp = await import('firebase/app').then(m => {
+        try { return m.getApp('secondary') } catch { return null }
+      })
+      let cred
+      if (secondaryApp) {
+        const { getAuth: getA } = await import('firebase/auth')
+        cred = await createUserWithEmailAndPassword(getA(secondaryApp), newAdminEmail.trim(), newAdminPassword)
+      } else {
+        const { initializeApp, getApp } = await import('firebase/app')
+        const { getAuth: getA } = await import('firebase/auth')
+        let app2
+        try { app2 = getApp('secondary') } catch { app2 = initializeApp(auth.app.options, 'secondary') }
+        cred = await createUserWithEmailAndPassword(getA(app2), newAdminEmail.trim(), newAdminPassword)
+      }
+      await setDoc(doc(db, 'admins', cred.user.uid), {
+        email: newAdminEmail.trim(),
+        uid: cred.user.uid,
+        createdAt: serverTimestamp()
+      })
+      setCreateAdminSuccess(`Admin "${newAdminEmail.trim()}" created successfully.`)
+      setNewAdminEmail('')
+      setNewAdminPassword('')
+      setNewAdminConfirm('')
+      fetchAdmins()
+    } catch (err) {
+      const msgs = {
+        'auth/email-already-in-use': 'That email is already registered.',
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/weak-password': 'Password is too weak.',
+      }
+      setCreateAdminError(msgs[err.code] || err.message)
+    } finally {
+      setCreatingAdmin(false)
+    }
+  }
+
+  async function handleDeleteAdmin(adminId, adminEmail) {
+    if (!confirm(`Remove admin "${adminEmail}"? They will no longer have access.`)) return
+    await deleteDoc(doc(db, 'admins', adminId))
+    fetchAdmins()
+  }
+
+  async function handleChangePassword() {
+    setChangePwError('')
+    setChangePwSuccess('')
+    if (!changePwCurrent) return setChangePwError('Please enter your current password.')
+    if (!changePwNew) return setChangePwError('Please enter a new password.')
+    if (changePwNew.length < 6) return setChangePwError('New password must be at least 6 characters.')
+    if (changePwNew !== changePwConfirm) return setChangePwError('New passwords do not match.')
+    setChangingPw(true)
+    try {
+      const credential = EmailAuthProvider.credential(auth.currentUser.email, changePwCurrent)
+      await reauthenticateWithCredential(auth.currentUser, credential)
+      await updatePassword(auth.currentUser, changePwNew)
+      setChangePwSuccess('Password updated successfully.')
+      setChangePwCurrent('')
+      setChangePwNew('')
+      setChangePwConfirm('')
+    } catch (err) {
+      const msgs = {
+        'auth/wrong-password': 'Current password is incorrect.',
+        'auth/invalid-credential': 'Current password is incorrect.',
+        'auth/too-many-requests': 'Too many attempts. Please try again later.',
+      }
+      setChangePwError(msgs[err.code] || err.message)
+    } finally {
+      setChangingPw(false)
+    }
+  }
 
   const emptySnap = { docs: [] }
 
@@ -223,7 +330,8 @@ export default function AdminPage() {
             { id: 'products', icon: 'fa-mobile-screen-button', label: 'Smartphones' },
             { id: 'gadgets', icon: 'fa-headphones', label: 'Accessories' },
             { id: 'hero', icon: 'fa-images', label: 'Hero Slides' },
-            { id: 'orders', icon: 'fa-bag-shopping', label: 'Orders' }
+            { id: 'orders', icon: 'fa-bag-shopping', label: 'Orders' },
+            { id: 'settings', icon: 'fa-users-gear', label: 'Admin Settings' }
           ].map(item => (
             <button
               key={item.id}
@@ -264,8 +372,12 @@ export default function AdminPage() {
         {/* Header */}
         <div className="bg-surface-900/80 backdrop-blur-xl border-b border-surface-800 px-8 py-5 flex justify-between items-center sticky top-0 z-10">
           <div>
-            <h2 className="text-2xl font-bold font-display text-white capitalize tracking-tight">{section}</h2>
-            <p className="text-sm text-surface-400 font-medium">Manage your {section} database</p>
+            <h2 className="text-2xl font-bold font-display text-white capitalize tracking-tight">
+              {section === 'settings' ? 'Admin Settings' : section}
+            </h2>
+            <p className="text-sm text-surface-400 font-medium">
+              {section === 'settings' ? 'Manage admins and your account security' : `Manage your ${section} database`}
+            </p>
           </div>
           <div className="flex gap-3">
             {section === 'products' && (
@@ -721,6 +833,210 @@ export default function AdminPage() {
                       )}
                     </>
                   )}
+                </div>
+              )}
+
+              {/* Settings */}
+              {section === 'settings' && (
+                <div className="space-y-10 max-w-3xl">
+
+                  {/* Current admin card */}
+                  <div className="bg-surface-900 border border-surface-800 rounded-2xl p-6 flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center flex-shrink-0">
+                      <i className="fas fa-user-shield text-brand-400 text-xl" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-lg truncate">{user?.email}</p>
+                      <p className="text-xs text-brand-400 font-bold uppercase tracking-wider mt-1">Currently Logged In · Super Admin</p>
+                    </div>
+                  </div>
+
+                  {/* Change Password */}
+                  <div className="bg-surface-900 border border-surface-800 rounded-2xl overflow-hidden">
+                    <div className="px-6 py-5 border-b border-surface-800 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                        <i className="fas fa-lock text-amber-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white text-base">Change Password</h3>
+                        <p className="text-xs text-surface-500">Update your login password</p>
+                      </div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      {changePwError && (
+                        <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-medium">
+                          <i className="fas fa-circle-exclamation flex-shrink-0" /> {changePwError}
+                        </div>
+                      )}
+                      {changePwSuccess && (
+                        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm font-medium">
+                          <i className="fas fa-circle-check flex-shrink-0" /> {changePwSuccess}
+                        </div>
+                      )}
+                      <div className="relative">
+                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Current Password</label>
+                        <input
+                          type={showCurrPw ? 'text' : 'password'}
+                          value={changePwCurrent}
+                          onChange={e => setChangePwCurrent(e.target.value)}
+                          placeholder="Your current password"
+                          className="w-full h-12 px-5 pr-12 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                        />
+                        <button type="button" onClick={() => setShowCurrPw(v => !v)} className="absolute right-4 top-[34px] text-surface-500 hover:text-white transition-colors">
+                          <i className={`fas ${showCurrPw ? 'fa-eye-slash' : 'fa-eye'}`} />
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">New Password</label>
+                        <input
+                          type={showChangePw ? 'text' : 'password'}
+                          value={changePwNew}
+                          onChange={e => setChangePwNew(e.target.value)}
+                          placeholder="New password (min 6 characters)"
+                          className="w-full h-12 px-5 pr-12 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                        />
+                        <button type="button" onClick={() => setShowChangePw(v => !v)} className="absolute right-4 top-[34px] text-surface-500 hover:text-white transition-colors">
+                          <i className={`fas ${showChangePw ? 'fa-eye-slash' : 'fa-eye'}`} />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Confirm New Password</label>
+                        <input
+                          type="password"
+                          value={changePwConfirm}
+                          onChange={e => setChangePwConfirm(e.target.value)}
+                          placeholder="Repeat new password"
+                          className="w-full h-12 px-5 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                        />
+                      </div>
+                      <button
+                        onClick={handleChangePassword}
+                        disabled={changingPw}
+                        className="w-full h-12 rounded-2xl bg-brand-500 text-white font-bold text-sm hover:bg-brand-400 hover:shadow-glow transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-brand-500 disabled:hover:-translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-2"
+                      >
+                        {changingPw ? <><i className="fas fa-circle-notch fa-spin" /> Updating…</> : <><i className="fas fa-lock" /> Update Password</>}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Create New Admin */}
+                  <div className="bg-surface-900 border border-surface-800 rounded-2xl overflow-hidden">
+                    <div className="px-6 py-5 border-b border-surface-800 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                        <i className="fas fa-user-plus text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white text-base">Create New Admin</h3>
+                        <p className="text-xs text-surface-500">Add another admin to this dashboard</p>
+                      </div>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      {createAdminError && (
+                        <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-medium">
+                          <i className="fas fa-circle-exclamation flex-shrink-0" /> {createAdminError}
+                        </div>
+                      )}
+                      {createAdminSuccess && (
+                        <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm font-medium">
+                          <i className="fas fa-circle-check flex-shrink-0" /> {createAdminSuccess}
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Admin Email *</label>
+                        <input
+                          type="email"
+                          value={newAdminEmail}
+                          onChange={e => setNewAdminEmail(e.target.value)}
+                          placeholder="admin@example.com"
+                          className="w-full h-12 px-5 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                        />
+                      </div>
+                      <div className="relative">
+                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Password *</label>
+                        <input
+                          type={showNewPw ? 'text' : 'password'}
+                          value={newAdminPassword}
+                          onChange={e => setNewAdminPassword(e.target.value)}
+                          placeholder="Min 6 characters"
+                          className="w-full h-12 px-5 pr-12 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                        />
+                        <button type="button" onClick={() => setShowNewPw(v => !v)} className="absolute right-4 top-[34px] text-surface-500 hover:text-white transition-colors">
+                          <i className={`fas ${showNewPw ? 'fa-eye-slash' : 'fa-eye'}`} />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider">Confirm Password *</label>
+                        <input
+                          type="password"
+                          value={newAdminConfirm}
+                          onChange={e => setNewAdminConfirm(e.target.value)}
+                          placeholder="Repeat password"
+                          className="w-full h-12 px-5 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
+                        />
+                      </div>
+                      <button
+                        onClick={handleCreateAdmin}
+                        disabled={creatingAdmin}
+                        className="w-full h-12 rounded-2xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-blue-500 disabled:hover:-translate-y-0 flex items-center justify-center gap-2"
+                      >
+                        {creatingAdmin ? <><i className="fas fa-circle-notch fa-spin" /> Creating…</> : <><i className="fas fa-user-plus" /> Create Admin</>}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Admins List */}
+                  <div className="bg-surface-900 border border-surface-800 rounded-2xl overflow-hidden">
+                    <div className="px-6 py-5 border-b border-surface-800 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                          <i className="fas fa-users text-purple-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-white text-base">All Admins</h3>
+                          <p className="text-xs text-surface-500">{adminsList.length} admin{adminsList.length !== 1 ? 's' : ''} registered</p>
+                        </div>
+                      </div>
+                      <button onClick={fetchAdmins} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center" title="Refresh">
+                        <i className="fas fa-rotate-right text-sm" />
+                      </button>
+                    </div>
+                    <div className="divide-y divide-surface-800">
+                      {adminsList.length === 0 ? (
+                        <div className="py-12 text-center">
+                          <p className="text-surface-500 text-sm">No admins found in database.</p>
+                        </div>
+                      ) : adminsList.map(a => {
+                        const isSelf = a.uid === user?.uid || a.email === user?.email
+                        const createdDate = a.createdAt?.toDate ? a.createdAt.toDate() : null
+                        return (
+                          <div key={a.id} className="px-6 py-4 flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isSelf ? 'bg-brand-500/15 border border-brand-500/30' : 'bg-surface-800'}`}>
+                              <i className={`fas fa-user text-sm ${isSelf ? 'text-brand-400' : 'text-surface-500'}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-bold text-white text-sm truncate">{a.email}</p>
+                                {isSelf && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-400 border border-brand-500/20">You</span>}
+                              </div>
+                              {createdDate && (
+                                <p className="text-xs text-surface-500 mt-0.5">Added {createdDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                              )}
+                            </div>
+                            {!isSelf && (
+                              <button
+                                onClick={() => handleDeleteAdmin(a.id, a.email)}
+                                className="w-8 h-8 rounded-lg bg-surface-800 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors flex items-center justify-center flex-shrink-0"
+                                title="Remove admin"
+                              >
+                                <i className="fas fa-trash text-xs" />
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
                 </div>
               )}
             </div>
