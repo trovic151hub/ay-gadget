@@ -80,6 +80,7 @@ export default function AdminPage() {
   const [showCurrPw, setShowCurrPw] = useState(false)
   const [showChangePw, setShowChangePw] = useState(false)
   const unsubOrdersRef = useRef(null)
+  const unsubAdminsRef = useRef(null)
   const [tick, setTick] = useState(0)
 
   // Keep "X mins ago" labels fresh every minute
@@ -106,7 +107,7 @@ export default function AdminPage() {
       try {
         await updateDoc(doc(db, 'admins', auth.currentUser.uid), { lastActive: serverTimestamp() })
       } catch { /* silent */ }
-    }, 5 * 60_000)
+    }, 2 * 60_000)
     return () => clearInterval(id)
   }, [])
 
@@ -119,18 +120,27 @@ export default function AdminPage() {
     return () => { if (unsubOrdersRef.current) unsubOrdersRef.current() }
   }, [])
 
-  async function fetchAdmins() {
+  function subscribeAdmins() {
+    if (unsubAdminsRef.current) return
     try {
-      const snap = await getDocs(collection(db, 'admins'))
-      setAdminsList(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      unsubAdminsRef.current = onSnapshot(
+        collection(db, 'admins'),
+        snap => setAdminsList(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        err => console.warn('admins listener error:', err.message)
+      )
     } catch (err) {
-      console.warn('fetchAdmins error:', err.message)
+      console.warn('subscribeAdmins error:', err.message)
     }
   }
 
+  function fetchAdmins() { subscribeAdmins() }
+
   useEffect(() => {
     localStorage.setItem('adminSection', section)
-    if (section === 'settings') fetchAdmins()
+    if (section === 'settings') subscribeAdmins()
+    else {
+      if (unsubAdminsRef.current) { unsubAdminsRef.current(); unsubAdminsRef.current = null }
+    }
   }, [section])
 
   async function handleCreateAdmin() {
@@ -1088,26 +1098,32 @@ export default function AdminPage() {
                         const createdDate = a.createdAt?.toDate ? a.createdAt.toDate() : null
                         const lastActiveDate = a.lastActive?.toDate ? a.lastActive.toDate() : null
                         const ago = timeAgo(lastActiveDate)
-                        const isRecent = lastActiveDate && (Date.now() - lastActiveDate.getTime()) < 10 * 60_000
+                        const diffMs = lastActiveDate ? Date.now() - lastActiveDate.getTime() : Infinity
+                        const isOnline = diffMs < 3 * 60_000
+                        const isRecent = diffMs < 10 * 60_000
                         void tick
                         return (
                           <div key={a.id} className="px-6 py-4 flex items-center gap-4">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 relative ${isSelf ? 'bg-brand-500/15 border border-brand-500/30' : 'bg-surface-800'}`}>
                               <i className={`fas fa-user text-sm ${isSelf ? 'text-brand-400' : 'text-surface-500'}`} />
-                              {isRecent && (
-                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-surface-900 rounded-full" title="Active in last 10 mins" />
-                              )}
+                              <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 border-2 border-surface-900 rounded-full transition-colors ${isOnline ? 'bg-emerald-500' : isRecent ? 'bg-amber-400' : 'bg-surface-700'}`} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <p className="font-bold text-white text-sm truncate">{a.email}</p>
+                                {isOnline && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                                    Online
+                                  </span>
+                                )}
                                 {isSelf && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-400 border border-brand-500/20">You</span>}
                               </div>
                               <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                                 {ago ? (
                                   <p className="text-xs text-surface-500 flex items-center gap-1.5">
-                                    <i className={`fas fa-circle text-[5px] ${isRecent ? 'text-emerald-500' : 'text-surface-600'}`} />
-                                    Last active: <span className={isRecent ? 'text-emerald-400 font-semibold' : 'text-surface-400'}>{ago}</span>
+                                    <i className={`fas fa-circle text-[5px] ${isOnline ? 'text-emerald-500' : isRecent ? 'text-amber-400' : 'text-surface-600'}`} />
+                                    Last active: <span className={isOnline ? 'text-emerald-400 font-semibold' : isRecent ? 'text-amber-400' : 'text-surface-400'}>{ago}</span>
                                   </p>
                                 ) : (
                                   <p className="text-xs text-surface-600 italic">Never logged in</p>
