@@ -90,27 +90,27 @@ export default function AdminPage() {
     return () => clearInterval(id)
   }, [])
 
-  // Write lastActive to Firestore when admin signs in, then refresh every 5 minutes
+  // Write lastActive on sign-in and keep a heartbeat running while logged in
   useEffect(() => {
+    let heartbeat = null
     const unsub = onAuthStateChanged(auth, async u => {
       if (!u) { navigate('/login'); return }
       setUser(u)
       try {
         await updateDoc(doc(db, 'admins', u.uid), { lastActive: serverTimestamp() })
       } catch { /* admin doc may not exist yet (owner account) */ }
+      if (heartbeat) clearInterval(heartbeat)
+      heartbeat = setInterval(async () => {
+        try {
+          await updateDoc(doc(db, 'admins', u.uid), { lastActive: serverTimestamp() })
+        } catch { /* silent */ }
+      }, 2 * 60_000)
     })
-    return unsub
+    return () => {
+      unsub()
+      if (heartbeat) clearInterval(heartbeat)
+    }
   }, [navigate])
-
-  useEffect(() => {
-    if (!auth.currentUser) return
-    const id = setInterval(async () => {
-      try {
-        await updateDoc(doc(db, 'admins', auth.currentUser.uid), { lastActive: serverTimestamp() })
-      } catch { /* silent */ }
-    }, 2 * 60_000)
-    return () => clearInterval(id)
-  }, [])
 
   useEffect(() => {
     fetchAll()
@@ -123,15 +123,14 @@ export default function AdminPage() {
 
   function subscribeAdmins() {
     if (unsubAdminsRef.current) return
-    try {
-      unsubAdminsRef.current = onSnapshot(
-        collection(db, 'admins'),
-        snap => setAdminsList(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-        err => console.warn('admins listener error:', err.message)
-      )
-    } catch (err) {
-      console.warn('subscribeAdmins error:', err.message)
-    }
+    unsubAdminsRef.current = onSnapshot(
+      collection(db, 'admins'),
+      snap => setAdminsList(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      err => {
+        console.warn('admins listener error:', err.message)
+        unsubAdminsRef.current = null
+      }
+    )
   }
 
   function fetchAdmins() { subscribeAdmins() }
