@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admins
+    match /admins/{adminId} {
+      // Only authenticated users can create themselves
+      allow create: if request.auth != null && request.auth.uid == adminId;
+      // Only authenticated admins can read admin data
+      allow read: if request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      // Only admin themselves can update or delete
+      allow update, delete: if request.auth != null && request.auth.uid == adminId;
+    }
+
+    // Products
+    match /products/{productId} {
+      allow read: if true; // public
+      allow write: if request.auth != null 
+                   && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Gadgets
+    match /gadgets/{gadgetId} {
+      allow read: if true;
+      allow write: if request.auth != null 
+                   && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Hero
+    match /hero/{heroId} {
+      allow read: if true;
+      allow write: if request.auth != null 
+                   && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Orders
+    match /orders/{orderId} {
+  allow read: if true;
+  allow create: if true;
+  allow update, delete: if request.auth != null 
+                        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+}
+    // match /orders/{orderId} {
+    //   allow read, write: if request.auth != null 
+    //                      && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    // }
+
+    // Carts — guests only
+    match /carts/{cartId} {
+      allow read: if resource.data.guestId.matches("guest-.*");
+      allow create: if request.resource.data.guestId.matches("guest-.*");
+      allow update, delete: if request.resource.data.guestId == resource.data.guestId;
+    }
+  }
+}
