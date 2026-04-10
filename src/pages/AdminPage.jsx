@@ -137,11 +137,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     localStorage.setItem('adminSection', section)
-    if (section === 'settings') subscribeAdmins()
-    else {
+    if (section === 'settings' && user) subscribeAdmins()
+    else if (section !== 'settings') {
       if (unsubAdminsRef.current) { unsubAdminsRef.current(); unsubAdminsRef.current = null }
     }
-  }, [section])
+  }, [section, user])
 
   async function handleCreateAdmin() {
     setCreateAdminError('')
@@ -189,8 +189,11 @@ export default function AdminPage() {
 
   async function handleDeleteAdmin(adminId, adminEmail) {
     if (!confirm(`Remove admin "${adminEmail}"? They will no longer have access.`)) return
-    await deleteDoc(doc(db, 'admins', adminId))
-    fetchAdmins()
+    try {
+      await deleteDoc(doc(db, 'admins', adminId))
+    } catch (err) {
+      alert(`Could not remove admin: ${err.message}`)
+    }
   }
 
   async function handleChangePassword() {
