@@ -1,13 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { db, auth } from '../firebase'
 import {
   collection, getDocs, addDoc, setDoc, doc, deleteDoc,
-  serverTimestamp, query, orderBy, updateDoc
+  serverTimestamp, query, orderBy, updateDoc, onSnapshot
 } from 'firebase/firestore'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
 
 const SECTIONS = ['products', 'gadgets', 'hero', 'orders']
+
+const STATUS_CONFIG = {
+  paid:       { label: 'Paid',       color: 'text-white',        bg: 'bg-surface-700',       border: 'border-surface-600' },
+  pending:    { label: 'Pending',    color: 'text-yellow-400',   bg: 'bg-yellow-500/15',     border: 'border-yellow-500/20' },
+  processing: { label: 'Processing', color: 'text-amber-400',    bg: 'bg-amber-500/15',      border: 'border-amber-500/20' },
+  shipped:    { label: 'Shipped',    color: 'text-blue-400',     bg: 'bg-blue-500/15',       border: 'border-blue-500/20' },
+  delivered:  { label: 'Delivered',  color: 'text-emerald-400',  bg: 'bg-emerald-500/15',    border: 'border-emerald-500/20' },
+  cancelled:  { label: 'Cancelled',  color: 'text-red-400',      bg: 'bg-red-500/15',        border: 'border-red-500/20' },
+}
 
 const emptyProduct = { name: '', brand: '', description: '', price: '', images: [''] }
 const emptyHero = { headline: '', subheadline: '', cta_primary_text: '', cta_secondary_text: '', type: 'image', url: '', active: true }
@@ -31,6 +40,7 @@ export default function AdminPage() {
   const [gadgetModal, setGadgetModal] = useState(false)
   const [heroModal, setHeroModal] = useState(false)
   const [saving, setSaving] = useState(false)
+  const unsubOrdersRef = useRef(null)
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, u => {
@@ -42,6 +52,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchAll()
+    const ordersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'))
+    unsubOrdersRef.current = onSnapshot(ordersQuery, snap => {
+      setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    }, err => console.warn('Orders listener error:', err.message))
+    return () => { if (unsubOrdersRef.current) unsubOrdersRef.current() }
   }, [])
 
   const emptySnap = { docs: [] }
@@ -57,16 +72,14 @@ export default function AdminPage() {
   async function fetchAll() {
     setLoading(true)
     try {
-      const [p, g, h, o] = await Promise.all([
+      const [p, g, h] = await Promise.all([
         safeGet(collection(db, 'products'), query(collection(db, 'products'), orderBy('createdAt', 'desc'))),
         safeGet(collection(db, 'gadgets'), query(collection(db, 'gadgets'), orderBy('createdAt', 'desc'))),
         safeGet(collection(db, 'hero'), null),
-        safeGet(collection(db, 'orders'), query(collection(db, 'orders'), orderBy('createdAt', 'desc')))
       ])
       setProducts(p.docs.map(d => ({ id: d.id, ...d.data() })))
       setGadgets(g.docs.map(d => ({ id: d.id, ...d.data() })))
       setHeroSlides(h.docs.map(d => ({ id: d.id, ...d.data() })))
-      setOrders(o.docs.map(d => ({ id: d.id, ...d.data() })))
     } catch (err) {
       console.warn('Admin fetchAll error:', err.message)
     } finally {
@@ -127,7 +140,6 @@ export default function AdminPage() {
 
   async function updateOrderStatus(orderId, status) {
     await updateDoc(doc(db, 'orders', orderId), { status })
-    fetchAll()
   }
 
   function openEditProduct(p) {
@@ -149,10 +161,10 @@ export default function AdminPage() {
   }
 
   const stats = [
-    { label: 'Products', value: products.length, icon: 'fa-mobile-screen-button', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Gadgets', value: gadgets.length, icon: 'fa-headphones', color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Hero Slides', value: heroSlides.length, icon: 'fa-images', color: 'text-pink-400', bg: 'bg-pink-500/10' },
-    { label: 'Orders', value: orders.length, icon: 'fa-bag-shopping', color: 'text-emerald-400', bg: 'bg-emerald-500/10' }
+    { label: 'Products', section: 'products', value: products.length, icon: 'fa-mobile-screen-button', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { label: 'Gadgets', section: 'gadgets', value: gadgets.length, icon: 'fa-headphones', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'Hero Slides', section: 'hero', value: heroSlides.length, icon: 'fa-images', color: 'text-pink-400', bg: 'bg-pink-500/10' },
+    { label: 'Orders', section: 'orders', value: orders.length, icon: 'fa-bag-shopping', color: 'text-emerald-400', bg: 'bg-emerald-500/10' }
   ]
 
   return (
@@ -243,22 +255,24 @@ export default function AdminPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-8">
-          {/* Stats row */}
-          {section === 'products' && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 animate-fade-up">
-              {stats.map(s => (
-                <div key={s.label} className="bg-surface-900 border border-surface-800 rounded-2xl p-6 shadow-xl flex items-center gap-5">
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${s.bg} ${s.color}`}>
-                    <i className={`fas ${s.icon} text-2xl`} />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold font-display text-white tracking-tight leading-none mb-1">{s.value}</p>
-                    <p className="text-xs font-bold text-surface-500 uppercase tracking-wider">{s.label}</p>
-                  </div>
+          {/* Stats row — always visible */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 animate-fade-up">
+            {stats.map(s => (
+              <button
+                key={s.label}
+                onClick={() => setSection(s.section)}
+                className={`bg-surface-900 border rounded-2xl p-6 shadow-xl flex items-center gap-5 text-left transition-all duration-200 hover:border-surface-600 ${section === s.section ? 'border-brand-500/40 shadow-glow' : 'border-surface-800'}`}
+              >
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${s.bg} ${s.color}`}>
+                  <i className={`fas ${s.icon} text-2xl`} />
                 </div>
-              ))}
-            </div>
-          )}
+                <div>
+                  <p className="text-3xl font-bold font-display text-white tracking-tight leading-none mb-1">{s.value}</p>
+                  <p className="text-xs font-bold text-surface-500 uppercase tracking-wider">{s.label}</p>
+                </div>
+              </button>
+            ))}
+          </div>
 
           {loading ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -377,76 +391,87 @@ export default function AdminPage() {
               {/* Orders */}
               {section === 'orders' && (
                 <div className="space-y-6">
-                  {orders.map(o => (
-                    <div key={o.id} className="bg-surface-900 border border-surface-800 rounded-2xl p-6 shadow-lg">
-                      <div className="flex flex-col md:flex-row md:justify-between items-start gap-6">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <span className="bg-brand-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md">New Order</span>
-                            <span className="text-surface-500 text-sm font-mono">{o.id.slice(0,8)}</span>
-                          </div>
-                          <p className="font-bold text-white text-lg">{o.address?.name || 'Guest Order'}</p>
-                          <div className="flex items-center gap-4 text-sm text-surface-400 mt-2">
-                            <span className="flex items-center gap-1.5"><i className="fas fa-envelope text-surface-600"></i> {o.address?.email}</span>
-                            <span className="flex items-center gap-1.5"><i className="fas fa-phone text-surface-600"></i> {o.address?.phone}</span>
-                          </div>
-                          <div className="mt-4 p-4 bg-surface-950 rounded-xl border border-surface-800">
-                            <p className="text-sm text-surface-300 font-medium leading-relaxed flex items-start gap-2">
-                              <i className="fas fa-map-marker-alt text-brand-500 mt-1"></i> {o.address?.full}
-                            </p>
-                          </div>
+                  {orders.map(o => {
+                    const st = o.status || 'paid'
+                    const cfg = STATUS_CONFIG[st] || STATUS_CONFIG.paid
+                    const orderDate = o.createdAt?.toDate ? o.createdAt.toDate() : o.createdAt ? new Date(o.createdAt) : null
+                    const dateStr = orderDate ? orderDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''
+                    return (
+                      <div key={o.id} className="bg-surface-900 border border-surface-800 rounded-2xl p-6 shadow-lg hover:border-surface-700 transition-colors">
+                        {/* Top row: id + status badge + date */}
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
+                            {cfg.label}
+                          </span>
+                          <span className="text-surface-500 text-sm font-mono">#{o.id.slice(0,8).toUpperCase()}</span>
+                          {dateStr && (
+                            <span className="ml-auto text-surface-500 text-xs flex items-center gap-1.5">
+                              <i className="fas fa-clock text-surface-600" /> {dateStr}
+                            </span>
+                          )}
                         </div>
-                        
-                        <div className="w-full md:w-64 flex flex-col items-start md:items-end">
-                          <div className="text-left md:text-right w-full mb-4">
-                            <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-1">Total Amount</p>
-                            <p className="font-bold font-display text-brand-400 text-3xl tracking-tight">₦{(o.total || 0).toLocaleString()}</p>
-                          </div>
-                          
-                          <div className="w-full">
-                            <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-2 text-left md:text-right">Order Status</p>
-                            <div className="relative">
-                              <select
-                                value={o.status || 'paid'}
-                                onChange={e => updateOrderStatus(o.id, e.target.value)}
-                                className={`w-full appearance-none rounded-xl px-4 py-3 font-bold text-sm focus:outline-none focus:ring-2 border cursor-pointer
-                                  ${o.status === 'delivered' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 focus:ring-emerald-500' : 
-                                    o.status === 'shipped' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 focus:ring-blue-500' :
-                                    o.status === 'processing' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 focus:ring-amber-500' :
-                                    o.status === 'cancelled' ? 'bg-red-500/10 text-red-400 border-red-500/20 focus:ring-red-500' :
-                                    'bg-surface-800 text-white border-surface-700 focus:ring-brand-500'
-                                  }
-                                `}
-                              >
-                                <option value="paid" className="bg-surface-900 text-white">Paid</option>
-                                <option value="processing" className="bg-surface-900 text-amber-400">Processing</option>
-                                <option value="shipped" className="bg-surface-900 text-blue-400">Shipped</option>
-                                <option value="delivered" className="bg-surface-900 text-emerald-400">Delivered</option>
-                                <option value="cancelled" className="bg-surface-900 text-red-400">Cancelled</option>
-                              </select>
-                              <i className="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none text-xs"></i>
+
+                        <div className="flex flex-col md:flex-row md:justify-between items-start gap-6">
+                          <div className="flex-1">
+                            <p className="font-bold text-white text-lg">{o.address?.name || 'Guest Order'}</p>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-surface-400 mt-2">
+                              <span className="flex items-center gap-1.5"><i className="fas fa-envelope text-surface-600"></i> {o.address?.email}</span>
+                              <span className="flex items-center gap-1.5"><i className="fas fa-phone text-surface-600"></i> {o.address?.phone}</span>
+                            </div>
+                            <div className="mt-4 p-4 bg-surface-950 rounded-xl border border-surface-800">
+                              <p className="text-sm text-surface-300 font-medium leading-relaxed flex items-start gap-2">
+                                <i className="fas fa-map-marker-alt text-brand-500 mt-1 flex-shrink-0"></i> {o.address?.full}
+                              </p>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-6 pt-6 border-t border-surface-800">
-                        <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-3">Order Items</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(o.items || []).map((item, i) => (
-                            <div key={i} className="flex items-center gap-3 bg-surface-950 border border-surface-800 rounded-lg pr-3 overflow-hidden">
-                              <div className="bg-white p-1 w-10 h-10 flex items-center justify-center">
-                                <img src={item.image || ''} className="w-full h-full object-contain" alt="" />
+
+                          <div className="w-full md:w-64 flex flex-col items-start md:items-end gap-4">
+                            <div className="text-left md:text-right w-full">
+                              <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-1">Total Amount</p>
+                              <p className="font-bold font-display text-brand-400 text-3xl tracking-tight">₦{(o.total || 0).toLocaleString()}</p>
+                            </div>
+
+                            <div className="w-full">
+                              <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-2 text-left md:text-right">Update Status</p>
+                              <div className="flex flex-wrap gap-1.5 justify-start md:justify-end">
+                                {Object.entries(STATUS_CONFIG).map(([key, c]) => (
+                                  <button
+                                    key={key}
+                                    onClick={() => updateOrderStatus(o.id, key)}
+                                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg border transition-all duration-150
+                                      ${st === key
+                                        ? `${c.bg} ${c.color} ${c.border} ring-1 ring-offset-1 ring-offset-surface-900 ${c.border.replace('border-', 'ring-')}`
+                                        : 'bg-surface-800 text-surface-500 border-surface-700 hover:border-surface-600 hover:text-surface-300'
+                                      }`}
+                                  >
+                                    {c.label}
+                                  </button>
+                                ))}
                               </div>
-                              <span className="text-sm font-medium text-surface-300">
-                                {item.name} <span className="text-brand-500 font-bold ml-1">x{item.quantity}</span>
-                              </span>
                             </div>
-                          ))}
+                          </div>
                         </div>
+
+                        {(o.items || []).length > 0 && (
+                          <div className="mt-6 pt-6 border-t border-surface-800">
+                            <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-3">Order Items</p>
+                            <div className="flex flex-wrap gap-2">
+                              {(o.items || []).map((item, i) => (
+                                <div key={i} className="flex items-center gap-3 bg-surface-950 border border-surface-800 rounded-lg pr-3 overflow-hidden">
+                                  <div className="bg-white p-1 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                    <img src={item.image || ''} className="w-full h-full object-contain" alt="" />
+                                  </div>
+                                  <span className="text-sm font-medium text-surface-300">
+                                    {item.name} <span className="text-brand-500 font-bold ml-1">×{item.quantity}</span>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                   {!orders.length && (
                     <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-20 px-6">
                       <div className="w-16 h-16 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
