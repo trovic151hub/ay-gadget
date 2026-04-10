@@ -46,6 +46,9 @@ export default function AdminPage() {
   const [gadgetSearch, setGadgetSearch] = useState('')
   const [productLimit, setProductLimit] = useState(9)
   const [gadgetLimit, setGadgetLimit] = useState(9)
+  const [orderSearch, setOrderSearch] = useState('')
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all')
+  const [orderLimit, setOrderLimit] = useState(10)
   const unsubOrdersRef = useRef(null)
 
   useEffect(() => {
@@ -174,6 +177,23 @@ export default function AdminPage() {
   )
   const visibleProducts = filteredProducts.slice(0, productLimit)
   const visibleGadgets = filteredGadgets.slice(0, gadgetLimit)
+
+  const orderStatusCounts = orders.reduce((acc, o) => {
+    const s = o.status || 'paid'
+    acc[s] = (acc[s] || 0) + 1
+    return acc
+  }, {})
+  const filteredOrders = orders.filter(o => {
+    const q = orderSearch.toLowerCase()
+    const matchesSearch = !q ||
+      (o.address?.name || '').toLowerCase().includes(q) ||
+      (o.address?.phone || '').toLowerCase().includes(q) ||
+      (o.id || '').toLowerCase().includes(q) ||
+      (o.reference || '').toLowerCase().includes(q)
+    const matchesStatus = orderStatusFilter === 'all' || (o.status || 'paid') === orderStatusFilter
+    return matchesSearch && matchesStatus
+  })
+  const visibleOrders = filteredOrders.slice(0, orderLimit)
 
   const stats = [
     { label: 'Products', section: 'products', value: products.length, icon: 'fa-mobile-screen-button', color: 'text-blue-400', bg: 'bg-blue-500/10' },
@@ -501,96 +521,205 @@ export default function AdminPage() {
 
               {/* Orders */}
               {section === 'orders' && (
-                <div className="space-y-6">
-                  {orders.map(o => {
-                    const st = o.status || 'paid'
-                    const cfg = STATUS_CONFIG[st] || STATUS_CONFIG.paid
-                    const orderDate = o.createdAt?.toDate ? o.createdAt.toDate() : o.createdAt ? new Date(o.createdAt) : null
-                    const dateStr = orderDate ? orderDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''
-                    return (
-                      <div key={o.id} className="bg-surface-900 border border-surface-800 rounded-2xl p-6 shadow-lg hover:border-surface-700 transition-colors">
-                        {/* Top row: id + status badge + date */}
-                        <div className="flex flex-wrap items-center gap-3 mb-4">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
-                            {cfg.label}
-                          </span>
-                          <span className="text-surface-500 text-sm font-mono">#{o.id.slice(0,8).toUpperCase()}</span>
-                          {dateStr && (
-                            <span className="ml-auto text-surface-500 text-xs flex items-center gap-1.5">
-                              <i className="fas fa-clock text-surface-600" /> {dateStr}
-                            </span>
-                          )}
-                        </div>
+                <div className="space-y-5">
 
-                        <div className="flex flex-col md:flex-row md:justify-between items-start gap-6">
-                          <div className="flex-1">
-                            <p className="font-bold text-white text-lg">{o.address?.name || 'Guest Order'}</p>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-surface-400 mt-2">
-                              <span className="flex items-center gap-1.5"><i className="fas fa-envelope text-surface-600"></i> {o.address?.email}</span>
-                              <span className="flex items-center gap-1.5"><i className="fas fa-phone text-surface-600"></i> {o.address?.phone}</span>
-                            </div>
-                            <div className="mt-4 p-4 bg-surface-950 rounded-xl border border-surface-800">
-                              <p className="text-sm text-surface-300 font-medium leading-relaxed flex items-start gap-2">
-                                <i className="fas fa-map-marker-alt text-brand-500 mt-1 flex-shrink-0"></i> {o.address?.full}
-                              </p>
-                            </div>
-                          </div>
+                  {/* Status summary pills */}
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { key: 'all', label: 'All', count: orders.length },
+                      ...Object.entries(STATUS_CONFIG).map(([key, c]) => ({ key, label: c.label, count: orderStatusCounts[key] || 0, cfg: c }))
+                    ].map(({ key, label, count, cfg }) => (
+                      <button
+                        key={key}
+                        onClick={() => { setOrderStatusFilter(key); setOrderLimit(10) }}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                          orderStatusFilter === key
+                            ? key === 'all'
+                              ? 'bg-brand-500 text-white border-brand-500 shadow-glow'
+                              : `${cfg.bg} ${cfg.color} ${cfg.border} ring-1 ${cfg.border.replace('border-','ring-')}`
+                            : 'bg-surface-800 text-surface-400 border-surface-700 hover:border-surface-600 hover:text-surface-300'
+                        }`}
+                      >
+                        {label}
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${orderStatusFilter === key ? 'bg-white/20' : 'bg-surface-700'}`}>
+                          {count}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
 
-                          <div className="w-full md:w-64 flex flex-col items-start md:items-end gap-4">
-                            <div className="text-left md:text-right w-full">
-                              <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-1">Total Amount</p>
-                              <p className="font-bold font-display text-brand-400 text-3xl tracking-tight">₦{(o.total || 0).toLocaleString()}</p>
-                            </div>
+                  {/* Search bar */}
+                  <div className="relative">
+                    <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 text-sm pointer-events-none" />
+                    <input
+                      value={orderSearch}
+                      onChange={e => { setOrderSearch(e.target.value); setOrderLimit(10) }}
+                      placeholder="Search by name, phone, order ID or reference…"
+                      className="w-full h-12 pl-12 pr-10 rounded-2xl bg-surface-900 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-600"
+                    />
+                    {orderSearch && (
+                      <button onClick={() => { setOrderSearch(''); setOrderLimit(10) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors">
+                        <i className="fas fa-times" />
+                      </button>
+                    )}
+                  </div>
 
-                            <div className="w-full">
-                              <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-2 text-left md:text-right">Update Status</p>
-                              <div className="flex flex-wrap gap-1.5 justify-start md:justify-end">
-                                {Object.entries(STATUS_CONFIG).map(([key, c]) => (
-                                  <button
-                                    key={key}
-                                    onClick={() => updateOrderStatus(o.id, key)}
-                                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg border transition-all duration-150
-                                      ${st === key
-                                        ? `${c.bg} ${c.color} ${c.border} ring-1 ring-offset-1 ring-offset-surface-900 ${c.border.replace('border-', 'ring-')}`
-                                        : 'bg-surface-800 text-surface-500 border-surface-700 hover:border-surface-600 hover:text-surface-300'
-                                      }`}
-                                  >
-                                    {c.label}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {(o.items || []).length > 0 && (
-                          <div className="mt-6 pt-6 border-t border-surface-800">
-                            <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-3">Order Items</p>
-                            <div className="flex flex-wrap gap-2">
-                              {(o.items || []).map((item, i) => (
-                                <div key={i} className="flex items-center gap-3 bg-surface-950 border border-surface-800 rounded-lg pr-3 overflow-hidden">
-                                  <div className="bg-white p-1 w-10 h-10 flex items-center justify-center flex-shrink-0">
-                                    <img src={item.image || ''} className="w-full h-full object-contain" alt="" />
-                                  </div>
-                                  <span className="text-sm font-medium text-surface-300">
-                                    {item.name} <span className="text-brand-500 font-bold ml-1">×{item.quantity}</span>
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                  {!orders.length && (
+                  {/* Order cards */}
+                  {filteredOrders.length === 0 ? (
                     <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-20 px-6">
                       <div className="w-16 h-16 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i className="fas fa-box-open text-2xl text-surface-500" />
+                        <i className={`fas ${orderSearch || orderStatusFilter !== 'all' ? 'fa-search' : 'fa-box-open'} text-2xl text-surface-500`} />
                       </div>
-                      <h3 className="text-xl font-bold text-white mb-2">No orders yet</h3>
-                      <p className="text-surface-400 text-sm">When customers place orders, they will appear here.</p>
+                      <h3 className="text-xl font-bold text-white mb-2">
+                        {orderSearch || orderStatusFilter !== 'all' ? 'No matching orders' : 'No orders yet'}
+                      </h3>
+                      <p className="text-surface-400 text-sm">
+                        {orderSearch || orderStatusFilter !== 'all' ? 'Try adjusting your search or filter.' : 'When customers place orders, they will appear here.'}
+                      </p>
                     </div>
+                  ) : (
+                    <>
+                      {visibleOrders.map(o => {
+                        const st = o.status || 'paid'
+                        const cfg = STATUS_CONFIG[st] || STATUS_CONFIG.paid
+                        const orderDate = o.createdAt?.toDate ? o.createdAt.toDate() : o.createdAt ? new Date(o.createdAt) : null
+                        const dateStr = orderDate ? orderDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''
+                        const waPhone = (o.address?.phone || '').replace(/\D/g, '').replace(/^0/, '234')
+                        return (
+                          <div key={o.id} className="bg-surface-900 border border-surface-800 rounded-2xl p-6 shadow-lg hover:border-surface-700 transition-colors">
+
+                            {/* Top row */}
+                            <div className="flex flex-wrap items-center gap-3 mb-5">
+                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
+                                {cfg.label}
+                              </span>
+                              <span className="text-surface-500 text-sm font-mono">#{o.id.slice(0,8).toUpperCase()}</span>
+                              {dateStr && (
+                                <span className="ml-auto text-surface-500 text-xs flex items-center gap-1.5">
+                                  <i className="fas fa-clock text-surface-600" /> {dateStr}
+                                </span>
+                              )}
+                              <button
+                                onClick={() => { if (confirm('Delete this order? This cannot be undone.')) deleteItem('orders', o.id) }}
+                                className="w-7 h-7 rounded-lg bg-surface-800 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors flex items-center justify-center"
+                                title="Delete order"
+                              >
+                                <i className="fas fa-trash text-xs" />
+                              </button>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row md:justify-between items-start gap-6">
+                              {/* Left: customer info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-white text-lg truncate">{o.address?.name || 'Guest Order'}</p>
+
+                                {/* Contact shortcuts */}
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
+                                  {o.address?.email && (
+                                    <a href={`mailto:${o.address.email}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-800 border border-surface-700 text-surface-300 text-xs font-medium hover:border-brand-500/40 hover:text-white transition-all truncate max-w-[220px]">
+                                      <i className="fas fa-envelope text-surface-500 flex-shrink-0" /> <span className="truncate">{o.address.email}</span>
+                                    </a>
+                                  )}
+                                  {o.address?.phone && (
+                                    <a href={`tel:${o.address.phone}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-800 border border-surface-700 text-surface-300 text-xs font-medium hover:border-brand-500/40 hover:text-white transition-all">
+                                      <i className="fas fa-phone text-surface-500 flex-shrink-0" /> {o.address.phone}
+                                    </a>
+                                  )}
+                                  {o.address?.phone && (
+                                    <a href={`https://wa.me/${waPhone}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] text-xs font-bold hover:bg-[#25D366]/20 transition-all">
+                                      <i className="fab fa-whatsapp" /> WhatsApp
+                                    </a>
+                                  )}
+                                </div>
+
+                                {/* Address */}
+                                <div className="mt-3 p-4 bg-surface-950 rounded-xl border border-surface-800">
+                                  <p className="text-sm text-surface-300 font-medium leading-relaxed flex items-start gap-2">
+                                    <i className="fas fa-map-marker-alt text-brand-500 mt-1 flex-shrink-0"></i> {o.address?.full}
+                                  </p>
+                                </div>
+
+                                {/* Payment reference */}
+                                {o.reference && (
+                                  <div className="mt-3 flex items-center gap-2 p-3 bg-surface-950 rounded-xl border border-surface-800">
+                                    <i className="fas fa-receipt text-surface-500 text-xs flex-shrink-0" />
+                                    <span className="text-xs text-surface-500 font-bold uppercase tracking-wider">Ref:</span>
+                                    <span className="text-xs text-surface-300 font-mono truncate flex-1">{o.reference}</span>
+                                    <button
+                                      onClick={() => navigator.clipboard.writeText(o.reference)}
+                                      className="text-surface-500 hover:text-brand-400 transition-colors flex-shrink-0"
+                                      title="Copy reference"
+                                    >
+                                      <i className="fas fa-copy text-xs" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Right: total + status */}
+                              <div className="w-full md:w-64 flex flex-col items-start md:items-end gap-4 flex-shrink-0">
+                                <div className="text-left md:text-right w-full">
+                                  <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-1">Total Amount</p>
+                                  <p className="font-bold font-display text-brand-400 text-3xl tracking-tight">₦{(o.total || 0).toLocaleString()}</p>
+                                </div>
+                                <div className="w-full">
+                                  <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-2 text-left md:text-right">Update Status</p>
+                                  <div className="flex flex-wrap gap-1.5 justify-start md:justify-end">
+                                    {Object.entries(STATUS_CONFIG).map(([key, c]) => (
+                                      <button
+                                        key={key}
+                                        onClick={() => updateOrderStatus(o.id, key)}
+                                        className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg border transition-all duration-150
+                                          ${st === key
+                                            ? `${c.bg} ${c.color} ${c.border} ring-1 ring-offset-1 ring-offset-surface-900 ${c.border.replace('border-', 'ring-')}`
+                                            : 'bg-surface-800 text-surface-500 border-surface-700 hover:border-surface-600 hover:text-surface-300'
+                                          }`}
+                                      >
+                                        {c.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Order items */}
+                            {(o.items || []).length > 0 && (
+                              <div className="mt-6 pt-5 border-t border-surface-800">
+                                <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-3">Order Items</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {(o.items || []).map((item, i) => (
+                                    <div key={i} className="flex items-center gap-3 bg-surface-950 border border-surface-800 rounded-lg pr-3 overflow-hidden">
+                                      <div className="bg-white p-1 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                        <img src={item.image || ''} className="w-full h-full object-contain" alt="" />
+                                      </div>
+                                      <span className="text-sm font-medium text-surface-300">
+                                        {item.name} <span className="text-brand-500 font-bold ml-1">×{item.quantity}</span>
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+
+                      {/* Load more */}
+                      {filteredOrders.length > orderLimit && (
+                        <div className="flex flex-col items-center gap-2 pt-2">
+                          <p className="text-surface-500 text-xs font-medium">
+                            Showing {visibleOrders.length} of {filteredOrders.length} orders
+                          </p>
+                          <button
+                            onClick={() => setOrderLimit(prev => prev + 10)}
+                            className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-800 border border-surface-700 text-white font-bold text-sm hover:bg-surface-700 hover:border-surface-600 transition-all"
+                          >
+                            <i className="fas fa-chevron-down" /> Load More
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
