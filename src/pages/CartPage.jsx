@@ -4,6 +4,7 @@ import { useNotification } from '../context/NotificationContext'
 import { db } from '../firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import NotificationContainer from '../components/NotificationContainer'
+import Footer from '../components/Footer'
 import { Link } from 'react-router-dom'
 
 const LAGOS_LGA_FEES = {
@@ -444,6 +445,7 @@ export default function CartPage() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }
