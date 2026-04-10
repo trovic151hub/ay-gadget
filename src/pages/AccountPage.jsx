@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { db } from '../firebase'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import Navbar from '../components/Navbar'
 import MiniCart from '../components/MiniCart'
 import NotificationContainer from '../components/NotificationContainer'
@@ -189,6 +189,11 @@ export default function AccountPage() {
   const [searched, setSearched] = useState(false)
   const [error, setError] = useState('')
   const [selectedOrder, setSelectedOrder] = useState(null)
+  const unsubscribeRef = useRef(null)
+
+  useEffect(() => {
+    return () => { if (unsubscribeRef.current) unsubscribeRef.current() }
+  }, [])
 
   function normalizePhone(raw) {
     const p = raw.replace(/\s+/g, '')
@@ -198,32 +203,44 @@ export default function AccountPage() {
     return '+234' + p
   }
 
-  async function handleLookup(e) {
+  function handleLookup(e) {
     e.preventDefault()
     const cleaned = phone.replace(/\s+/g, '')
     if (!cleaned) return
     const normalized = normalizePhone(cleaned)
+
+    if (unsubscribeRef.current) unsubscribeRef.current()
+
     setLoading(true)
     setError('')
     setSearched(false)
-    try {
-      const q = query(collection(db, 'orders'), where('address.phone', '==', normalized))
-      const snap = await getDocs(q)
-      const results = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => {
-          const ta = a.createdAt?.toMillis?.() ?? 0
-          const tb = b.createdAt?.toMillis?.() ?? 0
-          return tb - ta
-        })
-      setOrders(results)
-      setSearched(true)
-    } catch (err) {
-      setError('Unable to look up orders right now. Please try again.')
-      console.warn('Order lookup error:', err.message)
-    } finally {
-      setLoading(false)
-    }
+    setOrders([])
+
+    const q = query(collection(db, 'orders'), where('address.phone', '==', normalized))
+
+    unsubscribeRef.current = onSnapshot(
+      q,
+      snap => {
+        const results = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => {
+            const ta = a.createdAt?.toMillis?.() ?? 0
+            const tb = b.createdAt?.toMillis?.() ?? 0
+            return tb - ta
+          })
+        setOrders(results)
+        setSearched(true)
+        setLoading(false)
+        setSelectedOrder(prev =>
+          prev ? (results.find(o => o.id === prev.id) ?? null) : null
+        )
+      },
+      err => {
+        setError('Unable to look up orders right now. Please try again.')
+        setLoading(false)
+        console.warn('Order lookup error:', err.message)
+      }
+    )
   }
 
   return (
