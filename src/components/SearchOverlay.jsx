@@ -12,6 +12,11 @@ export default function SearchOverlay({ onClose }) {
   const navigate = useNavigate()
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  useEffect(() => {
     inputRef.current?.focus()
 
     async function fetchAll() {

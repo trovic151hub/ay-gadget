@@ -87,6 +87,15 @@ export default function CartPage() {
     }
   }, [cartItems])
 
+  useEffect(() => {
+    if (showLocationModal) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [showLocationModal])
+
   function handleProceedToCheckout() {
     if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }
     setOutsideLagos(false)

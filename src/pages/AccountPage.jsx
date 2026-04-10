@@ -20,6 +20,12 @@ const STATUS_META = {
 
 function OrderModal({ order, onClose }) {
   const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   const status = STATUS_META[order.status] || STATUS_META.pending
   const date = order.createdAt?.toDate?.()
   const isCancelled = order.status === 'cancelled'
