@@ -101,7 +101,7 @@ export default function HeroSlider({ slides }) {
       ))}
 
       {/* Main content */}
-      <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row items-center justify-between px-6 py-28 relative gap-12" style={{ zIndex: 20 }}>
+      <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row items-center justify-between px-6 py-14 md:py-28 relative gap-8 md:gap-12" style={{ zIndex: 20 }}>
 
         {/* Text — fade + subtle lift */}
         <div

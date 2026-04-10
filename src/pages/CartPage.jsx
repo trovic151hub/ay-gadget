@@ -178,7 +178,7 @@ export default function CartPage() {
     return (
       <div className="min-h-screen bg-surface-950 flex items-center justify-center p-4">
         <NotificationContainer />
-        <div className="text-center bg-surface-900 border border-surface-700/50 p-12 rounded-[32px] max-w-lg mx-auto w-full animate-fade-up">
+        <div className="text-center bg-surface-900 border border-surface-700/50 p-8 md:p-12 rounded-[32px] max-w-lg mx-auto w-full animate-fade-up">
           <div className="w-24 h-24 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
             <i className="fas fa-check text-green-400 text-4xl" />
           </div>
@@ -252,7 +252,7 @@ export default function CartPage() {
               <h2 className="text-3xl font-bold font-display text-white tracking-tight mb-8">Review your bag.</h2>
 
               {cartItems.length === 0 ? (
-                <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-16 text-center">
+                <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-10 md:p-16 text-center">
                   <div className="w-24 h-24 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
                     <i className="fas fa-bag-shopping text-4xl text-surface-600" />
                   </div>
@@ -265,8 +265,8 @@ export default function CartPage() {
               ) : (
                 <div className="space-y-4">
                   {cartItems.map(item => (
-                    <div key={item.id} className="flex gap-5 bg-surface-900 border border-surface-700/50 p-5 rounded-[24px] group">
-                      <div className="w-28 h-28 bg-surface-800 rounded-2xl flex-shrink-0 flex items-center justify-center p-2 overflow-hidden">
+                    <div key={item.id} className="flex gap-4 bg-surface-900 border border-surface-700/50 p-4 md:p-5 rounded-[24px] group">
+                      <div className="w-20 h-20 sm:w-28 sm:h-28 bg-surface-800 rounded-2xl flex-shrink-0 flex items-center justify-center p-2 overflow-hidden">
                         {item.image || item.images?.[0]
                           ? <img src={item.image || item.images?.[0]} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
                           : <i className="fas fa-image text-surface-600 text-2xl" />
@@ -307,7 +307,7 @@ export default function CartPage() {
 
             {/* Order Summary */}
             <div className="w-full lg:w-[380px]">
-              <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 sticky top-28">
+              <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8 sticky top-28">
                 <h3 className="font-bold font-display text-xl text-white tracking-tight mb-6">Order Summary</h3>
                 <div className="space-y-4 font-medium">
                   <div className="flex justify-between text-surface-400 pb-4 border-b border-surface-700/50">
@@ -348,7 +348,7 @@ export default function CartPage() {
 
               {/* Shipping Form — visible only when address not yet confirmed */}
               {!addressLocked && (
-                <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8">
                   <h3 className="font-bold text-xl font-display tracking-tight text-white mb-7">1. Shipping details</h3>
                   <div className="space-y-5">
                     <div>
@@ -418,7 +418,7 @@ export default function CartPage() {
               {addressLocked && (
                 <>
                   {/* Address Summary */}
-                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8">
                     <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center gap-3">
                         <div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center">
@@ -438,7 +438,7 @@ export default function CartPage() {
                   </div>
 
                   {/* Delivery */}
-                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8">
                     <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">2. Delivery method</h3>
                     <div className="border border-brand-500/60 bg-brand-500/[0.06] rounded-2xl p-5">
                       <div className="flex items-center gap-4">
@@ -457,7 +457,7 @@ export default function CartPage() {
                   </div>
 
                   {/* Payment */}
-                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8">
                     <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">3. Payment method</h3>
                     <div
                       onClick={() => setPaymentMethod('Paystack')}
@@ -478,7 +478,7 @@ export default function CartPage() {
 
             {/* Summary Sidebar */}
             <div className="w-full lg:w-[380px]">
-              <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 sticky top-28">
+              <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8 sticky top-28">
                 <h3 className="font-bold text-xl font-display tracking-tight text-white mb-7">Summary</h3>
 
                 <div className="space-y-4 mb-7">

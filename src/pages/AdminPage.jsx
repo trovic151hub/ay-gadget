@@ -25,6 +25,7 @@ export default function AdminPage() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [section, setSection] = useState('products')
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [products, setProducts] = useState([])
   const [gadgets, setGadgets] = useState([])
   const [heroSlides, setHeroSlides] = useState([])
@@ -309,11 +310,35 @@ export default function AdminPage() {
     { label: 'Orders', section: 'orders', value: orders.length, icon: 'fa-bag-shopping', color: 'text-emerald-400', bg: 'bg-emerald-500/10' }
   ]
 
+  const NAV_ITEMS = [
+    { id: 'products', icon: 'fa-mobile-screen-button', label: 'Smartphones' },
+    { id: 'gadgets', icon: 'fa-headphones', label: 'Accessories' },
+    { id: 'hero', icon: 'fa-images', label: 'Hero Slides' },
+    { id: 'orders', icon: 'fa-bag-shopping', label: 'Orders' },
+    { id: 'settings', icon: 'fa-users-gear', label: 'Admin Settings' }
+  ]
+
   return (
     <div className="min-h-screen bg-surface-950 flex font-sans text-surface-300 selection:bg-brand-500 selection:text-white">
+
+      {/* Mobile backdrop */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-surface-900 border-r border-surface-800 flex-shrink-0 flex flex-col hidden md:flex z-10 shadow-2xl">
-        <div className="p-6 border-b border-surface-800">
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64
+        bg-surface-900 border-r border-surface-800
+        flex-shrink-0 flex flex-col shadow-2xl
+        transform transition-transform duration-300 ease-in-out
+        md:relative md:translate-x-0
+        ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        <div className="p-6 border-b border-surface-800 flex items-center justify-between">
           <a href="/" className="flex items-center gap-3 group">
             <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white group-hover:bg-brand-400 transition-colors shadow-glow">
               <i className="fas fa-bolt text-sm" />
@@ -323,19 +348,19 @@ export default function AdminPage() {
               <p className="text-[10px] text-brand-400 font-bold uppercase tracking-widest mt-1">Command Center</p>
             </div>
           </a>
+          <button
+            onClick={() => setMobileNavOpen(false)}
+            className="md:hidden w-8 h-8 rounded-lg bg-surface-800 text-surface-400 hover:text-white flex items-center justify-center transition-colors"
+          >
+            <i className="fas fa-times text-sm" />
+          </button>
         </div>
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
           <p className="text-[10px] font-bold text-surface-500 uppercase tracking-widest px-4 mb-4">Management</p>
-          {[
-            { id: 'products', icon: 'fa-mobile-screen-button', label: 'Smartphones' },
-            { id: 'gadgets', icon: 'fa-headphones', label: 'Accessories' },
-            { id: 'hero', icon: 'fa-images', label: 'Hero Slides' },
-            { id: 'orders', icon: 'fa-bag-shopping', label: 'Orders' },
-            { id: 'settings', icon: 'fa-users-gear', label: 'Admin Settings' }
-          ].map(item => (
+          {NAV_ITEMS.map(item => (
             <button
               key={item.id}
-              onClick={() => setSection(item.id)}
+              onClick={() => { setSection(item.id); setMobileNavOpen(false) }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
                 section === item.id 
                   ? 'bg-brand-500 text-white shadow-glow' 
@@ -349,7 +374,7 @@ export default function AdminPage() {
         </nav>
         <div className="p-4 border-t border-surface-800">
           <div className="bg-surface-800 rounded-xl p-4 mb-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-surface-700 flex items-center justify-center text-surface-300">
+            <div className="w-10 h-10 rounded-full bg-surface-700 flex items-center justify-center text-surface-300 flex-shrink-0">
               <i className="fas fa-user-shield" />
             </div>
             <div className="flex-1 min-w-0">
@@ -368,40 +393,49 @@ export default function AdminPage() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-surface-900 to-surface-950">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-surface-900 to-surface-950 min-w-0">
         {/* Header */}
-        <div className="bg-surface-900/80 backdrop-blur-xl border-b border-surface-800 px-8 py-5 flex justify-between items-center sticky top-0 z-10">
-          <div>
-            <h2 className="text-2xl font-bold font-display text-white capitalize tracking-tight">
-              {section === 'settings' ? 'Admin Settings' : section}
-            </h2>
-            <p className="text-sm text-surface-400 font-medium">
-              {section === 'settings' ? 'Manage admins and your account security' : `Manage your ${section} database`}
-            </p>
+        <div className="bg-surface-900/80 backdrop-blur-xl border-b border-surface-800 px-4 md:px-8 py-4 md:py-5 flex justify-between items-center sticky top-0 z-10 gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => setMobileNavOpen(true)}
+              className="md:hidden w-9 h-9 bg-surface-800 rounded-xl flex items-center justify-center text-surface-300 hover:text-white transition-colors flex-shrink-0"
+              aria-label="Open menu"
+            >
+              <i className="fas fa-bars text-base" />
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-lg md:text-2xl font-bold font-display text-white capitalize tracking-tight truncate">
+                {section === 'settings' ? 'Admin Settings' : section}
+              </h2>
+              <p className="text-xs md:text-sm text-surface-400 font-medium hidden sm:block">
+                {section === 'settings' ? 'Manage admins and your account security' : `Manage your ${section} database`}
+              </p>
+            </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-shrink-0">
             {section === 'products' && (
               <button onClick={() => { setProductForm(emptyProduct); setEditingProductId(null); setProductModal(true) }}
-                className="bg-brand-500 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
-                <i className="fas fa-plus" /> New Phone
+                className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
+                <i className="fas fa-plus" /> <span className="hidden sm:inline">New Phone</span><span className="sm:hidden">Add</span>
               </button>
             )}
             {section === 'gadgets' && (
               <button onClick={() => { setGadgetForm(emptyProduct); setEditingGadgetId(null); setGadgetModal(true) }}
-                className="bg-brand-500 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
-                <i className="fas fa-plus" /> New Accessory
+                className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
+                <i className="fas fa-plus" /> <span className="hidden sm:inline">New Accessory</span><span className="sm:hidden">Add</span>
               </button>
             )}
             {section === 'hero' && (
               <button onClick={() => { setHeroForm(emptyHero); setEditingHeroId(null); setHeroModal(true) }}
-                className="bg-brand-500 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
-                <i className="fas fa-plus" /> New Slide
+                className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
+                <i className="fas fa-plus" /> <span className="hidden sm:inline">New Slide</span><span className="sm:hidden">Add</span>
               </button>
             )}
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
           {/* Stats row — always visible */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 animate-fade-up">
             {stats.map(s => (
@@ -587,8 +621,8 @@ export default function AdminPage() {
               {section === 'hero' && (
                 <div className="space-y-4 max-w-4xl">
                   {heroSlides.map(h => (
-                    <div key={h.id} className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-6 items-center">
-                      <div className="w-40 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-surface-700 relative group">
+                    <div key={h.id} className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row gap-4 sm:gap-6 sm:items-center">
+                      <div className="w-full sm:w-40 h-36 sm:h-24 rounded-xl overflow-hidden flex-shrink-0 border border-surface-700 relative group">
                         {h.type === 'image' ? (
                           <img src={h.url} alt={h.headline} className="w-full h-full object-cover" />
                         ) : (

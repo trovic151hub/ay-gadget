@@ -23,7 +23,7 @@ export default function ProductModal({ product, onClose }) {
         </button>
 
         {/* Image Section */}
-        <div className="md:w-1/2 bg-surface-50 p-8 flex items-center justify-center min-h-[300px] md:min-h-0 relative">
+        <div className="md:w-1/2 bg-surface-50 p-5 md:p-8 flex items-center justify-center min-h-[220px] md:min-h-0 relative">
           {product.brand && (
             <span className="absolute top-6 left-6 bg-white shadow-sm text-surface-800 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider z-10">
               {product.brand}
@@ -37,9 +37,9 @@ export default function ProductModal({ product, onClose }) {
         </div>
 
         {/* Details Section */}
-        <div className="md:w-1/2 p-8 md:p-12 flex flex-col bg-white overflow-y-auto">
-          <div className="mb-8">
-            <h2 className="text-3xl md:text-4xl font-bold font-display text-surface-900 tracking-tight leading-tight mb-4">{product.name}</h2>
+        <div className="md:w-1/2 p-6 md:p-12 flex flex-col bg-white overflow-y-auto">
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-2xl md:text-4xl font-bold font-display text-surface-900 tracking-tight leading-tight mb-3 md:mb-4">{product.name}</h2>
             {product.description && (
               <p className="text-surface-500 text-base leading-relaxed">{product.description}</p>
             )}
