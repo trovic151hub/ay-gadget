@@ -1344,9 +1344,14 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
           <div className="space-y-5">
             <div>
               <h2 className="text-2xl font-bold font-display text-white tracking-tight">{item.name}</h2>
-              {item.brand && (
-                <span className="inline-block mt-2 px-3 py-1 bg-surface-800 text-surface-300 text-xs font-bold uppercase tracking-wider rounded-lg">{item.brand}</span>
-              )}
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {item.brand && (
+                  <span className="px-3 py-1 bg-surface-800 text-surface-300 text-xs font-bold uppercase tracking-wider rounded-lg">{item.brand}</span>
+                )}
+                {item.condition && (
+                  <span className="px-3 py-1 bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-bold uppercase tracking-wider rounded-lg">{item.condition}</span>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-2">

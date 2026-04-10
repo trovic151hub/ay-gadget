@@ -40,6 +40,11 @@ export default function ProductModal({ product, onClose }) {
         <div className="md:w-1/2 p-6 md:p-12 flex flex-col bg-white overflow-y-auto">
           <div className="mb-6 md:mb-8">
             <h2 className="text-2xl md:text-4xl font-bold font-display text-surface-900 tracking-tight leading-tight mb-3 md:mb-4">{product.name}</h2>
+            {product.condition && (
+              <span className="inline-block mb-3 px-3 py-1 bg-brand-500/10 border border-brand-500/30 text-brand-600 text-xs font-bold uppercase tracking-wider rounded-lg">
+                {product.condition}
+              </span>
+            )}
             {product.description && (
               <p className="text-surface-500 text-base leading-relaxed">{product.description}</p>
             )}
