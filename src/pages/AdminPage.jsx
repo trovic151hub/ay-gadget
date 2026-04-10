@@ -836,16 +836,20 @@ export default function AdminPage() {
                                 <p className="text-surface-500 text-xs font-bold uppercase tracking-widest mb-3">Order Items</p>
                                 <div className="flex flex-wrap gap-2">
                                   {(o.items || []).map((item, i) => (
-                                    <div key={i} className="flex items-center gap-3 bg-surface-950 border border-surface-800 rounded-lg pr-3 overflow-hidden">
-                                      <div className="bg-white p-1 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                                    <div key={i} className="flex items-center gap-3 bg-surface-950 border border-surface-800 rounded-xl pr-4 overflow-hidden">
+                                      <div className="bg-white p-1 w-12 h-12 flex items-center justify-center flex-shrink-0">
                                         <img src={item.image || ''} className="w-full h-full object-contain" alt="" />
                                       </div>
-                                      <div className="flex flex-col py-1">
-                                        <span className="text-sm font-medium text-surface-300">
+                                      <div className="flex flex-col gap-1 py-2">
+                                        <span className="text-sm font-semibold text-surface-200">
                                           {item.name} <span className="text-brand-500 font-bold ml-1">×{item.quantity}</span>
                                         </span>
-                                        {item.condition && (
-                                          <span className="text-[10px] font-bold uppercase tracking-wider text-brand-400/80">{item.condition}</span>
+                                        {item.condition ? (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-500/15 border border-brand-500/25 text-brand-400 text-[10px] font-bold uppercase tracking-wider rounded-md w-fit">
+                                            <i className="fas fa-tag text-[8px]" /> {item.condition}
+                                          </span>
+                                        ) : (
+                                          <span className="text-[10px] text-surface-600 italic">No condition set</span>
                                         )}
                                       </div>
                                     </div>
