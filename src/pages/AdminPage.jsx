@@ -40,6 +40,8 @@ export default function AdminPage() {
   const [gadgetModal, setGadgetModal] = useState(false)
   const [heroModal, setHeroModal] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [viewingItem, setViewingItem] = useState(null)
+  const [viewingCollection, setViewingCollection] = useState('products')
   const unsubOrdersRef = useRef(null)
 
   useEffect(() => {
@@ -284,7 +286,11 @@ export default function AdminPage() {
               {section === 'products' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {products.map(p => (
-                    <div key={p.id} className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-surface-700 transition-colors">
+                    <div
+                      key={p.id}
+                      onClick={() => { setViewingItem(p); setViewingCollection('products') }}
+                      className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
+                    >
                       <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
                         <img src={p.images?.[0] || ''} alt={p.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
                       </div>
@@ -296,10 +302,10 @@ export default function AdminPage() {
                         <div className="flex items-end justify-between mt-3">
                           <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(p.price).toLocaleString()}</p>
                           <div className="flex gap-2">
-                            <button onClick={() => openEditProduct(p)} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
+                            <button onClick={e => { e.stopPropagation(); openEditProduct(p) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
                               <i className="fas fa-pen text-sm" />
                             </button>
-                            <button onClick={() => deleteItem('products', p.id)} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
+                            <button onClick={e => { e.stopPropagation(); deleteItem('products', p.id) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
                               <i className="fas fa-trash text-sm" />
                             </button>
                           </div>
@@ -314,7 +320,11 @@ export default function AdminPage() {
               {section === 'gadgets' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {gadgets.map(g => (
-                    <div key={g.id} className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-surface-700 transition-colors">
+                    <div
+                      key={g.id}
+                      onClick={() => { setViewingItem(g); setViewingCollection('gadgets') }}
+                      className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
+                    >
                       <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
                         <img src={g.images?.[0] || ''} alt={g.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
                       </div>
@@ -326,10 +336,10 @@ export default function AdminPage() {
                         <div className="flex items-end justify-between mt-3">
                           <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(g.price).toLocaleString()}</p>
                           <div className="flex gap-2">
-                            <button onClick={() => openEditGadget(g)} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
+                            <button onClick={e => { e.stopPropagation(); openEditGadget(g) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
                               <i className="fas fa-pen text-sm" />
                             </button>
-                            <button onClick={() => deleteItem('gadgets', g.id)} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
+                            <button onClick={e => { e.stopPropagation(); deleteItem('gadgets', g.id) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
                               <i className="fas fa-trash text-sm" />
                             </button>
                           </div>
@@ -523,6 +533,24 @@ export default function AdminPage() {
           <HeroForm form={heroForm} setForm={setHeroForm} />
         </FormModal>
       )}
+
+      {/* Product / Gadget Detail Modal */}
+      {viewingItem && (
+        <ProductDetailModal
+          item={viewingItem}
+          collection={viewingCollection}
+          onClose={() => setViewingItem(null)}
+          onEdit={() => {
+            setViewingItem(null)
+            if (viewingCollection === 'products') openEditProduct(viewingItem)
+            else openEditGadget(viewingItem)
+          }}
+          onDelete={() => {
+            setViewingItem(null)
+            deleteItem(viewingCollection, viewingItem.id)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -658,5 +686,118 @@ function HeroForm({ form, setForm }) {
         </div>
       </div>
     </>
+  )
+}
+
+function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
+  const [activeImg, setActiveImg] = useState(0)
+  const images = item.images?.filter(Boolean) || []
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-surface-900 border border-surface-700 rounded-[32px] w-full max-w-2xl shadow-2xl z-10 max-h-[90vh] flex flex-col animate-slide-in overflow-hidden">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-surface-800 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-brand-500/10 text-brand-400 border border-brand-500/20">
+              {collection === 'products' ? 'Smartphone' : 'Accessory'}
+            </span>
+            <span className="text-xs text-surface-600 font-mono">{item.id.slice(0, 10)}…</span>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 rounded-full bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center flex-shrink-0">
+            <i className="fas fa-times text-lg" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 p-8 space-y-8">
+          {images.length > 0 && (
+            <div className="space-y-4">
+              <div className="w-full h-64 bg-white rounded-2xl flex items-center justify-center p-4 border border-surface-800">
+                <img
+                  src={images[activeImg]}
+                  alt={item.name}
+                  className="max-w-full max-h-full object-contain mix-blend-multiply"
+                />
+              </div>
+              {images.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {images.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveImg(i)}
+                      className={`w-16 h-16 flex-shrink-0 rounded-xl bg-white p-1 border-2 transition-all ${i === activeImg ? 'border-brand-500 shadow-glow' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-5">
+            <div>
+              <h2 className="text-2xl font-bold font-display text-white tracking-tight">{item.name}</h2>
+              {item.brand && (
+                <span className="inline-block mt-2 px-3 py-1 bg-surface-800 text-surface-300 text-xs font-bold uppercase tracking-wider rounded-lg">{item.brand}</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-surface-500 text-sm font-bold uppercase tracking-wider">Price</span>
+              <span className="text-brand-400 font-bold font-display text-3xl tracking-tight ml-auto">₦{Number(item.price).toLocaleString()}</span>
+            </div>
+
+            {item.description && (
+              <div className="bg-surface-950 rounded-2xl p-5 border border-surface-800">
+                <p className="text-xs font-bold text-surface-500 uppercase tracking-widest mb-2">Description</p>
+                <p className="text-surface-300 text-sm leading-relaxed whitespace-pre-line">{item.description}</p>
+              </div>
+            )}
+
+            {images.length > 0 && (
+              <div className="bg-surface-950 rounded-2xl p-5 border border-surface-800">
+                <p className="text-xs font-bold text-surface-500 uppercase tracking-widest mb-3">Media URLs ({images.length})</p>
+                <div className="space-y-2">
+                  {images.map((img, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-[10px] text-surface-600 font-bold w-4">{i + 1}</span>
+                      <p className="text-xs text-surface-400 truncate flex-1 font-mono">{img}</p>
+                      <a href={img} target="_blank" rel="noreferrer" className="text-brand-500 hover:text-brand-400 text-xs flex-shrink-0">
+                        <i className="fas fa-external-link-alt" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Footer actions */}
+        <div className="p-6 border-t border-surface-800 flex gap-3 bg-surface-900/60 flex-shrink-0">
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 font-bold text-sm transition-all"
+          >
+            <i className="fas fa-trash" /> Delete
+          </button>
+          <button
+            onClick={onEdit}
+            className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-brand-500 text-white font-bold text-sm hover:bg-brand-400 hover:shadow-glow transition-all transform hover:-translate-y-0.5"
+          >
+            <i className="fas fa-pen" /> Edit Product
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
