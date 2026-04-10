@@ -91,7 +91,7 @@ export default function AdminPage() {
     setSaving(true)
     const data = { ...productForm, price: Number(productForm.price), images: productForm.images.filter(Boolean), updatedAt: serverTimestamp() }
     if (editingProductId) {
-      await setDoc(doc(db, 'products', editingProductId), data)
+      await updateDoc(doc(db, 'products', editingProductId), data)
     } else {
       await addDoc(collection(db, 'products'), { ...data, createdAt: serverTimestamp() })
     }
@@ -106,7 +106,7 @@ export default function AdminPage() {
     setSaving(true)
     const data = { ...gadgetForm, price: Number(gadgetForm.price), images: gadgetForm.images.filter(Boolean), updatedAt: serverTimestamp() }
     if (editingGadgetId) {
-      await setDoc(doc(db, 'gadgets', editingGadgetId), data)
+      await updateDoc(doc(db, 'gadgets', editingGadgetId), data)
     } else {
       await addDoc(collection(db, 'gadgets'), { ...data, createdAt: serverTimestamp() })
     }
@@ -121,7 +121,7 @@ export default function AdminPage() {
     setSaving(true)
     const data = { ...heroForm, updatedAt: serverTimestamp() }
     if (editingHeroId) {
-      await setDoc(doc(db, 'hero', editingHeroId), data)
+      await updateDoc(doc(db, 'hero', editingHeroId), data)
     } else {
       await addDoc(collection(db, 'hero'), { ...data, createdAt: serverTimestamp() })
     }
