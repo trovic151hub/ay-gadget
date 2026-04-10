@@ -42,6 +42,10 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
   const [viewingItem, setViewingItem] = useState(null)
   const [viewingCollection, setViewingCollection] = useState('products')
+  const [productSearch, setProductSearch] = useState('')
+  const [gadgetSearch, setGadgetSearch] = useState('')
+  const [productLimit, setProductLimit] = useState(9)
+  const [gadgetLimit, setGadgetLimit] = useState(9)
   const unsubOrdersRef = useRef(null)
 
   useEffect(() => {
@@ -161,6 +165,15 @@ export default function AdminPage() {
     setEditingHeroId(h.id)
     setHeroModal(true)
   }
+
+  const filteredProducts = products.filter(p =>
+    `${p.name} ${p.brand}`.toLowerCase().includes(productSearch.toLowerCase())
+  )
+  const filteredGadgets = gadgets.filter(g =>
+    `${g.name} ${g.brand}`.toLowerCase().includes(gadgetSearch.toLowerCase())
+  )
+  const visibleProducts = filteredProducts.slice(0, productLimit)
+  const visibleGadgets = filteredGadgets.slice(0, gadgetLimit)
 
   const stats = [
     { label: 'Products', section: 'products', value: products.length, icon: 'fa-mobile-screen-button', color: 'text-blue-400', bg: 'bg-blue-500/10' },
@@ -284,69 +297,157 @@ export default function AdminPage() {
             <div className="animate-fade-up" style={{animationDelay: '100ms'}}>
               {/* Products */}
               {section === 'products' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {products.map(p => (
-                    <div
-                      key={p.id}
-                      onClick={() => { setViewingItem(p); setViewingCollection('products') }}
-                      className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
-                    >
-                      <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
-                        <img src={p.images?.[0] || ''} alt={p.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                <div className="space-y-6">
+                  {/* Search bar */}
+                  <div className="relative">
+                    <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 text-sm pointer-events-none" />
+                    <input
+                      value={productSearch}
+                      onChange={e => { setProductSearch(e.target.value); setProductLimit(9) }}
+                      placeholder="Search by name or brand…"
+                      className="w-full h-12 pl-12 pr-5 rounded-2xl bg-surface-900 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-600"
+                    />
+                    {productSearch && (
+                      <button onClick={() => { setProductSearch(''); setProductLimit(9) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors">
+                        <i className="fas fa-times" />
+                      </button>
+                    )}
+                  </div>
+
+                  {filteredProducts.length === 0 ? (
+                    <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-16 px-6">
+                      <div className="w-14 h-14 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i className="fas fa-search text-xl text-surface-500" />
                       </div>
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                          <h3 className="font-bold text-white text-base truncate mb-1">{p.name}</h3>
-                          <span className="inline-block px-2 py-0.5 bg-surface-800 text-surface-400 text-[10px] font-bold uppercase tracking-wider rounded-md">{p.brand}</span>
-                        </div>
-                        <div className="flex items-end justify-between mt-3">
-                          <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(p.price).toLocaleString()}</p>
-                          <div className="flex gap-2">
-                            <button onClick={e => { e.stopPropagation(); openEditProduct(p) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
-                              <i className="fas fa-pen text-sm" />
-                            </button>
-                            <button onClick={e => { e.stopPropagation(); deleteItem('products', p.id) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
-                              <i className="fas fa-trash text-sm" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                      <h3 className="text-lg font-bold text-white mb-1">No results for "{productSearch}"</h3>
+                      <p className="text-surface-400 text-sm">Try a different name or brand.</p>
                     </div>
-                  ))}
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {visibleProducts.map(p => (
+                          <div
+                            key={p.id}
+                            onClick={() => { setViewingItem(p); setViewingCollection('products') }}
+                            className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
+                          >
+                            <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
+                              <img src={p.images?.[0] || ''} alt={p.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                              <div>
+                                <h3 className="font-bold text-white text-base truncate mb-1">{p.name}</h3>
+                                <span className="inline-block px-2 py-0.5 bg-surface-800 text-surface-400 text-[10px] font-bold uppercase tracking-wider rounded-md">{p.brand}</span>
+                              </div>
+                              <div className="flex items-end justify-between mt-3">
+                                <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(p.price).toLocaleString()}</p>
+                                <div className="flex gap-2">
+                                  <button onClick={e => { e.stopPropagation(); openEditProduct(p) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
+                                    <i className="fas fa-pen text-sm" />
+                                  </button>
+                                  <button onClick={e => { e.stopPropagation(); deleteItem('products', p.id) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
+                                    <i className="fas fa-trash text-sm" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {filteredProducts.length > productLimit && (
+                        <div className="flex flex-col items-center gap-2 pt-2">
+                          <p className="text-surface-500 text-xs font-medium">
+                            Showing {visibleProducts.length} of {filteredProducts.length}
+                          </p>
+                          <button
+                            onClick={() => setProductLimit(prev => prev + 9)}
+                            className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-800 border border-surface-700 text-white font-bold text-sm hover:bg-surface-700 hover:border-surface-600 transition-all"
+                          >
+                            <i className="fas fa-chevron-down" /> Load More
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Gadgets */}
               {section === 'gadgets' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {gadgets.map(g => (
-                    <div
-                      key={g.id}
-                      onClick={() => { setViewingItem(g); setViewingCollection('gadgets') }}
-                      className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
-                    >
-                      <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
-                        <img src={g.images?.[0] || ''} alt={g.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                <div className="space-y-6">
+                  {/* Search bar */}
+                  <div className="relative">
+                    <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 text-sm pointer-events-none" />
+                    <input
+                      value={gadgetSearch}
+                      onChange={e => { setGadgetSearch(e.target.value); setGadgetLimit(9) }}
+                      placeholder="Search by name or brand…"
+                      className="w-full h-12 pl-12 pr-5 rounded-2xl bg-surface-900 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-600"
+                    />
+                    {gadgetSearch && (
+                      <button onClick={() => { setGadgetSearch(''); setGadgetLimit(9) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors">
+                        <i className="fas fa-times" />
+                      </button>
+                    )}
+                  </div>
+
+                  {filteredGadgets.length === 0 ? (
+                    <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-16 px-6">
+                      <div className="w-14 h-14 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i className="fas fa-search text-xl text-surface-500" />
                       </div>
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                          <h3 className="font-bold text-white text-base truncate mb-1">{g.name}</h3>
-                          <span className="inline-block px-2 py-0.5 bg-surface-800 text-surface-400 text-[10px] font-bold uppercase tracking-wider rounded-md">{g.brand}</span>
-                        </div>
-                        <div className="flex items-end justify-between mt-3">
-                          <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(g.price).toLocaleString()}</p>
-                          <div className="flex gap-2">
-                            <button onClick={e => { e.stopPropagation(); openEditGadget(g) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
-                              <i className="fas fa-pen text-sm" />
-                            </button>
-                            <button onClick={e => { e.stopPropagation(); deleteItem('gadgets', g.id) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
-                              <i className="fas fa-trash text-sm" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                      <h3 className="text-lg font-bold text-white mb-1">No results for "{gadgetSearch}"</h3>
+                      <p className="text-surface-400 text-sm">Try a different name or brand.</p>
                     </div>
-                  ))}
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {visibleGadgets.map(g => (
+                          <div
+                            key={g.id}
+                            onClick={() => { setViewingItem(g); setViewingCollection('gadgets') }}
+                            className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
+                          >
+                            <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
+                              <img src={g.images?.[0] || ''} alt={g.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                              <div>
+                                <h3 className="font-bold text-white text-base truncate mb-1">{g.name}</h3>
+                                <span className="inline-block px-2 py-0.5 bg-surface-800 text-surface-400 text-[10px] font-bold uppercase tracking-wider rounded-md">{g.brand}</span>
+                              </div>
+                              <div className="flex items-end justify-between mt-3">
+                                <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(g.price).toLocaleString()}</p>
+                                <div className="flex gap-2">
+                                  <button onClick={e => { e.stopPropagation(); openEditGadget(g) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
+                                    <i className="fas fa-pen text-sm" />
+                                  </button>
+                                  <button onClick={e => { e.stopPropagation(); deleteItem('gadgets', g.id) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
+                                    <i className="fas fa-trash text-sm" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {filteredGadgets.length > gadgetLimit && (
+                        <div className="flex flex-col items-center gap-2 pt-2">
+                          <p className="text-surface-500 text-xs font-medium">
+                            Showing {visibleGadgets.length} of {filteredGadgets.length}
+                          </p>
+                          <button
+                            onClick={() => setGadgetLimit(prev => prev + 9)}
+                            className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-800 border border-surface-700 text-white font-bold text-sm hover:bg-surface-700 hover:border-surface-600 transition-all"
+                          >
+                            <i className="fas fa-chevron-down" /> Load More
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
 
