@@ -66,8 +66,8 @@ export default function CartPage() {
       currency: 'NGN',
       ref: 'PS-' + Date.now(),
       metadata: { name: `${form.firstName} ${form.lastName}`, phone: `${form.areaCode}${form.phone}` },
-      callback: async (response) => {
-        await addDoc(collection(db, 'orders'), {
+      callback: function(response) {
+        addDoc(collection(db, 'orders'), {
           guestId,
           items: cartItems,
           address: {
@@ -82,9 +82,11 @@ export default function CartPage() {
           reference: response.reference,
           status: 'paid',
           createdAt: serverTimestamp()
+        }).then(function() {
+          return clearCart()
+        }).then(function() {
+          setStep('complete')
         })
-        await clearCart()
-        setStep('complete')
       },
       onClose: () => showNotification('Payment window closed', 'info')
     })

@@ -1,0 +1,45 @@
+Uncaught Error: Attribute callback must be a valid functionUnderstand this error
+chunk-OY5C42Z6.js?v=865d0ffd:3756 Uncaught Error: A cross-origin error was thrown. React doesn't have access to the actual error object in development. See https://reactjs.org/link/crossorigin-error for more information.
+    at Object.invokeGuardedCallbackDev (chunk-OY5C42Z6.js?v=865d0ffd:3713:28)
+    at invokeGuardedCallback (chunk-OY5C42Z6.js?v=865d0ffd:3739:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-OY5C42Z6.js?v=865d0ffd:3742:33)
+    at executeDispatch (chunk-OY5C42Z6.js?v=865d0ffd:7046:11)
+    at processDispatchQueueItemsInOrder (chunk-OY5C42Z6.js?v=865d0ffd:7066:15)
+    at processDispatchQueue (chunk-OY5C42Z6.js?v=865d0ffd:7075:13)
+    at dispatchEventsForPlugins (chunk-OY5C42Z6.js?v=865d0ffd:7083:11)
+    at chunk-OY5C42Z6.js?v=865d0ffd:7206:20
+    at batchedUpdates$1 (chunk-OY5C42Z6.js?v=865d0ffd:18966:20)
+    at batchedUpdates (chunk-OY5C42Z6.js?v=865d0ffd:3585:20)Understand this error
+inline.js:1 Uncaught Error: Attribute callback must be a valid function
+i @ inline.js:1
+r @ inline.js:1
+validateInputTypes @ inline.js:1
+isValid @ inline.js:1
+setup @ inline.js:1
+handlePlaceOrder @ CartPage.jsx:62
+callCallback2 @ chunk-OY5C42Z6.js?v=865d0ffd:3680
+invokeGuardedCallbackDev @ chunk-OY5C42Z6.js?v=865d0ffd:3705
+invokeGuardedCallback @ chunk-OY5C42Z6.js?v=865d0ffd:3739
+invokeGuardedCallbackAndCatchFirstError @ chunk-OY5C42Z6.js?v=865d0ffd:3742
+executeDispatch @ chunk-OY5C42Z6.js?v=865d0ffd:7046
+processDispatchQueueItemsInOrder @ chunk-OY5C42Z6.js?v=865d0ffd:7066
+processDispatchQueue @ chunk-OY5C42Z6.js?v=865d0ffd:7075
+dispatchEventsForPlugins @ chunk-OY5C42Z6.js?v=865d0ffd:7083
+(anonymous) @ chunk-OY5C42Z6.js?v=865d0ffd:7206
+batchedUpdates$1 @ chunk-OY5C42Z6.js?v=865d0ffd:18966
+batchedUpdates @ chunk-OY5C42Z6.js?v=865d0ffd:3585
+dispatchEventForPluginEventSystem @ chunk-OY5C42Z6.js?v=865d0ffd:7205
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-OY5C42Z6.js?v=865d0ffd:5484
+dispatchEvent @ chunk-OY5C42Z6.js?v=865d0ffd:5478
+dispatchDiscreteEvent @ chunk-OY5C42Z6.js?v=865d0ffd:5455Understand this error
+chunk-OY5C42Z6.js?v=865d0ffd:3713 Uncaught Error: A cross-origin error was thrown. React doesn't have access to the actual error object in development. See https://reactjs.org/link/crossorigin-error for more information.
+    at Object.invokeGuardedCallbackDev (chunk-OY5C42Z6.js?v=865d0ffd:3713:28)
+    at invokeGuardedCallback (chunk-OY5C42Z6.js?v=865d0ffd:3739:39)
+    at invokeGuardedCallbackAndCatchFirstError (chunk-OY5C42Z6.js?v=865d0ffd:3742:33)
+    at executeDispatch (chunk-OY5C42Z6.js?v=865d0ffd:7046:11)
+    at processDispatchQueueItemsInOrder (chunk-OY5C42Z6.js?v=865d0ffd:7066:15)
+    at processDispatchQueue (chunk-OY5C42Z6.js?v=865d0ffd:7075:13)
+    at dispatchEventsForPlugins (chunk-OY5C42Z6.js?v=865d0ffd:7083:11)
+    at chunk-OY5C42Z6.js?v=865d0ffd:7206:20
+    at batchedUpdates$1 (chunk-OY5C42Z6.js?v=865d0ffd:18966:20)
+    at batchedUpdates (chunk-OY5C42Z6.js?v=865d0ffd:3585:20)
