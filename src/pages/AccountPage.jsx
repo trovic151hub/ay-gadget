@@ -24,15 +24,24 @@ export default function AccountPage() {
   const [searched, setSearched] = useState(false)
   const [error, setError] = useState('')
 
+  function normalizePhone(raw) {
+    const p = raw.replace(/\s+/g, '')
+    if (p.startsWith('+234')) return p
+    if (p.startsWith('234')) return '+' + p
+    if (p.startsWith('0')) return '+234' + p
+    return '+234' + p
+  }
+
   async function handleLookup(e) {
     e.preventDefault()
     const cleaned = phone.replace(/\s+/g, '')
     if (!cleaned) return
+    const normalized = normalizePhone(cleaned)
     setLoading(true)
     setError('')
     setSearched(false)
     try {
-      const q = query(collection(db, 'orders'), where('phone', '==', cleaned))
+      const q = query(collection(db, 'orders'), where('address.phone', '==', normalized))
       const snap = await getDocs(q)
       const results = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
