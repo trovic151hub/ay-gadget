@@ -335,7 +335,7 @@ export default function AdminPage() {
         bg-surface-900 border-r border-surface-800
         flex-shrink-0 flex flex-col shadow-2xl
         transform transition-transform duration-300 ease-in-out
-        md:relative md:translate-x-0
+        md:relative md:sticky md:top-0 md:h-screen md:translate-x-0
         ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         <div className="p-6 border-b border-surface-800 flex items-center justify-between">
@@ -393,7 +393,7 @@ export default function AdminPage() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-surface-900 to-surface-950 min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 relative bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-surface-900 to-surface-950">
         {/* Header */}
         <div className="bg-surface-900/80 backdrop-blur-xl border-b border-surface-800 px-4 md:px-8 py-4 md:py-5 flex justify-between items-center sticky top-0 z-10 gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -435,7 +435,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div className="flex-1 p-4 md:p-8 pb-16">
           {/* Stats row — always visible */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 animate-fade-up">
             {stats.map(s => (
