@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
 import { db } from '../firebase'
@@ -20,6 +20,54 @@ const STEP_LABELS = { cart: 'Shopping Cart', checkout: 'Secure Checkout', comple
 
 const ADMIN_WHATSAPP = '2349053380773'
 const ADMIN_EMAIL = 'victoradeyimika0@gmail.com'
+
+function CustomSelect({ value, onChange, options, placeholder = 'Select...' }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const selectedLabel = options.find(o => o.value === value)?.label
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`w-full h-14 px-5 rounded-2xl bg-surface-800 border text-left font-medium focus:outline-none transition-all flex items-center justify-between gap-3 ${open ? 'border-brand-500 ring-1 ring-brand-500/30' : 'border-surface-700/60 hover:border-surface-600'}`}
+      >
+        <span className={selectedLabel ? 'text-white' : 'text-surface-500 font-normal text-sm'}>
+          {selectedLabel || placeholder}
+        </span>
+        <i className={`fas fa-chevron-down text-surface-500 text-xs transition-transform duration-200 ${open ? 'rotate-180 text-brand-500' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-surface-800 border border-surface-700/60 rounded-2xl overflow-hidden z-30 shadow-2xl shadow-black/40">
+          <div className="max-h-56 overflow-y-auto scrollbar-thin">
+            {options.map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false) }}
+                className={`w-full text-left px-5 py-3.5 text-sm font-medium transition-colors flex items-center justify-between gap-3 ${value === opt.value ? 'bg-brand-500/15 text-brand-400' : 'text-surface-300 hover:bg-surface-700/70 hover:text-white'}`}
+              >
+                {opt.label}
+                {value === opt.value && <i className="fas fa-check text-brand-500 text-[10px]" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function CartPage() {
   const { cartItems, cartSubtotal, removeFromCart, changeQuantity, clearCart, guestId } = useCart()
@@ -315,26 +363,37 @@ export default function CartPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <label className={labelClass}>State</label>
-                        <select name="state" value={form.state} onChange={handleFormChange} className={inputClass}>
-                          <option value="Lagos">Lagos</option>
-                        </select>
+                        <div className="w-full h-14 px-5 rounded-2xl bg-surface-800 border border-surface-700/60 flex items-center justify-between gap-3 cursor-not-allowed">
+                          <span className="text-white font-medium">Lagos</span>
+                          <span className="flex items-center gap-1.5 text-xs font-semibold text-brand-500 bg-brand-500/10 border border-brand-500/20 rounded-lg px-2.5 py-1">
+                            <i className="fas fa-lock text-[9px]" />
+                            Only
+                          </span>
+                        </div>
                       </div>
                       <div>
                         <label className={labelClass}>Local Government Area</label>
-                        <select name="lga" value={form.lga} onChange={handleFormChange} className={inputClass}>
-                          <option value="">Select LGA</option>
-                          {Object.keys(LAGOS_LGA_FEES).sort().map(lga => <option key={lga} value={lga}>{lga}</option>)}
-                        </select>
+                        <CustomSelect
+                          value={form.lga}
+                          onChange={val => setForm(prev => ({ ...prev, lga: val }))}
+                          placeholder="Select your LGA"
+                          options={Object.keys(LAGOS_LGA_FEES).sort().map(lga => ({ value: lga, label: lga }))}
+                        />
                       </div>
                     </div>
-                    <div className="flex gap-3">
-                      <div className="w-28">
-                        <label className={labelClass}>Code</label>
-                        <input name="areaCode" value={form.areaCode} onChange={handleFormChange} className={`${inputClass} opacity-50 cursor-not-allowed`} disabled />
-                      </div>
-                      <div className="flex-1">
-                        <label className={labelClass}>Phone Number</label>
-                        <input name="phone" value={form.phone} onChange={handleFormChange} placeholder="801 234 5678" className={inputClass} />
+                    <div>
+                      <label className={labelClass}>Phone Number</label>
+                      <div className="flex h-14 rounded-2xl bg-surface-800 border border-surface-700/60 overflow-hidden focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500/30 transition-all">
+                        <div className="flex items-center gap-2 px-4 border-r border-surface-700/60 shrink-0 bg-surface-800">
+                          <span className="text-surface-400 font-bold text-sm tracking-wide">🇳🇬 +234</span>
+                        </div>
+                        <input
+                          name="phone"
+                          value={form.phone}
+                          onChange={handleFormChange}
+                          placeholder="801 234 5678"
+                          className="flex-1 px-4 bg-transparent text-white font-medium focus:outline-none placeholder:text-surface-500 placeholder:font-normal"
+                        />
                       </div>
                     </div>
                     <div className="pt-2">
