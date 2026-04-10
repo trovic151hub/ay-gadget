@@ -252,18 +252,10 @@ export default function CartPage() {
             {/* Checkout Form */}
             <div className="flex-1 space-y-6">
 
-              {/* Shipping */}
-              <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
-                <div className="flex items-center justify-between mb-7">
-                  <h3 className="font-bold text-xl font-display tracking-tight text-white">1. Shipping details</h3>
-                  {addressLocked && (
-                    <button onClick={() => setAddressLocked(false)} className="text-sm font-bold text-brand-500 hover:text-brand-400 transition-colors">
-                      Edit
-                    </button>
-                  )}
-                </div>
-
-                {!addressLocked ? (
+              {/* Shipping Form — visible only when address not yet confirmed */}
+              {!addressLocked && (
+                <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                  <h3 className="font-bold text-xl font-display tracking-tight text-white mb-7">1. Shipping details</h3>
                   <div className="space-y-5">
                     <div>
                       <label className={labelClass}>Email Address</label>
@@ -314,50 +306,69 @@ export default function CartPage() {
                       </button>
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-surface-800 border border-surface-700/50 rounded-2xl p-6">
-                    <p className="text-white font-semibold text-base mb-1">{form.firstName} {form.lastName}</p>
-                    <p className="text-surface-400 text-sm mb-3">{form.email} &bull; {form.areaCode} {form.phone}</p>
-                    <p className="text-surface-300 text-sm leading-relaxed">{form.street}<br />{form.lga}, {form.state}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Delivery */}
-              <div className={`bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 transition-opacity duration-300 ${!addressLocked ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-                <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">2. Delivery method</h3>
-                <div className="border border-brand-500/60 bg-brand-500/8 rounded-2xl p-5 relative overflow-hidden">
-                  <div className="flex items-center gap-4">
-                    <div className="w-11 h-11 bg-brand-500/15 border border-brand-500/30 rounded-xl flex items-center justify-center text-brand-500">
-                      <i className="fas fa-truck-fast" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-bold text-white">Standard Delivery</p>
-                      <p className="text-surface-400 text-sm mt-0.5">₦{shippingFee.toLocaleString()}</p>
-                    </div>
-                    <div className="w-5 h-5 rounded-full bg-brand-500 border border-brand-500 flex items-center justify-center">
-                      <i className="fas fa-check text-white text-[9px]" />
-                    </div>
-                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Payment */}
-              <div className={`bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 transition-opacity duration-300 ${!addressLocked ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-                <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">3. Payment method</h3>
-                <div
-                  onClick={() => setPaymentMethod('Paystack')}
-                  className={`p-5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-4 ${paymentMethod === 'Paystack' ? 'border-brand-500/60 bg-brand-500/8' : 'border-surface-700/50 bg-surface-800 hover:border-surface-600'}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${paymentMethod === 'Paystack' ? 'border-brand-500' : 'border-surface-600'}`}>
-                      {paymentMethod === 'Paystack' && <div className="w-2.5 h-2.5 bg-brand-500 rounded-full" />}
+              {/* Address Summary + Delivery + Payment — visible only after address confirmed */}
+              {addressLocked && (
+                <>
+                  {/* Address Summary */}
+                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center">
+                          <i className="fas fa-check text-white text-[10px]" />
+                        </div>
+                        <h3 className="font-bold text-xl font-display tracking-tight text-white">Shipping details</h3>
+                      </div>
+                      <button onClick={() => setAddressLocked(false)} className="text-sm font-bold text-brand-500 hover:text-brand-400 transition-colors">
+                        Edit
+                      </button>
                     </div>
-                    <span className="font-bold text-white">Pay with Card or Transfer</span>
+                    <div className="bg-surface-800 border border-surface-700/50 rounded-2xl p-5">
+                      <p className="text-white font-semibold text-base mb-1">{form.firstName} {form.lastName}</p>
+                      <p className="text-surface-400 text-sm mb-3">{form.email} &bull; {form.areaCode} {form.phone}</p>
+                      <p className="text-surface-300 text-sm leading-relaxed">{form.street}<br />{form.lga}, {form.state}</p>
+                    </div>
                   </div>
-                  <img className="h-7 shrink-0" src="https://cdn.brandfetch.io/idM5mrwtDs/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX" alt="Paystack" />
-                </div>
-              </div>
+
+                  {/* Delivery */}
+                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                    <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">2. Delivery method</h3>
+                    <div className="border border-brand-500/60 bg-brand-500/[0.06] rounded-2xl p-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 bg-brand-500/15 border border-brand-500/30 rounded-xl flex items-center justify-center text-brand-500">
+                          <i className="fas fa-truck-fast" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-white">Standard Delivery</p>
+                          <p className="text-surface-400 text-sm mt-0.5">₦{shippingFee.toLocaleString()}</p>
+                        </div>
+                        <div className="w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center shrink-0">
+                          <i className="fas fa-check text-white text-[9px]" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment */}
+                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8">
+                    <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">3. Payment method</h3>
+                    <div
+                      onClick={() => setPaymentMethod('Paystack')}
+                      className={`p-5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-4 ${paymentMethod === 'Paystack' ? 'border-brand-500/60 bg-brand-500/[0.06]' : 'border-surface-700/50 bg-surface-800 hover:border-surface-600'}`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${paymentMethod === 'Paystack' ? 'border-brand-500' : 'border-surface-600'}`}>
+                          {paymentMethod === 'Paystack' && <div className="w-2.5 h-2.5 bg-brand-500 rounded-full" />}
+                        </div>
+                        <span className="font-bold text-white">Pay with Card or Transfer</span>
+                      </div>
+                      <img className="h-7 shrink-0" src="https://cdn.brandfetch.io/idM5mrwtDs/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX" alt="Paystack" />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Summary Sidebar */}
