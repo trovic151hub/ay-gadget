@@ -840,9 +840,14 @@ export default function AdminPage() {
                                       <div className="bg-white p-1 w-10 h-10 flex items-center justify-center flex-shrink-0">
                                         <img src={item.image || ''} className="w-full h-full object-contain" alt="" />
                                       </div>
-                                      <span className="text-sm font-medium text-surface-300">
-                                        {item.name} <span className="text-brand-500 font-bold ml-1">×{item.quantity}</span>
-                                      </span>
+                                      <div className="flex flex-col py-1">
+                                        <span className="text-sm font-medium text-surface-300">
+                                          {item.name} <span className="text-brand-500 font-bold ml-1">×{item.quantity}</span>
+                                        </span>
+                                        {item.condition && (
+                                          <span className="text-[10px] font-bold uppercase tracking-wider text-brand-400/80">{item.condition}</span>
+                                        )}
+                                      </div>
                                     </div>
                                   ))}
                                 </div>

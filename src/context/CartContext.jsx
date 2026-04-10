@@ -61,7 +61,8 @@ export function CartProvider({ children }) {
         name: product.name,
         price: Number(product.price),
         quantity: 1,
-        image: product.images?.[0] || ''
+        image: product.images?.[0] || '',
+        condition: product.condition || ''
       })
     }
     await saveCart(cart)

@@ -118,7 +118,14 @@ function OrderModal({ order, onClose }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium truncate">{item.name}</p>
-                      <p className="text-surface-500 text-xs">Qty: {item.quantity}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {item.condition && (
+                          <span className="px-1.5 py-0.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 text-[10px] font-bold uppercase tracking-wider rounded">
+                            {item.condition}
+                          </span>
+                        )}
+                        <span className="text-surface-500 text-xs">Qty: {item.quantity}</span>
+                      </div>
                     </div>
                     <p className="text-brand-500 font-bold text-sm shrink-0">
                       ₦{Number(item.price * item.quantity).toLocaleString()}
@@ -302,7 +309,14 @@ export default function AccountPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium truncate">{item.name}</p>
-                      <p className="text-surface-500 text-xs">Qty: {item.quantity}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {item.condition && (
+                          <span className="px-1.5 py-0.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 text-[10px] font-bold uppercase tracking-wider rounded">
+                            {item.condition}
+                          </span>
+                        )}
+                        <span className="text-surface-500 text-xs">Qty: {item.quantity}</span>
+                      </div>
                     </div>
                     <p className="text-brand-500 font-bold text-sm shrink-0">
                       ₦{(item.price * item.quantity).toLocaleString()}

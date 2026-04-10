@@ -274,7 +274,14 @@ export default function CartPage() {
                       </div>
                       <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
                         <div className="flex justify-between gap-3">
-                          <h4 className="font-bold text-base text-white leading-tight line-clamp-2">{item.name}</h4>
+                          <div>
+                            <h4 className="font-bold text-base text-white leading-tight line-clamp-2">{item.name}</h4>
+                            {item.condition && (
+                              <span className="inline-block mt-1 px-2 py-0.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 text-[10px] font-bold uppercase tracking-wider rounded-md">
+                                {item.condition}
+                              </span>
+                            )}
+                          </div>
                           <button
                             onClick={() => removeFromCart(item.id)}
                             className="text-surface-600 hover:text-red-400 transition-colors p-1 shrink-0 mt-0.5"
@@ -492,7 +499,14 @@ export default function CartPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-white line-clamp-1 leading-tight">{item.name}</p>
-                        <p className="text-surface-500 text-xs mt-0.5">Qty: {item.quantity}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {item.condition && (
+                            <span className="px-1.5 py-0.5 bg-brand-500/10 border border-brand-500/20 text-brand-400 text-[10px] font-bold uppercase tracking-wider rounded">
+                              {item.condition}
+                            </span>
+                          )}
+                          <span className="text-surface-500 text-xs">Qty: {item.quantity}</span>
+                        </div>
                         <p className="font-bold text-brand-500 text-sm mt-0.5">₦{(item.price * item.quantity).toLocaleString()}</p>
                       </div>
                     </div>
