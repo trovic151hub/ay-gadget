@@ -18,6 +18,9 @@ const LAGOS_LGA_FEES = {
 const STEPS = ['cart', 'checkout', 'complete']
 const STEP_LABELS = { cart: 'Shopping Cart', checkout: 'Secure Checkout', complete: 'Order Complete' }
 
+const ADMIN_WHATSAPP = '2349053380773'
+const ADMIN_EMAIL = 'victoradeyimika0@gmail.com'
+
 export default function CartPage() {
   const { cartItems, cartSubtotal, removeFromCart, changeQuantity, clearCart, guestId } = useCart()
   const { showNotification } = useNotification()
@@ -26,13 +29,30 @@ export default function CartPage() {
   const [addressLocked, setAddressLocked] = useState(false)
   const [shippingFee, setShippingFee] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState(null)
+  const [showLocationModal, setShowLocationModal] = useState(false)
+  const [outsideLagos, setOutsideLagos] = useState(false)
 
   useEffect(() => {
     if (localStorage.getItem('gotoCheckout') === 'true') {
       localStorage.removeItem('gotoCheckout')
-      if (cartItems.length > 0) setStep('checkout')
+      if (cartItems.length > 0) setShowLocationModal(true)
     }
   }, [cartItems])
+
+  function handleProceedToCheckout() {
+    if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }
+    setOutsideLagos(false)
+    setShowLocationModal(true)
+  }
+
+  function handleInLagos() {
+    setShowLocationModal(false)
+    setStep('checkout')
+  }
+
+  function handleOutsideLagos() {
+    setOutsideLagos(true)
+  }
 
   const total = cartSubtotal + shippingFee
 
@@ -248,7 +268,7 @@ export default function CartPage() {
                 </div>
 
                 <button
-                  onClick={() => { if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }; setStep('checkout') }}
+                  onClick={handleProceedToCheckout}
                   className="mt-8 w-full bg-brand-500 hover:bg-brand-400 text-white py-4 rounded-2xl font-bold text-base transition-colors shadow-[0_0_20px_rgba(255,98,0,0.2)] hover:shadow-[0_0_30px_rgba(255,98,0,0.4)]"
                 >
                   Proceed to Checkout
@@ -446,6 +466,93 @@ export default function CartPage() {
         )}
       </div>
       <Footer />
+
+      {/* Lagos Location Modal */}
+      {showLocationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-8 max-w-md w-full animate-fade-up">
+
+            {!outsideLagos ? (
+              <>
+                <div className="w-14 h-14 bg-brand-500/10 border border-brand-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <i className="fas fa-map-location-dot text-brand-500 text-2xl" />
+                </div>
+                <h3 className="text-2xl font-bold font-display text-white tracking-tight text-center mb-3">
+                  Are you in Lagos?
+                </h3>
+                <p className="text-surface-400 text-center text-sm leading-relaxed mb-8">
+                  We currently deliver within <span className="text-white font-semibold">Lagos State only.</span> Please confirm your location to continue.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleInLagos}
+                    className="flex-1 bg-brand-500 hover:bg-brand-400 text-white py-4 rounded-2xl font-bold transition-colors shadow-[0_0_20px_rgba(255,98,0,0.25)]"
+                  >
+                    Yes, I&apos;m in Lagos
+                  </button>
+                  <button
+                    onClick={handleOutsideLagos}
+                    className="flex-1 bg-surface-800 hover:bg-surface-700 border border-surface-700/50 text-surface-300 hover:text-white py-4 rounded-2xl font-bold transition-colors"
+                  >
+                    No, I&apos;m outside Lagos
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-14 h-14 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <i className="fas fa-truck text-yellow-500 text-2xl" />
+                </div>
+                <h3 className="text-2xl font-bold font-display text-white tracking-tight text-center mb-3">
+                  Delivery not available yet
+                </h3>
+                <p className="text-surface-400 text-center text-sm leading-relaxed mb-7">
+                  We&apos;re currently delivering within <span className="text-white font-semibold">Lagos only.</span> To place an order from outside Lagos, please reach out to us directly and we&apos;ll sort you out.
+                </p>
+
+                <div className="space-y-3 mb-7">
+                  <a
+                    href={`https://wa.me/${ADMIN_WHATSAPP}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 bg-green-500/10 border border-green-500/20 hover:border-green-500/40 rounded-2xl px-5 py-4 transition-all group"
+                  >
+                    <div className="w-10 h-10 bg-green-500/15 rounded-xl flex items-center justify-center shrink-0">
+                      <i className="fab fa-whatsapp text-green-400 text-xl" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-surface-500 font-medium mb-0.5">Chat on WhatsApp</p>
+                      <p className="text-white font-bold text-sm group-hover:text-green-400 transition-colors">+{ADMIN_WHATSAPP}</p>
+                    </div>
+                    <i className="fas fa-arrow-right text-surface-600 group-hover:text-green-400 text-xs ml-auto transition-colors" />
+                  </a>
+
+                  <a
+                    href={`mailto:${ADMIN_EMAIL}`}
+                    className="flex items-center gap-4 bg-surface-800 border border-surface-700/50 hover:border-surface-600 rounded-2xl px-5 py-4 transition-all group"
+                  >
+                    <div className="w-10 h-10 bg-surface-700 rounded-xl flex items-center justify-center shrink-0">
+                      <i className="fas fa-envelope text-surface-300 text-base" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-surface-500 font-medium mb-0.5">Send an Email</p>
+                      <p className="text-white font-bold text-sm group-hover:text-brand-500 transition-colors">{ADMIN_EMAIL}</p>
+                    </div>
+                    <i className="fas fa-arrow-right text-surface-600 group-hover:text-brand-500 text-xs ml-auto transition-colors" />
+                  </a>
+                </div>
+
+                <button
+                  onClick={() => setShowLocationModal(false)}
+                  className="w-full bg-surface-800 hover:bg-surface-700 border border-surface-700/50 text-surface-400 hover:text-white py-3.5 rounded-2xl font-semibold text-sm transition-colors"
+                >
+                  Go back to cart
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
