@@ -24,7 +24,7 @@ const emptyHero = { headline: '', subheadline: '', cta_primary_text: '', cta_sec
 export default function AdminPage() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
-  const [section, setSection] = useState('products')
+  const [section, setSection] = useState(() => localStorage.getItem('adminSection') || 'products')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [products, setProducts] = useState([])
   const [gadgets, setGadgets] = useState([])
@@ -95,6 +95,7 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
+    localStorage.setItem('adminSection', section)
     if (section === 'settings') fetchAdmins()
   }, [section])
 
