@@ -21,6 +21,19 @@ const STATUS_CONFIG = {
 const emptyProduct = { name: '', brand: '', description: '', price: '', condition: '', images: [''] }
 const emptyHero = { headline: '', subheadline: '', cta_primary_text: '', cta_secondary_text: '', type: 'image', url: '', active: true }
 
+function timeAgo(date) {
+  if (!date) return null
+  const secs = Math.floor((Date.now() - date.getTime()) / 1000)
+  if (secs < 60) return 'Just now'
+  const mins = Math.floor(secs / 60)
+  if (mins < 60) return `${mins} min${mins !== 1 ? 's' : ''} ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs} hour${hrs !== 1 ? 's' : ''} ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days} day${days !== 1 ? 's' : ''} ago`
+  return date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 export default function AdminPage() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
@@ -67,14 +80,35 @@ export default function AdminPage() {
   const [showCurrPw, setShowCurrPw] = useState(false)
   const [showChangePw, setShowChangePw] = useState(false)
   const unsubOrdersRef = useRef(null)
+  const [tick, setTick] = useState(0)
 
+  // Keep "X mins ago" labels fresh every minute
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, u => {
-      if (!u) navigate('/login')
-      else setUser(u)
+    const id = setInterval(() => setTick(t => t + 1), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Write lastActive to Firestore when admin signs in, then refresh every 5 minutes
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async u => {
+      if (!u) { navigate('/login'); return }
+      setUser(u)
+      try {
+        await updateDoc(doc(db, 'admins', u.uid), { lastActive: serverTimestamp() })
+      } catch { /* admin doc may not exist yet (owner account) */ }
     })
     return unsub
   }, [navigate])
+
+  useEffect(() => {
+    if (!auth.currentUser) return
+    const id = setInterval(async () => {
+      try {
+        await updateDoc(doc(db, 'admins', auth.currentUser.uid), { lastActive: serverTimestamp() })
+      } catch { /* silent */ }
+    }, 5 * 60_000)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     fetchAll()
@@ -1052,19 +1086,36 @@ export default function AdminPage() {
                       ) : adminsList.map(a => {
                         const isSelf = a.uid === user?.uid || a.email === user?.email
                         const createdDate = a.createdAt?.toDate ? a.createdAt.toDate() : null
+                        const lastActiveDate = a.lastActive?.toDate ? a.lastActive.toDate() : null
+                        const ago = timeAgo(lastActiveDate)
+                        const isRecent = lastActiveDate && (Date.now() - lastActiveDate.getTime()) < 10 * 60_000
+                        void tick
                         return (
                           <div key={a.id} className="px-6 py-4 flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isSelf ? 'bg-brand-500/15 border border-brand-500/30' : 'bg-surface-800'}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 relative ${isSelf ? 'bg-brand-500/15 border border-brand-500/30' : 'bg-surface-800'}`}>
                               <i className={`fas fa-user text-sm ${isSelf ? 'text-brand-400' : 'text-surface-500'}`} />
+                              {isRecent && (
+                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-surface-900 rounded-full" title="Active in last 10 mins" />
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <p className="font-bold text-white text-sm truncate">{a.email}</p>
                                 {isSelf && <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-brand-500/10 text-brand-400 border border-brand-500/20">You</span>}
                               </div>
-                              {createdDate && (
-                                <p className="text-xs text-surface-500 mt-0.5">Added {createdDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                              )}
+                              <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                                {ago ? (
+                                  <p className="text-xs text-surface-500 flex items-center gap-1.5">
+                                    <i className={`fas fa-circle text-[5px] ${isRecent ? 'text-emerald-500' : 'text-surface-600'}`} />
+                                    Last active: <span className={isRecent ? 'text-emerald-400 font-semibold' : 'text-surface-400'}>{ago}</span>
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-surface-600 italic">Never logged in</p>
+                                )}
+                                {createdDate && (
+                                  <p className="text-xs text-surface-600">· Added {createdDate.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                )}
+                              </div>
                             </div>
                             {!isSelf && (
                               <button
