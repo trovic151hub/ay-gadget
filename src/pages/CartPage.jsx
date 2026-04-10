@@ -134,15 +134,29 @@ export default function CartPage() {
           {STEPS.map((s, i) => {
             const done = STEPS.indexOf(step) > i
             const active = step === s
+            const clickable =
+              (s === 'cart' && step === 'checkout') ||
+              (s === 'checkout' && step === 'cart' && cartItems.length > 0)
+            function handleStepClick() {
+              if (s === 'cart' && step === 'checkout') setStep('cart')
+              if (s === 'checkout' && step === 'cart') {
+                if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }
+                setStep('checkout')
+              }
+            }
             return (
               <span key={s} className="flex items-center gap-3">
                 {i > 0 && <i className="fas fa-chevron-right text-[10px] text-surface-600" />}
-                <span className={`flex items-center gap-2 transition-colors ${active ? 'text-brand-500' : done ? 'text-surface-300' : 'text-surface-600'}`}>
+                <button
+                  onClick={handleStepClick}
+                  disabled={!clickable}
+                  className={`flex items-center gap-2 transition-colors ${active ? 'text-brand-500' : done ? 'text-surface-300' : 'text-surface-600'} ${clickable ? 'hover:text-white cursor-pointer' : 'cursor-default'}`}
+                >
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors ${active ? 'bg-brand-500 border-brand-500 text-white' : done ? 'bg-surface-700 border-surface-700 text-white' : 'bg-transparent border-surface-700 text-surface-600'}`}>
                     {done ? <i className="fas fa-check text-[10px]" /> : i + 1}
                   </span>
                   {STEP_LABELS[s]}
-                </span>
+                </button>
               </span>
             )
           })}
