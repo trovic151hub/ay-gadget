@@ -209,7 +209,7 @@ export default function HomePage() {
         {/* Trust badges */}
         <section className="border-t border-surface-800 py-16 mt-4">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
               {TRUST_BADGES.map((b, i) => (
                 <div key={i} className="text-center flex flex-col items-center">
                   <div className="w-12 h-12 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mb-4 text-brand-500">
