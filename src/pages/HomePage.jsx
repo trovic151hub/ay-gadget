@@ -20,7 +20,6 @@ const TRUST_BADGES = [
   { icon: 'fa-truck-fast', title: 'Fast Delivery', desc: 'Across all 36 states in Nigeria' },
   { icon: 'fa-shield-halved', title: '100% Secure', desc: 'Verified and trusted products' },
   { icon: 'fa-headset', title: '24/7 Support', desc: 'Always here to help you' },
-  { icon: 'fa-rotate-left', title: 'Easy Returns', desc: '7-day return policy' },
 ]
 
 function SkeletonCard() {

@@ -23,7 +23,7 @@ const SECTIONS = [
   },
   {
     title: 'Product Condition',
-    content: `Products are listed with their condition clearly stated — New, UK-Used, or Nigeria-Used. Please review the condition carefully before purchasing. Images are representative of the product condition and may vary slightly from the actual item.`
+    content: `Products are listed with their condition clearly stated — New, UK-Used, or Nigeria-Used. Please review the condition carefully before purchasing. Images are representative of the product condition and may vary slightly from the actual item. All sales are final.`
   },
   {
     title: 'Limitation of Liability',
