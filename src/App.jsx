@@ -8,6 +8,8 @@ import CartPage from './pages/CartPage'
 import AdminPage from './pages/AdminPage'
 import LoginPage from './pages/LoginPage'
 import AccountPage from './pages/AccountPage'
+import TermsPage from './pages/TermsPage'
+import PrivacyPage from './pages/PrivacyPage'
 
 export default function App() {
   return (
@@ -22,6 +24,8 @@ export default function App() {
             <Route path="/admin" element={<AdminPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/account" element={<AccountPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
           </Routes>
         </CartProvider>
       </NotificationProvider>
