@@ -289,6 +289,13 @@ export default function CartPage() {
       } else {
         window.location.href = waUrl
       }
+
+      // On Android, the OS's "Open with WhatsApp" chooser takes a beat to
+      // appear after the redirect starts. Swapping our own UI to the
+      // confirmation screen immediately made it look like our screen
+      // popped up before the native picker did. A short pause lets that
+      // native UI show up first.
+      await new Promise(resolve => setTimeout(resolve, 600))
       setStep('whatsapp')
     } catch (err) {
       if (waWindow) waWindow.close()
