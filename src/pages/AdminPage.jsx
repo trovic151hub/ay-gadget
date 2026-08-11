@@ -412,7 +412,7 @@ export default function AdminPage() {
       {/* Mobile backdrop */}
       {mobileNavOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden touch-none"
           onClick={() => setMobileNavOpen(false)}
         />
       )}
@@ -1247,7 +1247,7 @@ function ConfirmModal({ message, onConfirm, onCancel, confirming }) {
   useScrollLock(true)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md transition-opacity" onClick={onCancel} />
+      <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md transition-opacity touch-none" onClick={onCancel} />
       <div className="relative bg-surface-900 border border-surface-700 rounded-[32px] w-full max-w-sm shadow-2xl z-10 animate-slide-in">
         <div className="p-8 text-center">
           <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-5">
@@ -1281,7 +1281,7 @@ function FormModal({ title, onClose, onSave, saving, children }) {
   useScrollLock(true)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md transition-opacity" onClick={onClose} />
+      <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md transition-opacity touch-none" onClick={onClose} />
       <div className="relative bg-surface-900 border border-surface-700 rounded-[32px] w-full max-w-xl shadow-2xl z-10 max-h-[90vh] flex flex-col animate-slide-in">
         <div className="flex justify-between items-center p-8 border-b border-surface-800">
           <h3 className="font-bold text-2xl font-display text-white tracking-tight">{title}</h3>
@@ -1426,7 +1426,7 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md touch-none" onClick={onClose} />
       <div className="relative bg-surface-900 border border-surface-700 rounded-[32px] w-full max-w-2xl shadow-2xl z-10 max-h-[90vh] flex flex-col animate-slide-in overflow-hidden">
 
         {/* Header */}

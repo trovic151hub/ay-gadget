@@ -39,7 +39,7 @@ function OrderModal({ order, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm touch-none" onClick={onClose}>
       <div
         className="bg-surface-900 border border-surface-700/50 rounded-[28px] w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}

@@ -37,7 +37,7 @@ export default function MiniCart() {
       {/* Backdrop */}
       <div
         onClick={() => setCartOpen(false)}
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 touch-none"
         style={{ opacity: cartOpen ? 1 : 0, pointerEvents: cartOpen ? 'auto' : 'none' }}
       />
 
