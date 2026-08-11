@@ -13,6 +13,7 @@ const CATEGORIES = [
   { label: 'New Phones', icon: 'fa-box', desc: 'Brand new sealed phones with full manufacturer warranty.' },
   { label: 'UK-Used Phones', icon: 'fa-plane-departure', desc: 'Premium pre-owned phones imported from the UK, tested and trusted.' },
   { label: 'Nigeria-Used Phones', icon: 'fa-check-circle', desc: 'Locally used phones verified by our expert technicians.' },
+  { label: 'Video Games', icon: 'fa-gamepad', desc: 'Consoles, titles, and gaming accessories for every platform.' },
 ]
 
 const TRUST_BADGES = [
@@ -38,6 +39,7 @@ function SkeletonCard() {
 export default function HomePage() {
   const [products, setProducts] = useState([])
   const [gadgets, setGadgets] = useState([])
+  const [games, setGames] = useState([])
   const [heroSlides, setHeroSlides] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState(null)
@@ -45,13 +47,15 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [productsSnap, gadgetsSnap, heroSnap] = await Promise.all([
+        const [productsSnap, gadgetsSnap, gamesSnap, heroSnap] = await Promise.all([
           getDocs(collection(db, 'products')),
           getDocs(collection(db, 'gadgets')),
+          getDocs(collection(db, 'games')),
           getDocs(collection(db, 'hero'))
         ])
         setProducts(productsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
         setGadgets(gadgetsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+        setGames(gamesSnap.docs.map(d => ({ id: d.id, ...d.data() })))
         setHeroSlides(heroSnap.docs.map(d => ({ id: d.id, ...d.data() })))
       } catch (err) {
         console.warn('HomePage fetch error:', err.message)
@@ -71,6 +75,57 @@ export default function HomePage() {
       <main className="flex-1 pt-20">
         <HeroSlider slides={heroSlides} />
 
+        {/* Brand Story */}
+        <section className="px-6 pt-14 pb-10 max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block py-1 px-3 rounded-full bg-brand-500/15 text-brand-400 text-xs font-bold uppercase tracking-widest mb-4 border border-brand-500/20">
+              Our Philosophy
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold font-display text-white tracking-tight">
+              Why AY&apos;s Store?
+            </h2>
+            <p className="mt-5 text-surface-400 text-sm max-w-xl mx-auto leading-relaxed">
+              We built AY&apos;s Store in Lagos for people who want a phone or gadget they can actually
+              trust — no guessing about condition, no faceless checkout. Every device is graded and
+              tested before it&apos;s listed, whether it&apos;s brand new, imported from the UK, or
+              locally sourced, and every order is confirmed by a real person before anything ships.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-7 text-center hover:border-brand-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-4">
+                <i className="fas fa-award text-brand-500 text-sm" />
+              </div>
+              <h3 className="font-bold font-display text-white text-lg mb-2">Verified Condition</h3>
+              <p className="text-surface-400 text-sm leading-relaxed">
+                Every phone and gadget is graded and tested before listing, with its condition
+                clearly marked — New, UK-Used, or Nigeria-Used.
+              </p>
+            </div>
+            <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-7 text-center hover:border-brand-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-4">
+                <i className="fab fa-whatsapp text-brand-500 text-sm" />
+              </div>
+              <h3 className="font-bold font-display text-white text-lg mb-2">Real Human Support</h3>
+              <p className="text-surface-400 text-sm leading-relaxed">
+                Every order is confirmed directly with our team on WhatsApp — a real conversation,
+                not a faceless checkout.
+              </p>
+            </div>
+            <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-7 text-center hover:border-brand-500/30 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-4">
+                <i className="fas fa-location-dot text-brand-500 text-sm" />
+              </div>
+              <h3 className="font-bold font-display text-white text-lg mb-2">Built for Lagos</h3>
+              <p className="text-surface-400 text-sm leading-relaxed">
+                Local delivery priced by LGA, plus trusted imported and locally-sourced stock —
+                built around how people actually shop here.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Shop by Category */}
         <section className="max-w-7xl mx-auto px-6 py-20">
           <div className="text-center mb-12">
@@ -83,7 +138,7 @@ export default function HomePage() {
             <p className="text-surface-400 mt-3 text-base">Find exactly what you&apos;re looking for</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
             {CATEGORIES.map((cat, i) => (
               <div
                 key={i}
@@ -118,7 +173,7 @@ export default function HomePage() {
                 <p className="text-surface-400 mt-1 text-base">Top picks curated for you</p>
               </div>
               <a
-                href="/products"
+                href="/products?tab=products"
                 className="group inline-flex items-center gap-2 text-brand-500 font-semibold hover:text-brand-400 transition-colors text-sm"
               >
                 View All <i className="fas fa-arrow-right group-hover:translate-x-1 transition-transform" />
@@ -169,7 +224,7 @@ export default function HomePage() {
                 <p className="text-surface-400 mt-1 text-base">Elevate your everyday experience</p>
               </div>
               <a
-                href="/products"
+                href="/products?tab=gadgets"
                 className="group inline-flex items-center gap-2 text-brand-500 font-semibold hover:text-brand-400 transition-colors text-sm"
               >
                 Explore All <i className="fas fa-arrow-right group-hover:translate-x-1 transition-transform" />
@@ -188,6 +243,57 @@ export default function HomePage() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
                 {gadgets.slice(0, 4).map((p, i) => (
+                  <div
+                    key={p.id}
+                    className="animate-fade-up"
+                    style={{ animationDelay: `${i * 40}ms` }}
+                  >
+                    <ProductCard product={p} onClick={() => setSelectedProduct(p)} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Divider */}
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="border-t border-surface-800" />
+        </div>
+
+        {/* Video Games & Accessories */}
+        <section className="py-20">
+          <div className="max-w-[88rem] mx-auto px-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+              <div>
+                <span className="inline-block py-1 px-3 rounded-full bg-brand-500/15 text-brand-400 text-xs font-bold uppercase tracking-widest mb-3 border border-brand-500/20">
+                  Games
+                </span>
+                <h2 className="text-3xl md:text-4xl font-bold font-display text-white tracking-tight">
+                  Video Games &amp; Accessories
+                </h2>
+                <p className="text-surface-400 mt-1 text-base">Consoles, titles, and gear for every platform</p>
+              </div>
+              <a
+                href="/products?tab=games"
+                className="group inline-flex items-center gap-2 text-brand-500 font-semibold hover:text-brand-400 transition-colors text-sm"
+              >
+                Explore All <i className="fas fa-arrow-right group-hover:translate-x-1 transition-transform" />
+              </a>
+            </div>
+
+            {loading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+                {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+              </div>
+            ) : games.length === 0 ? (
+              <div className="text-center py-20 text-surface-500">
+                <i className="fas fa-gamepad text-4xl mb-4 block opacity-30" />
+                <p className="text-base">No games listed yet. Add some from the admin panel.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+                {games.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
                     className="animate-fade-up"

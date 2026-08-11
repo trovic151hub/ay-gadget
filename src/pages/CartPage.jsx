@@ -21,6 +21,11 @@ const STEP_LABELS = { cart: 'Shopping Cart', checkout: 'Secure Checkout', comple
 const ADMIN_WHATSAPP = '2349053380773'
 const ADMIN_EMAIL = 'victoradeyimika0@gmail.com'
 
+// Toggle checkout flow without touching the Paystack code below: true sends
+// customers to WhatsApp to finish payment with a human; false re-enables the
+// in-app Paystack popup.
+const CHECKOUT_VIA_WHATSAPP = true
+
 function CustomSelect({ value, onChange, options, placeholder = 'Select...' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -79,6 +84,7 @@ export default function CartPage() {
   const [paymentMethod, setPaymentMethod] = useState(null)
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [outsideLagos, setOutsideLagos] = useState(false)
+  const [placingOrder, setPlacingOrder] = useState(false)
 
   useEffect(() => {
     if (localStorage.getItem('gotoCheckout') === 'true') {
@@ -88,6 +94,10 @@ export default function CartPage() {
   }, [cartItems])
 
   useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [step])
+
+  useEffect(() => {
     if (showLocationModal) {
       document.body.style.overflow = 'hidden'
     } else {
@@ -95,6 +105,41 @@ export default function CartPage() {
     }
     return () => { document.body.style.overflow = '' }
   }, [showLocationModal])
+
+  // wa.me sends the user (or their WhatsApp app) away from the tab. Only
+  // treat the order as "done" once they've actually left and come back —
+  // covers both mobile app-switching (visibilitychange) and desktop
+  // opening WhatsApp in another tab (blur/focus).
+  useEffect(() => {
+    if (step !== 'whatsapp') return
+    let hasLeft = false
+
+    function markLeft() {
+      if (document.hidden) hasLeft = true
+    }
+    function markLeftOnBlur() {
+      hasLeft = true
+    }
+    function handleReturn() {
+      if (hasLeft && !document.hidden) finishAfterWhatsApp()
+    }
+
+    document.addEventListener('visibilitychange', markLeft)
+    document.addEventListener('visibilitychange', handleReturn)
+    window.addEventListener('blur', markLeftOnBlur)
+    window.addEventListener('focus', handleReturn)
+    return () => {
+      document.removeEventListener('visibilitychange', markLeft)
+      document.removeEventListener('visibilitychange', handleReturn)
+      window.removeEventListener('blur', markLeftOnBlur)
+      window.removeEventListener('focus', handleReturn)
+    }
+  }, [step])
+
+  async function finishAfterWhatsApp() {
+    await clearCart()
+    setStep('complete')
+  }
 
   function handleProceedToCheckout() {
     if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }
@@ -145,6 +190,11 @@ export default function CartPage() {
       ref: 'PS-' + Date.now(),
       metadata: { name: `${form.firstName} ${form.lastName}`, phone: `${form.areaCode}${form.phone}` },
       callback: function(response) {
+        setPlacingOrder(true)
+        // No server-side verification without a Cloud Function (needs Blaze), so
+        // this lands as 'pending' just like the WhatsApp flow — the Paystack
+        // reference is kept for an admin to manually confirm on the Paystack
+        // dashboard before marking the order 'paid'.
         addDoc(collection(db, 'orders'), {
           guestId,
           items: cartItems,
@@ -157,13 +207,18 @@ export default function CartPage() {
           subtotal: cartSubtotal,
           shippingFee,
           total,
-          reference: response.reference,
-          status: 'paid',
+          reference: null,
+          paystackReference: response.reference,
+          status: 'pending',
           createdAt: serverTimestamp()
         }).then(function() {
           return clearCart()
         }).then(function() {
           setStep('complete')
+        }).catch(function(err) {
+          showNotification(err.message || `Could not confirm your order. Please contact support with your payment reference: ${response.reference}`, 'error')
+        }).finally(function() {
+          setPlacingOrder(false)
         })
       },
       onClose: () => showNotification('Payment window closed', 'info')
@@ -171,8 +226,89 @@ export default function CartPage() {
     handler.openIframe()
   }
 
+  async function handleWhatsAppCheckout() {
+    if (!addressLocked) { showNotification('Please confirm shipping address first', 'warning'); return }
+    if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }
+
+    setPlacingOrder(true)
+    try {
+      const orderRef = await addDoc(collection(db, 'orders'), {
+        guestId,
+        items: cartItems,
+        address: {
+          email: form.email,
+          name: `${form.firstName} ${form.lastName}`,
+          phone: `${form.areaCode}${form.phone}`,
+          full: `${form.street}, ${form.lga}, ${form.state}`
+        },
+        subtotal: cartSubtotal,
+        shippingFee,
+        total,
+        reference: null,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      })
+
+      const itemsText = cartItems.map(i => `- ${i.name} (x${i.quantity}) — ₦${(i.price * i.quantity).toLocaleString()}`).join('\n')
+      const message = [
+        `*🛒 New Order*`,
+        `*🧾 Order Ref:* ${orderRef.id.slice(-6).toUpperCase()}`,
+        '',
+        `*👤 Customer Details*`,
+        `- Name: ${form.firstName} ${form.lastName}`,
+        `- Phone: ${form.areaCode}${form.phone}`,
+        `- Email: ${form.email}`,
+        '',
+        `*📍 Delivery Info*`,
+        `- State: ${form.state}`,
+        `- LGA: ${form.lga}`,
+        `- Address: ${form.street}`,
+        '',
+        `*📦 Order Items*`,
+        itemsText,
+        '',
+        `*💰 Payment Summary*`,
+        `- Subtotal: ₦${cartSubtotal.toLocaleString()}`,
+        `- Delivery Fee: ${shippingFee > 0 ? `₦${shippingFee.toLocaleString()}` : 'To be confirmed'}`,
+        `- Total: ₦${total.toLocaleString()}`,
+        '',
+        `I'd like to complete payment and delivery for this order. Thank you! 🙏`
+      ].join('\n')
+
+      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank')
+      setStep('whatsapp')
+    } catch (err) {
+      showNotification(err.message || 'Could not start your order. Please try again.', 'error')
+    } finally {
+      setPlacingOrder(false)
+    }
+  }
+
   const inputClass = "w-full h-14 px-5 rounded-2xl bg-surface-800 border border-surface-700/60 text-white font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 transition-all placeholder:font-normal placeholder:text-surface-500 [&_option]:bg-surface-800 [&_option]:text-white"
   const labelClass = "block text-sm font-bold text-surface-400 mb-2"
+
+  if (step === 'whatsapp') {
+    return (
+      <div className="min-h-screen bg-surface-950 flex items-center justify-center p-4">
+        <NotificationContainer />
+        <div className="text-center bg-surface-900 border border-surface-700/50 p-8 md:p-12 rounded-[32px] max-w-lg mx-auto w-full animate-fade-up">
+          <div className="w-24 h-24 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
+            <i className="fab fa-whatsapp text-green-400 text-4xl" />
+          </div>
+          <h2 className="text-3xl font-bold font-display text-white tracking-tight mb-4">Continue on WhatsApp</h2>
+          <p className="text-surface-400 text-lg mb-10 max-w-sm mx-auto leading-relaxed">
+            We've opened WhatsApp with your order details. Come back here once you're done chatting with our team to see your confirmation.
+          </p>
+          <button
+            onClick={finishAfterWhatsApp}
+            className="bg-brand-500 hover:bg-brand-400 text-white px-10 py-4 rounded-full font-bold transition-colors shadow-[0_0_24px_rgba(255,98,0,0.3)]"
+          >
+            I'm done — Continue
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (step === 'complete') {
     return (
@@ -182,9 +318,13 @@ export default function CartPage() {
           <div className="w-24 h-24 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
             <i className="fas fa-check text-green-400 text-4xl" />
           </div>
-          <h2 className="text-3xl font-bold font-display text-white tracking-tight mb-4">Order Successful!</h2>
+          <h2 className="text-3xl font-bold font-display text-white tracking-tight mb-4">
+            {CHECKOUT_VIA_WHATSAPP ? 'Order Received!' : 'Order Successful!'}
+          </h2>
           <p className="text-surface-400 text-lg mb-10 max-w-sm mx-auto leading-relaxed">
-            Thank you for shopping with AY's Store. We've received your order and will process it shortly.
+            {CHECKOUT_VIA_WHATSAPP
+              ? "Thank you for shopping with AY's Store. We've saved your order — finish up with our team on WhatsApp to confirm payment and delivery."
+              : "Thank you for shopping with AY's Store. We've received your order and will process it shortly."}
           </p>
           <Link
             to="/"
@@ -457,21 +597,35 @@ export default function CartPage() {
                   </div>
 
                   {/* Payment */}
-                  <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8">
-                    <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">3. Payment method</h3>
-                    <div
-                      onClick={() => setPaymentMethod('Paystack')}
-                      className={`p-5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-4 ${paymentMethod === 'Paystack' ? 'border-brand-500/60 bg-brand-500/[0.06]' : 'border-surface-700/50 bg-surface-800 hover:border-surface-600'}`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${paymentMethod === 'Paystack' ? 'border-brand-500' : 'border-surface-600'}`}>
-                          {paymentMethod === 'Paystack' && <div className="w-2.5 h-2.5 bg-brand-500 rounded-full" />}
+                  {CHECKOUT_VIA_WHATSAPP ? (
+                    <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8">
+                      <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">3. Finish on WhatsApp</h3>
+                      <div className="p-5 rounded-2xl border border-green-500/20 bg-green-500/[0.06] flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-full bg-green-500/15 flex items-center justify-center shrink-0">
+                          <i className="fab fa-whatsapp text-green-400 text-xl" />
                         </div>
-                        <span className="font-bold text-white">Pay with Card or Transfer</span>
+                        <p className="text-surface-300 text-sm leading-relaxed">
+                          We'll open WhatsApp with your order details filled in. Our team will confirm payment and delivery with you directly there.
+                        </p>
                       </div>
-                      <img className="h-7 shrink-0" src="https://cdn.brandfetch.io/idM5mrwtDs/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX" alt="Paystack" />
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-5 md:p-8">
+                      <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">3. Payment method</h3>
+                      <div
+                        onClick={() => setPaymentMethod('Paystack')}
+                        className={`p-5 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-4 ${paymentMethod === 'Paystack' ? 'border-brand-500/60 bg-brand-500/[0.06]' : 'border-surface-700/50 bg-surface-800 hover:border-surface-600'}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${paymentMethod === 'Paystack' ? 'border-brand-500' : 'border-surface-600'}`}>
+                            {paymentMethod === 'Paystack' && <div className="w-2.5 h-2.5 bg-brand-500 rounded-full" />}
+                          </div>
+                          <span className="font-bold text-white">Pay with Card or Transfer</span>
+                        </div>
+                        <img className="h-7 shrink-0" src="https://cdn.brandfetch.io/idM5mrwtDs/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX" alt="Paystack" />
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -515,17 +669,41 @@ export default function CartPage() {
                   <span className="font-bold font-display text-3xl tracking-tight text-white">₦{total.toLocaleString()}</span>
                 </div>
 
-                <button
-                  onClick={handlePlaceOrder}
-                  disabled={!addressLocked || !paymentMethod}
-                  className={`mt-6 w-full py-4 rounded-2xl font-bold text-base transition-all ${addressLocked && paymentMethod ? 'bg-brand-500 hover:bg-brand-400 text-white shadow-[0_0_24px_rgba(255,98,0,0.3)] hover:shadow-[0_0_36px_rgba(255,98,0,0.45)]' : 'bg-surface-800 text-surface-600 cursor-not-allowed border border-surface-700/50'}`}
-                >
-                  Pay ₦{total.toLocaleString()}
-                </button>
+                {CHECKOUT_VIA_WHATSAPP ? (
+                  <button
+                    onClick={handleWhatsAppCheckout}
+                    disabled={!addressLocked || placingOrder}
+                    className={`mt-6 w-full py-4 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2 ${addressLocked ? 'bg-green-500 hover:bg-green-400 text-white shadow-[0_0_24px_rgba(34,197,94,0.3)] hover:shadow-[0_0_36px_rgba(34,197,94,0.45)]' : 'bg-surface-800 text-surface-600 cursor-not-allowed border border-surface-700/50'}`}
+                  >
+                    {placingOrder ? (
+                      <>
+                        <i className="fas fa-circle-notch fa-spin" /> Starting order...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fab fa-whatsapp" /> Continue on WhatsApp
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handlePlaceOrder}
+                    disabled={!addressLocked || !paymentMethod || placingOrder}
+                    className={`mt-6 w-full py-4 rounded-2xl font-bold text-base transition-all ${addressLocked && paymentMethod ? 'bg-brand-500 hover:bg-brand-400 text-white shadow-[0_0_24px_rgba(255,98,0,0.3)] hover:shadow-[0_0_36px_rgba(255,98,0,0.45)]' : 'bg-surface-800 text-surface-600 cursor-not-allowed border border-surface-700/50'}`}
+                  >
+                    {placingOrder ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <i className="fas fa-circle-notch fa-spin" /> Confirming payment...
+                      </span>
+                    ) : (
+                      `Pay ₦${total.toLocaleString()}`
+                    )}
+                  </button>
+                )}
 
                 <div className="mt-4 flex items-center justify-center gap-2 text-surface-600 text-xs">
-                  <i className="fas fa-lock" />
-                  <span>Payments are secure and encrypted</span>
+                  <i className={CHECKOUT_VIA_WHATSAPP ? 'fab fa-whatsapp' : 'fas fa-lock'} />
+                  <span>{CHECKOUT_VIA_WHATSAPP ? "We'll finalize payment with you on WhatsApp" : 'Payments are secure and encrypted'}</span>
                 </div>
               </div>
             </div>

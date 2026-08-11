@@ -22,24 +22,46 @@ function SkeletonCard() {
   )
 }
 
+const TABS = [
+  { label: 'All Products', value: 'all' },
+  { label: 'Smartphones', value: 'products' },
+  { label: 'Accessories', value: 'gadgets' },
+  { label: 'Games', value: 'games' },
+]
+
+const TAB_META = {
+  all: { title: 'All Products', crumb: 'All Products', desc: 'Our full catalog of phones, gadgets, games, and accessories — all verified.' },
+  products: { title: 'Smartphones', crumb: 'Smartphones', desc: 'New, UK-used, and Nigeria-used phones — all verified.' },
+  gadgets: { title: 'Gadgets & Accessories', crumb: 'Accessories', desc: 'Accessories and gadgets to elevate your everyday experience.' },
+  games: { title: 'Video Games & Accessories', crumb: 'Games', desc: 'Consoles, titles, and gaming accessories — all verified.' },
+}
+
+const CONDITIONS = ['New', 'UK-Used', 'Nigeria-Used']
+const PAGE_SIZE = 15
+
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState([])
   const [gadgets, setGadgets] = useState([])
+  const [games, setGames] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'products')
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all')
+  const [conditionFilter, setConditionFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [selectedProduct, setSelectedProduct] = useState(null)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [productsSnap, gadgetsSnap] = await Promise.all([
+        const [productsSnap, gadgetsSnap, gamesSnap] = await Promise.all([
           getDocs(collection(db, 'products')),
-          getDocs(collection(db, 'gadgets'))
+          getDocs(collection(db, 'gadgets')),
+          getDocs(collection(db, 'games'))
         ])
-        setProducts(productsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
-        setGadgets(gadgetsSnap.docs.map(d => ({ id: d.id, ...d.data() })))
+        setProducts(productsSnap.docs.map(d => ({ id: d.id, ...d.data(), _tab: 'products' })))
+        setGadgets(gadgetsSnap.docs.map(d => ({ id: d.id, ...d.data(), _tab: 'gadgets' })))
+        setGames(gamesSnap.docs.map(d => ({ id: d.id, ...d.data(), _tab: 'games' })))
       } catch (err) {
         console.warn('ProductsPage fetch error:', err.message)
       } finally {
@@ -51,20 +73,32 @@ export default function ProductsPage() {
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab === 'gadgets') setActiveTab('gadgets')
-    else setActiveTab('products')
+    if (tab === 'gadgets' || tab === 'products' || tab === 'games') setActiveTab(tab)
+    else setActiveTab('all')
   }, [searchParams])
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [activeTab])
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [activeTab, conditionFilter, search])
 
   function handleTabChange(tab) {
     setActiveTab(tab)
     setSearch('')
-    setSearchParams({ tab })
+    setSearchParams(tab === 'all' ? {} : { tab })
   }
 
-  const data = activeTab === 'products' ? products : gadgets
-  const filtered = search
-    ? data.filter(p => p.name?.toLowerCase().includes(search.toLowerCase()) || p.brand?.toLowerCase().includes(search.toLowerCase()))
-    : data
+  const data = activeTab === 'products' ? products
+    : activeTab === 'gadgets' ? gadgets
+    : activeTab === 'games' ? games
+    : [...products, ...gadgets, ...games]
+  const filtered = data
+    .filter(p => conditionFilter === 'all' || p.condition === conditionFilter)
+    .filter(p => !search || p.name?.toLowerCase().includes(search.toLowerCase()) || p.brand?.toLowerCase().includes(search.toLowerCase()))
+  const visible = filtered.slice(0, visibleCount)
 
   return (
     <div className="min-h-screen bg-surface-950 flex flex-col font-sans">
@@ -78,12 +112,10 @@ export default function ProductsPage() {
           Collection
         </span>
         <h1 className="text-4xl md:text-5xl font-bold font-display text-white tracking-tight mb-3">
-          {activeTab === 'products' ? 'Smartphones' : 'Gadgets & Accessories'}
+          {TAB_META[activeTab].title}
         </h1>
         <p className="text-surface-400 text-base max-w-xl mx-auto">
-          {activeTab === 'products'
-            ? 'New, UK-used, and Nigeria-used phones — all verified.'
-            : 'Accessories and gadgets to elevate your everyday experience.'}
+          {TAB_META[activeTab].desc}
         </p>
       </div>
 
@@ -96,18 +128,15 @@ export default function ProductsPage() {
           </a>
           <i className="fas fa-chevron-right text-[10px]" />
           <span className="text-surface-300 font-semibold">
-            {activeTab === 'products' ? 'Smartphones' : 'Accessories'}
+            {TAB_META[activeTab].crumb}
           </span>
         </nav>
 
         {/* Tabs + Search */}
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-10">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
           {/* Tabs */}
           <div className="flex gap-1 p-1 bg-surface-900 border border-surface-700/50 rounded-2xl">
-            {[
-              { label: 'Smartphones', value: 'products' },
-              { label: 'Accessories', value: 'gadgets' },
-            ].map(tab => (
+            {TABS.map(tab => (
               <button
                 key={tab.value}
                 onClick={() => handleTabChange(tab.value)}
@@ -142,6 +171,23 @@ export default function ProductsPage() {
           </div>
         </div>
 
+        {/* Condition filter */}
+        <div className="flex flex-wrap gap-2 mb-10">
+          {['all', ...CONDITIONS].map(c => (
+            <button
+              key={c}
+              onClick={() => setConditionFilter(c)}
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all duration-200 ${
+                conditionFilter === c
+                  ? 'bg-brand-500 border-brand-500 text-white'
+                  : 'border-surface-700/50 text-surface-400 hover:text-white hover:border-surface-600'
+              }`}
+            >
+              {c === 'all' ? 'All Conditions' : c}
+            </button>
+          ))}
+        </div>
+
         {/* Grid */}
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
@@ -153,30 +199,48 @@ export default function ProductsPage() {
               <i className="fas fa-search text-2xl text-surface-500" />
             </div>
             <h3 className="text-xl font-bold font-display text-white mb-2">
-              {search ? 'No results found' : 'Nothing here yet'}
+              {search || conditionFilter !== 'all' ? 'No results found' : 'Nothing here yet'}
             </h3>
             <p className="text-surface-500 max-w-sm text-sm">
               {search
                 ? `We couldn't find anything matching "${search}". Try a different term.`
+                : conditionFilter !== 'all'
+                ? `No ${conditionFilter} items in this category yet.`
                 : 'Products will appear here once added from the admin panel.'}
             </p>
-            {search && (
+            {(search || conditionFilter !== 'all') && (
               <button
-                onClick={() => setSearch('')}
+                onClick={() => { setSearch(''); setConditionFilter('all') }}
                 className="mt-5 text-brand-500 font-semibold text-sm hover:text-brand-400 transition-colors"
               >
-                Clear search
+                Clear filters
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
-            {filtered.map((p, i) => (
-              <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${(i % 10) * 40}ms` }}>
-                <ProductCard product={p} onClick={() => setSelectedProduct(p)} />
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+              {visible.map((p, i) => (
+                <div key={`${p._tab}-${p.id}`} className="animate-fade-up" style={{ animationDelay: `${(i % 10) * 40}ms` }}>
+                  <ProductCard product={p} onClick={() => setSelectedProduct(p)} />
+                </div>
+              ))}
+            </div>
+
+            {filtered.length > visible.length && (
+              <div className="flex flex-col items-center gap-3 pt-10">
+                <p className="text-surface-500 text-xs font-medium">
+                  Showing {visible.length} of {filtered.length}
+                </p>
+                <button
+                  onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                  className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-900 border border-surface-700/50 text-white font-bold text-sm hover:bg-surface-800 hover:border-surface-600 transition-all"
+                >
+                  <i className="fas fa-chevron-down" /> See More
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </main>
 

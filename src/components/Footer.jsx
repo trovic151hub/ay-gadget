@@ -22,6 +22,7 @@ export default function Footer() {
             <div className="flex flex-col gap-3">
               <Link to="/products?tab=products" className="hover:text-brand-500 transition-colors">Smartphones</Link>
               <Link to="/products?tab=gadgets" className="hover:text-brand-500 transition-colors">Gadgets</Link>
+              <Link to="/products?tab=games" className="hover:text-brand-500 transition-colors">Games</Link>
               <Link to="/products" className="hover:text-brand-500 transition-colors">All Products</Link>
               <Link to="/account" className="hover:text-brand-500 transition-colors">Track Order</Link>
             </div>
@@ -30,9 +31,9 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-sm">Legal</h4>
             <div className="flex flex-col gap-3">
-              <a href="#" className="hover:text-brand-500 transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-brand-500 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-brand-500 transition-colors">Return Policy</a>
+              <Link to="/terms" className="hover:text-brand-500 transition-colors">Terms of Service</Link>
+              <Link to="/privacy" className="hover:text-brand-500 transition-colors">Privacy Policy</Link>
+              <Link to="/returns" className="hover:text-brand-500 transition-colors">Return Policy</Link>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ const CartContext = createContext(null)
 function getGuestId() {
   let guestId = localStorage.getItem('guestId')
   if (!guestId) {
-    guestId = 'guest-' + Date.now() + '-' + Math.floor(Math.random() * 1000)
+    guestId = 'guest-' + crypto.randomUUID()
     localStorage.setItem('guestId', guestId)
   }
   return guestId
@@ -61,7 +61,8 @@ export function CartProvider({ children }) {
         name: product.name,
         price: Number(product.price),
         quantity: 1,
-        image: product.images?.[0] || ''
+        image: product.images?.[0] || '',
+        condition: product.condition || 'New'
       })
     }
     await saveCart(cart)

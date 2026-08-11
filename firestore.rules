@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Admins
+    // NOTE: self-create (request.auth.uid == adminId) is intentionally NOT allowed.
+    // That branch is only needed once, to bootstrap the very first admin account.
+    // If you ever need to bootstrap again from zero, temporarily add it back via
+    // the Firebase console, create the account, then remove it again.
+    match /admins/{adminId} {
+      allow create: if isAdmin();
+      allow read: if isAdmin();
+      allow update: if request.auth != null && request.auth.uid == adminId;
+      allow delete: if isAdmin();
+    }
+
+    // Products
+    match /products/{productId} {
+      allow read: if true; // public
+      allow write: if isAdmin();
+    }
+
+    // Gadgets
+    match /gadgets/{gadgetId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Games & Accessories
+    match /games/{gameId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Hero
+    match /hero/{heroId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Orders
+    // No Cloud Functions are deployed for this project (Blaze plan not in
+    // use), so orders are written directly by clients and read back using
+    // the guestId stored in this browser's localStorage (see
+    // CartContext.jsx) as an unguessable capability token — nobody can look
+    // up a stranger's orders without already having their guestId. This is
+    // NOT the same as fully locking the collection down: a script with no
+    // filter at all could still dump every order, since rules can't require
+    // a query to be filtered by guestId. If that residual risk ever
+    // matters, the proper fix is a Cloud Function gating `list` (needs
+    // Blaze).
+    //
+    // Regardless of checkout flow (WhatsApp or Paystack), a client can only
+    // ever create an order as 'pending' with no payment reference — only an
+    // admin (via the dashboard, see updateOrderStatus) can mark an order
+    // 'paid'. If Paystack checkout is ever re-enabled without a Cloud
+    // Function to verify it server-side, it should also create a 'pending'
+    // order and have an admin confirm the payment before flipping it.
+    match /orders/{orderId} {
+      allow read: if true;
+      allow create: if request.resource.data.status == 'pending'
+                    && request.resource.data.reference == null
+                    && request.resource.data.guestId is string
+                    && request.resource.data.guestId.matches("guest-.*")
+                    && request.resource.data.items is list
+                    && request.resource.data.items.size() > 0
+                    && request.resource.data.items.size() <= 50
+                    && request.resource.data.subtotal is number
+                    && request.resource.data.subtotal >= 0
+                    && request.resource.data.shippingFee is number
+                    && request.resource.data.shippingFee >= 0
+                    && request.resource.data.total is number
+                    && request.resource.data.total == request.resource.data.subtotal + request.resource.data.shippingFee
+                    && request.resource.data.address is map
+                    && request.resource.data.address.email is string
+                    && request.resource.data.address.name is string
+                    && request.resource.data.address.phone is string
+                    && request.resource.data.address.full is string;
+      allow update, delete: if isAdmin();
+    }
+
+    // Carts — guests only. guestId must be an unguessable token (see
+    // CartContext.jsx, which uses crypto.randomUUID()) for this ownership
+    // check to mean anything.
+    match /carts/{cartId} {
+      allow read: if resource.data.guestId.matches("guest-.*");
+      allow create: if request.resource.data.guestId.matches("guest-.*");
+      allow update, delete: if request.resource.data.guestId == resource.data.guestId;
+    }
+  }
+}

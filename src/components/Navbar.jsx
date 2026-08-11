@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { label: 'Phones', to: '/products?tab=products' },
   { label: 'All Products', to: '/products' },
   { label: 'Gadgets', to: '/products?tab=gadgets' },
+  { label: 'Games', to: '/products?tab=games' },
 ]
 
 function isActive(link, location) {

@@ -1,6 +1,12 @@
 import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
 
+const CONDITION_STYLES = {
+  'New': 'bg-green-500/15 text-green-400 border-green-500/20',
+  'UK-Used': 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+  'Nigeria-Used': 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+}
+
 export default function ProductCard({ product, onClick }) {
   const { addToCart } = useCart()
   const { showNotification } = useNotification()
@@ -40,6 +46,15 @@ export default function ProductCard({ product, onClick }) {
           <div className="absolute top-3 left-3 z-20">
             <span className="bg-surface-900/80 backdrop-blur-sm text-surface-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-surface-700/50">
               {product.brand}
+            </span>
+          </div>
+        )}
+
+        {/* Condition badge */}
+        {product.condition && (
+          <div className="absolute top-3 right-3 z-20">
+            <span className={`backdrop-blur-sm text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border ${CONDITION_STYLES[product.condition] || 'bg-surface-900/80 text-surface-300 border-surface-700/50'}`}>
+              {product.condition}
             </span>
           </div>
         )}

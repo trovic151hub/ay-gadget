@@ -7,7 +7,7 @@ import {
 import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
 
-const SECTIONS = ['products', 'gadgets', 'hero', 'orders', 'settings']
+const SECTIONS = ['products', 'gadgets', 'games', 'hero', 'orders', 'settings']
 
 const STATUS_CONFIG = {
   paid:       { label: 'Paid',       color: 'text-white',        bg: 'bg-surface-700',       border: 'border-surface-600' },
@@ -18,35 +18,59 @@ const STATUS_CONFIG = {
   cancelled:  { label: 'Cancelled',  color: 'text-red-400',      bg: 'bg-red-500/15',        border: 'border-red-500/20' },
 }
 
-const emptyProduct = { name: '', brand: '', description: '', price: '', images: [''] }
+const CONDITIONS = ['New', 'UK-Used', 'Nigeria-Used']
+const emptyProduct = { name: '', brand: '', condition: 'New', description: '', price: '', images: [''] }
 const emptyHero = { headline: '', subheadline: '', cta_primary_text: '', cta_secondary_text: '', type: 'image', url: '', active: true }
+
+// An order still sitting at 'pending' this long probably means the customer
+// went quiet mid-checkout or got forgotten — worth a nudge, unlike a fresh
+// pending order that's just waiting on a normal WhatsApp back-and-forth.
+const FOLLOWUP_THRESHOLD_MS = 3 * 60 * 60 * 1000
+function needsFollowUp(order) {
+  if ((order.status || 'pending') !== 'pending') return false
+  const created = order.createdAt?.toDate ? order.createdAt.toDate() : (order.createdAt ? new Date(order.createdAt) : null)
+  if (!created) return false
+  return Date.now() - created.getTime() > FOLLOWUP_THRESHOLD_MS
+}
 
 export default function AdminPage() {
   const navigate = useNavigate()
   const [user, setUser] = useState(null)
-  const [section, setSection] = useState('products')
+  const [section, setSection] = useState(() => {
+    const saved = localStorage.getItem('adminSection')
+    return SECTIONS.includes(saved) ? saved : 'products'
+  })
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const contentRef = useRef(null)
   const [products, setProducts] = useState([])
   const [gadgets, setGadgets] = useState([])
+  const [games, setGames] = useState([])
   const [heroSlides, setHeroSlides] = useState([])
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [productForm, setProductForm] = useState(emptyProduct)
   const [gadgetForm, setGadgetForm] = useState(emptyProduct)
+  const [gameForm, setGameForm] = useState(emptyProduct)
   const [heroForm, setHeroForm] = useState(emptyHero)
   const [editingProductId, setEditingProductId] = useState(null)
   const [editingGadgetId, setEditingGadgetId] = useState(null)
+  const [editingGameId, setEditingGameId] = useState(null)
   const [editingHeroId, setEditingHeroId] = useState(null)
   const [productModal, setProductModal] = useState(false)
   const [gadgetModal, setGadgetModal] = useState(false)
+  const [gameModal, setGameModal] = useState(false)
   const [heroModal, setHeroModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [viewingItem, setViewingItem] = useState(null)
+  const [confirmModal, setConfirmModal] = useState(null)
+  const [confirming, setConfirming] = useState(false)
   const [viewingCollection, setViewingCollection] = useState('products')
   const [productSearch, setProductSearch] = useState('')
   const [gadgetSearch, setGadgetSearch] = useState('')
+  const [gameSearch, setGameSearch] = useState('')
   const [productLimit, setProductLimit] = useState(9)
   const [gadgetLimit, setGadgetLimit] = useState(9)
+  const [gameLimit, setGameLimit] = useState(9)
   const [orderSearch, setOrderSearch] = useState('')
   const [orderStatusFilter, setOrderStatusFilter] = useState('all')
   const [orderLimit, setOrderLimit] = useState(10)
@@ -77,13 +101,22 @@ export default function AdminPage() {
   }, [navigate])
 
   useEffect(() => {
+    localStorage.setItem('adminSection', section)
+    contentRef.current?.scrollTo(0, 0)
+  }, [section])
+
+  useEffect(() => {
     fetchAll()
+  }, [])
+
+  useEffect(() => {
+    if (!user) return
     const ordersQuery = query(collection(db, 'orders'), orderBy('createdAt', 'desc'))
     unsubOrdersRef.current = onSnapshot(ordersQuery, snap => {
       setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })))
     }, err => console.warn('Orders listener error:', err.message))
     return () => { if (unsubOrdersRef.current) unsubOrdersRef.current() }
-  }, [])
+  }, [user])
 
   async function fetchAdmins() {
     try {
@@ -95,8 +128,8 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (section === 'settings') fetchAdmins()
-  }, [section])
+    if (section === 'settings' && user) fetchAdmins()
+  }, [section, user])
 
   async function handleCreateAdmin() {
     setCreateAdminError('')
@@ -142,10 +175,20 @@ export default function AdminPage() {
     }
   }
 
-  async function handleDeleteAdmin(adminId, adminEmail) {
-    if (!confirm(`Remove admin "${adminEmail}"? They will no longer have access.`)) return
-    await deleteDoc(doc(db, 'admins', adminId))
-    fetchAdmins()
+  function handleDeleteAdmin(adminId, adminEmail) {
+    setConfirmModal({
+      message: `Remove admin "${adminEmail}"? They will no longer have access.`,
+      onConfirm: async () => {
+        setConfirming(true)
+        try {
+          await deleteDoc(doc(db, 'admins', adminId))
+          fetchAdmins()
+          setConfirmModal(null)
+        } finally {
+          setConfirming(false)
+        }
+      }
+    })
   }
 
   async function handleChangePassword() {
@@ -189,13 +232,15 @@ export default function AdminPage() {
   async function fetchAll() {
     setLoading(true)
     try {
-      const [p, g, h] = await Promise.all([
+      const [p, g, gm, h] = await Promise.all([
         safeGet(collection(db, 'products'), query(collection(db, 'products'), orderBy('createdAt', 'desc'))),
         safeGet(collection(db, 'gadgets'), query(collection(db, 'gadgets'), orderBy('createdAt', 'desc'))),
+        safeGet(collection(db, 'games'), query(collection(db, 'games'), orderBy('createdAt', 'desc'))),
         safeGet(collection(db, 'hero'), null),
       ])
       setProducts(p.docs.map(d => ({ id: d.id, ...d.data() })))
       setGadgets(g.docs.map(d => ({ id: d.id, ...d.data() })))
+      setGames(gm.docs.map(d => ({ id: d.id, ...d.data() })))
       setHeroSlides(h.docs.map(d => ({ id: d.id, ...d.data() })))
     } catch (err) {
       console.warn('Admin fetchAll error:', err.message)
@@ -234,6 +279,21 @@ export default function AdminPage() {
     fetchAll()
   }
 
+  async function handleSaveGame() {
+    setSaving(true)
+    const data = { ...gameForm, price: Number(gameForm.price), images: gameForm.images.filter(Boolean), updatedAt: serverTimestamp() }
+    if (editingGameId) {
+      await updateDoc(doc(db, 'games', editingGameId), data)
+    } else {
+      await addDoc(collection(db, 'games'), { ...data, createdAt: serverTimestamp() })
+    }
+    setGameModal(false)
+    setGameForm(emptyProduct)
+    setEditingGameId(null)
+    setSaving(false)
+    fetchAll()
+  }
+
   async function handleSaveHero() {
     setSaving(true)
     const data = { ...heroForm, updatedAt: serverTimestamp() }
@@ -249,10 +309,20 @@ export default function AdminPage() {
     fetchAll()
   }
 
-  async function deleteItem(col, id) {
-    if (!confirm('Delete this item?')) return
-    await deleteDoc(doc(db, col, id))
-    fetchAll()
+  function deleteItem(col, id, message = 'Delete this item? This cannot be undone.') {
+    setConfirmModal({
+      message,
+      onConfirm: async () => {
+        setConfirming(true)
+        try {
+          await deleteDoc(doc(db, col, id))
+          fetchAll()
+          setConfirmModal(null)
+        } finally {
+          setConfirming(false)
+        }
+      }
+    })
   }
 
   async function updateOrderStatus(orderId, status) {
@@ -260,15 +330,21 @@ export default function AdminPage() {
   }
 
   function openEditProduct(p) {
-    setProductForm({ name: p.name || '', brand: p.brand || '', description: p.description || '', price: p.price || '', images: p.images?.length ? p.images : [''] })
+    setProductForm({ name: p.name || '', brand: p.brand || '', condition: p.condition || 'New', description: p.description || '', price: p.price || '', images: p.images?.length ? p.images : [''] })
     setEditingProductId(p.id)
     setProductModal(true)
   }
 
   function openEditGadget(g) {
-    setGadgetForm({ name: g.name || '', brand: g.brand || '', description: g.description || '', price: g.price || '', images: g.images?.length ? g.images : [''] })
+    setGadgetForm({ name: g.name || '', brand: g.brand || '', condition: g.condition || 'New', description: g.description || '', price: g.price || '', images: g.images?.length ? g.images : [''] })
     setEditingGadgetId(g.id)
     setGadgetModal(true)
+  }
+
+  function openEditGame(g) {
+    setGameForm({ name: g.name || '', brand: g.brand || '', condition: g.condition || 'New', description: g.description || '', price: g.price || '', images: g.images?.length ? g.images : [''] })
+    setEditingGameId(g.id)
+    setGameModal(true)
   }
 
   function openEditHero(h) {
@@ -283,14 +359,19 @@ export default function AdminPage() {
   const filteredGadgets = gadgets.filter(g =>
     `${g.name} ${g.brand}`.toLowerCase().includes(gadgetSearch.toLowerCase())
   )
+  const filteredGames = games.filter(g =>
+    `${g.name} ${g.brand}`.toLowerCase().includes(gameSearch.toLowerCase())
+  )
   const visibleProducts = filteredProducts.slice(0, productLimit)
   const visibleGadgets = filteredGadgets.slice(0, gadgetLimit)
+  const visibleGames = filteredGames.slice(0, gameLimit)
 
   const orderStatusCounts = orders.reduce((acc, o) => {
     const s = o.status || 'paid'
     acc[s] = (acc[s] || 0) + 1
     return acc
   }, {})
+  const followUpOrderIds = new Set(orders.filter(needsFollowUp).map(o => o.id))
   const filteredOrders = orders.filter(o => {
     const q = orderSearch.toLowerCase()
     const matchesSearch = !q ||
@@ -306,13 +387,18 @@ export default function AdminPage() {
   const stats = [
     { label: 'Products', section: 'products', value: products.length, icon: 'fa-mobile-screen-button', color: 'text-blue-400', bg: 'bg-blue-500/10' },
     { label: 'Gadgets', section: 'gadgets', value: gadgets.length, icon: 'fa-headphones', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'Games', section: 'games', value: games.length, icon: 'fa-gamepad', color: 'text-orange-400', bg: 'bg-orange-500/10' },
     { label: 'Hero Slides', section: 'hero', value: heroSlides.length, icon: 'fa-images', color: 'text-pink-400', bg: 'bg-pink-500/10' },
-    { label: 'Orders', section: 'orders', value: orders.length, icon: 'fa-bag-shopping', color: 'text-emerald-400', bg: 'bg-emerald-500/10' }
+    { label: 'Orders', section: 'orders', value: orders.length, icon: 'fa-bag-shopping', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    ...(followUpOrderIds.size > 0
+      ? [{ label: 'Needs Follow-up', section: 'orders', value: followUpOrderIds.size, icon: 'fa-triangle-exclamation', color: 'text-red-400', bg: 'bg-red-500/10' }]
+      : [])
   ]
 
   const NAV_ITEMS = [
     { id: 'products', icon: 'fa-mobile-screen-button', label: 'Smartphones' },
     { id: 'gadgets', icon: 'fa-headphones', label: 'Accessories' },
+    { id: 'games', icon: 'fa-gamepad', label: 'Games' },
     { id: 'hero', icon: 'fa-images', label: 'Hero Slides' },
     { id: 'orders', icon: 'fa-bag-shopping', label: 'Orders' },
     { id: 'settings', icon: 'fa-users-gear', label: 'Admin Settings' }
@@ -368,7 +454,12 @@ export default function AdminPage() {
               }`}
             >
               <i className={`fas ${item.icon} w-5 text-center ${section === item.id ? 'text-white' : 'text-surface-500'}`} />
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {item.id === 'orders' && followUpOrderIds.size > 0 && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${section === item.id ? 'bg-white/20 text-white' : 'bg-red-500/15 text-red-400'}`}>
+                  {followUpOrderIds.size}
+                </span>
+              )}
             </button>
           ))}
         </nav>
@@ -426,6 +517,12 @@ export default function AdminPage() {
                 <i className="fas fa-plus" /> <span className="hidden sm:inline">New Accessory</span><span className="sm:hidden">Add</span>
               </button>
             )}
+            {section === 'games' && (
+              <button onClick={() => { setGameForm(emptyProduct); setEditingGameId(null); setGameModal(true) }}
+                className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
+                <i className="fas fa-plus" /> <span className="hidden sm:inline">New Item</span><span className="sm:hidden">Add</span>
+              </button>
+            )}
             {section === 'hero' && (
               <button onClick={() => { setHeroForm(emptyHero); setEditingHeroId(null); setHeroModal(true) }}
                 className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
@@ -435,9 +532,9 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+        <div ref={contentRef} className="flex-1 overflow-y-auto p-4 md:p-8">
           {/* Stats row — always visible */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8 animate-fade-up">
+          <div className={`grid grid-cols-2 gap-6 mb-8 animate-fade-up ${stats.length > 4 ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
             {stats.map(s => (
               <button
                 key={s.label}
@@ -463,158 +560,47 @@ export default function AdminPage() {
             <div className="animate-fade-up" style={{animationDelay: '100ms'}}>
               {/* Products */}
               {section === 'products' && (
-                <div className="space-y-6">
-                  {/* Search bar */}
-                  <div className="relative">
-                    <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 text-sm pointer-events-none" />
-                    <input
-                      value={productSearch}
-                      onChange={e => { setProductSearch(e.target.value); setProductLimit(9) }}
-                      placeholder="Search by name or brand…"
-                      className="w-full h-12 pl-12 pr-5 rounded-2xl bg-surface-900 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-600"
-                    />
-                    {productSearch && (
-                      <button onClick={() => { setProductSearch(''); setProductLimit(9) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors">
-                        <i className="fas fa-times" />
-                      </button>
-                    )}
-                  </div>
-
-                  {filteredProducts.length === 0 ? (
-                    <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-16 px-6">
-                      <div className="w-14 h-14 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i className="fas fa-search text-xl text-surface-500" />
-                      </div>
-                      <h3 className="text-lg font-bold text-white mb-1">No results for "{productSearch}"</h3>
-                      <p className="text-surface-400 text-sm">Try a different name or brand.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {visibleProducts.map(p => (
-                          <div
-                            key={p.id}
-                            onClick={() => { setViewingItem(p); setViewingCollection('products') }}
-                            className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
-                          >
-                            <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
-                              <img src={p.images?.[0] || ''} alt={p.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
-                            </div>
-                            <div className="flex-1 min-w-0 flex flex-col justify-between">
-                              <div>
-                                <h3 className="font-bold text-white text-base truncate mb-1">{p.name}</h3>
-                                <span className="inline-block px-2 py-0.5 bg-surface-800 text-surface-400 text-[10px] font-bold uppercase tracking-wider rounded-md">{p.brand}</span>
-                              </div>
-                              <div className="flex items-end justify-between mt-3">
-                                <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(p.price).toLocaleString()}</p>
-                                <div className="flex gap-2">
-                                  <button onClick={e => { e.stopPropagation(); openEditProduct(p) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
-                                    <i className="fas fa-pen text-sm" />
-                                  </button>
-                                  <button onClick={e => { e.stopPropagation(); deleteItem('products', p.id) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
-                                    <i className="fas fa-trash text-sm" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {filteredProducts.length > productLimit && (
-                        <div className="flex flex-col items-center gap-2 pt-2">
-                          <p className="text-surface-500 text-xs font-medium">
-                            Showing {visibleProducts.length} of {filteredProducts.length}
-                          </p>
-                          <button
-                            onClick={() => setProductLimit(prev => prev + 9)}
-                            className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-800 border border-surface-700 text-white font-bold text-sm hover:bg-surface-700 hover:border-surface-600 transition-all"
-                          >
-                            <i className="fas fa-chevron-down" /> Load More
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                <CatalogSection
+                  search={productSearch}
+                  setSearch={setProductSearch}
+                  setLimit={setProductLimit}
+                  filteredItems={filteredProducts}
+                  visibleItems={visibleProducts}
+                  onOpenItem={p => { setViewingItem(p); setViewingCollection('products') }}
+                  onEdit={openEditProduct}
+                  onDelete={p => deleteItem('products', p.id, 'Delete this product? This cannot be undone.')}
+                  onLoadMore={() => setProductLimit(prev => prev + 9)}
+                />
               )}
 
               {/* Gadgets */}
               {section === 'gadgets' && (
-                <div className="space-y-6">
-                  {/* Search bar */}
-                  <div className="relative">
-                    <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 text-sm pointer-events-none" />
-                    <input
-                      value={gadgetSearch}
-                      onChange={e => { setGadgetSearch(e.target.value); setGadgetLimit(9) }}
-                      placeholder="Search by name or brand…"
-                      className="w-full h-12 pl-12 pr-5 rounded-2xl bg-surface-900 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-600"
-                    />
-                    {gadgetSearch && (
-                      <button onClick={() => { setGadgetSearch(''); setGadgetLimit(9) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors">
-                        <i className="fas fa-times" />
-                      </button>
-                    )}
-                  </div>
+                <CatalogSection
+                  search={gadgetSearch}
+                  setSearch={setGadgetSearch}
+                  setLimit={setGadgetLimit}
+                  filteredItems={filteredGadgets}
+                  visibleItems={visibleGadgets}
+                  onOpenItem={g => { setViewingItem(g); setViewingCollection('gadgets') }}
+                  onEdit={openEditGadget}
+                  onDelete={g => deleteItem('gadgets', g.id, 'Delete this gadget? This cannot be undone.')}
+                  onLoadMore={() => setGadgetLimit(prev => prev + 9)}
+                />
+              )}
 
-                  {filteredGadgets.length === 0 ? (
-                    <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-16 px-6">
-                      <div className="w-14 h-14 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i className="fas fa-search text-xl text-surface-500" />
-                      </div>
-                      <h3 className="text-lg font-bold text-white mb-1">No results for "{gadgetSearch}"</h3>
-                      <p className="text-surface-400 text-sm">Try a different name or brand.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {visibleGadgets.map(g => (
-                          <div
-                            key={g.id}
-                            onClick={() => { setViewingItem(g); setViewingCollection('gadgets') }}
-                            className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
-                          >
-                            <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
-                              <img src={g.images?.[0] || ''} alt={g.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
-                            </div>
-                            <div className="flex-1 min-w-0 flex flex-col justify-between">
-                              <div>
-                                <h3 className="font-bold text-white text-base truncate mb-1">{g.name}</h3>
-                                <span className="inline-block px-2 py-0.5 bg-surface-800 text-surface-400 text-[10px] font-bold uppercase tracking-wider rounded-md">{g.brand}</span>
-                              </div>
-                              <div className="flex items-end justify-between mt-3">
-                                <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(g.price).toLocaleString()}</p>
-                                <div className="flex gap-2">
-                                  <button onClick={e => { e.stopPropagation(); openEditGadget(g) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
-                                    <i className="fas fa-pen text-sm" />
-                                  </button>
-                                  <button onClick={e => { e.stopPropagation(); deleteItem('gadgets', g.id) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
-                                    <i className="fas fa-trash text-sm" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {filteredGadgets.length > gadgetLimit && (
-                        <div className="flex flex-col items-center gap-2 pt-2">
-                          <p className="text-surface-500 text-xs font-medium">
-                            Showing {visibleGadgets.length} of {filteredGadgets.length}
-                          </p>
-                          <button
-                            onClick={() => setGadgetLimit(prev => prev + 9)}
-                            className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-800 border border-surface-700 text-white font-bold text-sm hover:bg-surface-700 hover:border-surface-600 transition-all"
-                          >
-                            <i className="fas fa-chevron-down" /> Load More
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
+              {/* Games & Accessories */}
+              {section === 'games' && (
+                <CatalogSection
+                  search={gameSearch}
+                  setSearch={setGameSearch}
+                  setLimit={setGameLimit}
+                  filteredItems={filteredGames}
+                  visibleItems={visibleGames}
+                  onOpenItem={g => { setViewingItem(g); setViewingCollection('games') }}
+                  onEdit={openEditGame}
+                  onDelete={g => deleteItem('games', g.id, 'Delete this item? This cannot be undone.')}
+                  onLoadMore={() => setGameLimit(prev => prev + 9)}
+                />
               )}
 
               {/* Hero */}
@@ -647,7 +633,7 @@ export default function AdminPage() {
                         <button onClick={() => openEditHero(h)} className="w-10 h-10 rounded-xl bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
                           <i className="fas fa-pen" />
                         </button>
-                        <button onClick={() => deleteItem('hero', h.id)} className="w-10 h-10 rounded-xl bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors flex items-center justify-center">
+                        <button onClick={() => deleteItem('hero', h.id, 'Delete this hero slide? This cannot be undone.')} className="w-10 h-10 rounded-xl bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors flex items-center justify-center">
                           <i className="fas fa-trash" />
                         </button>
                       </div>
@@ -739,6 +725,11 @@ export default function AdminPage() {
                               <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${cfg.bg} ${cfg.color} ${cfg.border}`}>
                                 {cfg.label}
                               </span>
+                              {followUpOrderIds.has(o.id) && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border bg-red-500/15 text-red-400 border-red-500/20 flex items-center gap-1.5">
+                                  <i className="fas fa-triangle-exclamation" /> Needs Follow-up
+                                </span>
+                              )}
                               <span className="text-surface-500 text-sm font-mono">#{o.id.slice(0,8).toUpperCase()}</span>
                               {dateStr && (
                                 <span className="ml-auto text-surface-500 text-xs flex items-center gap-1.5">
@@ -746,7 +737,7 @@ export default function AdminPage() {
                                 </span>
                               )}
                               <button
-                                onClick={() => { if (confirm('Delete this order? This cannot be undone.')) deleteItem('orders', o.id) }}
+                                onClick={() => deleteItem('orders', o.id, 'Delete this order? This cannot be undone.')}
                                 className="w-7 h-7 rounded-lg bg-surface-800 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors flex items-center justify-center"
                                 title="Delete order"
                               >
@@ -785,21 +776,29 @@ export default function AdminPage() {
                                   </p>
                                 </div>
 
-                                {/* Payment reference */}
-                                {o.reference && (
-                                  <div className="mt-3 flex items-center gap-2 p-3 bg-surface-950 rounded-xl border border-surface-800">
-                                    <i className="fas fa-receipt text-surface-500 text-xs flex-shrink-0" />
-                                    <span className="text-xs text-surface-500 font-bold uppercase tracking-wider">Ref:</span>
-                                    <span className="text-xs text-surface-300 font-mono truncate flex-1">{o.reference}</span>
-                                    <button
-                                      onClick={() => navigator.clipboard.writeText(o.reference)}
-                                      className="text-surface-500 hover:text-brand-400 transition-colors flex-shrink-0"
-                                      title="Copy reference"
-                                    >
-                                      <i className="fas fa-copy text-xs" />
-                                    </button>
-                                  </div>
-                                )}
+                                {/* Payment method */}
+                                <div className="mt-3 flex items-center gap-2 p-3 bg-surface-950 rounded-xl border border-surface-800">
+                                  {o.paystackReference ? (
+                                    <>
+                                      <i className="fas fa-credit-card text-surface-500 text-xs flex-shrink-0" />
+                                      <span className="text-xs text-surface-500 font-bold uppercase tracking-wider">Paystack Ref:</span>
+                                      <span className="text-xs text-surface-300 font-mono truncate flex-1">{o.paystackReference}</span>
+                                      <button
+                                        onClick={() => navigator.clipboard.writeText(o.paystackReference)}
+                                        className="text-surface-500 hover:text-brand-400 transition-colors flex-shrink-0"
+                                        title="Copy reference"
+                                      >
+                                        <i className="fas fa-copy text-xs" />
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <i className="fab fa-whatsapp text-[#25D366] text-xs flex-shrink-0" />
+                                      <span className="text-xs text-surface-500 font-bold uppercase tracking-wider">Payment:</span>
+                                      <span className="text-xs text-surface-300 font-medium flex-1">Arranged via WhatsApp</span>
+                                    </>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Right: total + status */}
@@ -840,7 +839,9 @@ export default function AdminPage() {
                                         <img src={item.image || ''} className="w-full h-full object-contain" alt="" />
                                       </div>
                                       <span className="text-sm font-medium text-surface-300">
-                                        {item.name} <span className="text-brand-500 font-bold ml-1">×{item.quantity}</span>
+                                        {item.name}
+                                        {item.condition && <span className="text-surface-500"> ({item.condition})</span>}
+                                        <span className="text-brand-500 font-bold ml-1">×{item.quantity}</span>
                                       </span>
                                     </div>
                                   ))}
@@ -1102,6 +1103,18 @@ export default function AdminPage() {
         </FormModal>
       )}
 
+      {/* Game Modal */}
+      {gameModal && (
+        <FormModal
+          title={editingGameId ? 'Edit Game / Accessory' : 'Add Game / Accessory'}
+          onClose={() => setGameModal(false)}
+          onSave={handleSaveGame}
+          saving={saving}
+        >
+          <ItemForm form={gameForm} setForm={setGameForm} />
+        </FormModal>
+      )}
+
       {/* Hero Modal */}
       {heroModal && (
         <FormModal
@@ -1114,7 +1127,7 @@ export default function AdminPage() {
         </FormModal>
       )}
 
-      {/* Product / Gadget Detail Modal */}
+      {/* Product / Gadget / Game Detail Modal */}
       {viewingItem && (
         <ProductDetailModal
           item={viewingItem}
@@ -1122,15 +1135,141 @@ export default function AdminPage() {
           onClose={() => setViewingItem(null)}
           onEdit={() => {
             setViewingItem(null)
-            if (viewingCollection === 'products') openEditProduct(viewingItem)
-            else openEditGadget(viewingItem)
+            const openEdit = { products: openEditProduct, gadgets: openEditGadget, games: openEditGame }[viewingCollection]
+            openEdit(viewingItem)
           }}
           onDelete={() => {
             setViewingItem(null)
-            deleteItem(viewingCollection, viewingItem.id)
+            const label = { products: 'product', gadgets: 'gadget', games: 'item' }[viewingCollection] || 'item'
+            deleteItem(viewingCollection, viewingItem.id, `Delete this ${label}? This cannot be undone.`)
           }}
         />
       )}
+
+      {/* Confirm Modal */}
+      {confirmModal && (
+        <ConfirmModal
+          message={confirmModal.message}
+          confirming={confirming}
+          onCancel={() => setConfirmModal(null)}
+          onConfirm={confirmModal.onConfirm}
+        />
+      )}
+    </div>
+  )
+}
+
+function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleItems, onOpenItem, onEdit, onDelete, onLoadMore }) {
+  return (
+    <div className="space-y-6">
+      {/* Search bar */}
+      <div className="relative">
+        <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 text-sm pointer-events-none" />
+        <input
+          value={search}
+          onChange={e => { setSearch(e.target.value); setLimit(9) }}
+          placeholder="Search by name or brand…"
+          className="w-full h-12 pl-12 pr-5 rounded-2xl bg-surface-900 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-600"
+        />
+        {search && (
+          <button onClick={() => { setSearch(''); setLimit(9) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors">
+            <i className="fas fa-times" />
+          </button>
+        )}
+      </div>
+
+      {filteredItems.length === 0 ? (
+        <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-16 px-6">
+          <div className="w-14 h-14 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-search text-xl text-surface-500" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-1">No results for "{search}"</h3>
+          <p className="text-surface-400 text-sm">Try a different name or brand.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {visibleItems.map(item => (
+              <div
+                key={item.id}
+                onClick={() => onOpenItem(item)}
+                className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
+              >
+                <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
+                  <img src={item.images?.[0] || ''} alt={item.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-white text-base truncate mb-1">{item.name}</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="inline-block px-2 py-0.5 bg-surface-800 text-surface-400 text-[10px] font-bold uppercase tracking-wider rounded-md">{item.brand}</span>
+                      <span className="inline-block px-2 py-0.5 bg-brand-500/10 text-brand-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-brand-500/20">{item.condition || 'New'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-end justify-between mt-3">
+                    <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(item.price).toLocaleString()}</p>
+                    <div className="flex gap-2">
+                      <button onClick={e => { e.stopPropagation(); onEdit(item) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
+                        <i className="fas fa-pen text-sm" />
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); onDelete(item) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
+                        <i className="fas fa-trash text-sm" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredItems.length > visibleItems.length && (
+            <div className="flex flex-col items-center gap-2 pt-2">
+              <p className="text-surface-500 text-xs font-medium">
+                Showing {visibleItems.length} of {filteredItems.length}
+              </p>
+              <button
+                onClick={onLoadMore}
+                className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-800 border border-surface-700 text-white font-bold text-sm hover:bg-surface-700 hover:border-surface-600 transition-all"
+              >
+                <i className="fas fa-chevron-down" /> Load More
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+function ConfirmModal({ message, onConfirm, onCancel, confirming }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md transition-opacity" onClick={onCancel} />
+      <div className="relative bg-surface-900 border border-surface-700 rounded-[32px] w-full max-w-sm shadow-2xl z-10 animate-slide-in">
+        <div className="p-8 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-5">
+            <i className="fas fa-triangle-exclamation text-xl" />
+          </div>
+          <h3 className="font-bold text-xl font-display text-white tracking-tight mb-2">Are you sure?</h3>
+          <p className="text-surface-400 text-sm">{message}</p>
+        </div>
+        <div className="px-8 pb-8 flex gap-4">
+          <button onClick={onCancel} className="flex-1 bg-surface-800 text-white py-3.5 rounded-2xl font-bold hover:bg-surface-700 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={confirming}
+            className="flex-1 bg-red-500 text-white py-3.5 rounded-2xl font-bold hover:bg-red-400 transition-colors disabled:opacity-50"
+          >
+            {confirming ? (
+              <span className="flex items-center justify-center gap-2">
+                <i className="fas fa-circle-notch fa-spin" /> Deleting...
+              </span>
+            ) : 'Delete'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1185,6 +1324,12 @@ function ItemForm({ form, setForm }) {
       <div className="grid grid-cols-2 gap-5">
         <div><label className={labelClass}>Brand</label><input name="brand" value={form.brand} onChange={handleChange} placeholder="e.g. Apple" className={inputClass} /></div>
         <div><label className={labelClass}>Price (₦) *</label><input name="price" type="number" value={form.price} onChange={handleChange} placeholder="0" className={inputClass} /></div>
+      </div>
+      <div>
+        <label className={labelClass}>Condition *</label>
+        <select name="condition" value={form.condition || 'New'} onChange={handleChange} className={inputClass}>
+          {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
       </div>
       <div><label className={labelClass}>Description</label><textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder="Product details..." className="w-full p-5 rounded-2xl bg-surface-950 border border-surface-800 text-white font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700 placeholder:font-normal resize-none" /></div>
       
@@ -1287,7 +1432,10 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
         <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-surface-800 flex-shrink-0">
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-brand-500/10 text-brand-400 border border-brand-500/20">
-              {collection === 'products' ? 'Smartphone' : 'Accessory'}
+              {{ products: 'Smartphone', gadgets: 'Accessory', games: 'Game / Accessory' }[collection] || 'Item'}
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md bg-surface-800 text-surface-300 border border-surface-700/50">
+              {item.condition || 'New'}
             </span>
             <span className="text-xs text-surface-600 font-mono">{item.id.slice(0, 10)}…</span>
           </div>

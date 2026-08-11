@@ -1,6 +1,12 @@
 import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
 
+const CONDITION_STYLES = {
+  'New': 'bg-green-50 text-green-700',
+  'UK-Used': 'bg-blue-50 text-blue-700',
+  'Nigeria-Used': 'bg-amber-50 text-amber-700',
+}
+
 export default function ProductModal({ product, onClose }) {
   const { addToCart } = useCart()
   const { showNotification } = useNotification()
@@ -24,11 +30,18 @@ export default function ProductModal({ product, onClose }) {
 
         {/* Image Section */}
         <div className="md:w-1/2 bg-surface-50 p-5 md:p-8 flex items-center justify-center min-h-[220px] md:min-h-0 relative">
-          {product.brand && (
-            <span className="absolute top-6 left-6 bg-white shadow-sm text-surface-800 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider z-10">
-              {product.brand}
-            </span>
-          )}
+          <div className="absolute top-6 left-6 z-10 flex flex-wrap gap-2 max-w-[70%]">
+            {product.brand && (
+              <span className="bg-white shadow-sm text-surface-800 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                {product.brand}
+              </span>
+            )}
+            {product.condition && (
+              <span className={`shadow-sm text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${CONDITION_STYLES[product.condition] || 'bg-white text-surface-800'}`}>
+                {product.condition}
+              </span>
+            )}
+          </div>
           {image ? (
             <img src={image} alt={product.name} className="w-full h-full object-contain max-h-[400px] mix-blend-multiply drop-shadow-xl" />
           ) : (

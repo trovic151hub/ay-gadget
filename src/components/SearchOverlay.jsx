@@ -21,13 +21,15 @@ export default function SearchOverlay({ onClose }) {
 
     async function fetchAll() {
       try {
-        const [prodSnap, gadgetSnap] = await Promise.all([
+        const [prodSnap, gadgetSnap, gameSnap] = await Promise.all([
           getDocs(collection(db, 'products')),
           getDocs(collection(db, 'gadgets')),
+          getDocs(collection(db, 'games')),
         ])
         const phones = prodSnap.docs.map(d => ({ id: d.id, ...d.data(), _category: 'Phones', _tab: 'products' }))
         const gadgets = gadgetSnap.docs.map(d => ({ id: d.id, ...d.data(), _category: 'Gadgets', _tab: 'gadgets' }))
-        setAllProducts([...phones, ...gadgets])
+        const games = gameSnap.docs.map(d => ({ id: d.id, ...d.data(), _category: 'Games', _tab: 'games' }))
+        setAllProducts([...phones, ...gadgets, ...games])
       } catch (e) {
         console.warn('Search fetch error:', e.message)
       } finally {
@@ -163,13 +165,17 @@ export default function SearchOverlay({ onClose }) {
                           <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                             product._category === 'Phones'
                               ? 'bg-brand-500/15 text-brand-400 border-brand-500/20'
+                              : product._category === 'Games'
+                              ? 'bg-orange-500/15 text-orange-400 border-orange-500/20'
                               : 'bg-blue-500/15 text-blue-400 border-blue-500/20'
                           }`}>
                             {product._category}
                           </span>
                         </div>
-                        {product.brand && (
-                          <p className="text-surface-500 text-xs">{product.brand}</p>
+                        {(product.brand || product.condition) && (
+                          <p className="text-surface-500 text-xs">
+                            {[product.brand, product.condition].filter(Boolean).join(' · ')}
+                          </p>
                         )}
                       </div>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, query, where, onSnapshot } from 'firebase/firestore'
@@ -188,66 +188,37 @@ function OrderModal({ order, onClose }) {
 }
 
 export default function AccountPage() {
-  const { cartItems, cartCount, cartSubtotal, setCartOpen } = useCart()
-  const [phone, setPhone] = useState('')
+  const { cartItems, cartCount, cartSubtotal, setCartOpen, guestId } = useCart()
   const [orders, setOrders] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [searched, setSearched] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedOrder, setSelectedOrder] = useState(null)
-  const unsubscribeRef = useRef(null)
 
+  // Orders are tied to this browser's guestId (an unguessable token, same
+  // as the cart) rather than a phone number — no login needed, and nobody
+  // can look up a stranger's orders without already having their token.
   useEffect(() => {
-    return () => { if (unsubscribeRef.current) unsubscribeRef.current() }
-  }, [])
-
-  function normalizePhone(raw) {
-    const p = raw.replace(/\s+/g, '')
-    if (p.startsWith('+234')) return p
-    if (p.startsWith('234')) return '+' + p
-    if (p.startsWith('0')) return '+234' + p
-    return '+234' + p
-  }
-
-  function handleLookup(e) {
-    e.preventDefault()
-    const cleaned = phone.replace(/\s+/g, '')
-    if (!cleaned) return
-    const normalized = normalizePhone(cleaned)
-
-    if (unsubscribeRef.current) unsubscribeRef.current()
-
-    setLoading(true)
-    setError('')
-    setSearched(false)
-    setOrders([])
-
-    const q = query(collection(db, 'orders'), where('address.phone', '==', normalized))
-
-    unsubscribeRef.current = onSnapshot(
+    const q = query(collection(db, 'orders'), where('guestId', '==', guestId))
+    const unsub = onSnapshot(
       q,
       snap => {
         const results = snap.docs
           .map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => {
-            const ta = a.createdAt?.toMillis?.() ?? 0
-            const tb = b.createdAt?.toMillis?.() ?? 0
-            return tb - ta
-          })
+          .sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0))
         setOrders(results)
-        setSearched(true)
         setLoading(false)
         setSelectedOrder(prev =>
           prev ? (results.find(o => o.id === prev.id) ?? null) : null
         )
       },
       err => {
-        setError('Unable to look up orders right now. Please try again.')
+        setError('Unable to load your orders right now. Please try again.')
         setLoading(false)
-        console.warn('Order lookup error:', err.message)
+        console.warn('Orders listener error:', err.message)
       }
     )
-  }
+    return unsub
+  }, [guestId])
 
   return (
     <div className="min-h-screen bg-surface-950 flex flex-col font-sans">
@@ -326,43 +297,31 @@ export default function AccountPage() {
 
         {/* Order lookup */}
         <section className="bg-surface-900 border border-surface-700/50 rounded-2xl p-6">
-          <h2 className="text-lg font-bold font-display text-white mb-2">Track Your Order</h2>
-          <p className="text-surface-400 text-sm mb-5">Enter the phone number you used at checkout to see your orders.</p>
+          <h2 className="text-lg font-bold font-display text-white mb-2">Your Orders</h2>
+          <p className="text-surface-400 text-sm mb-5">
+            Orders placed from this browser show up here automatically. Checked out on a different device? Message us on WhatsApp with your order reference.
+          </p>
 
-          <form onSubmit={handleLookup} className="flex gap-3">
-            <div className="relative flex-1">
-              <i className="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-surface-500 text-sm" />
-              <input
-                type="tel"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                placeholder="e.g. 08012345678"
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-surface-700/50 bg-surface-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all placeholder:text-surface-500"
-              />
+          {loading && (
+            <div className="text-center py-8">
+              <i className="fas fa-spinner fa-spin text-2xl text-surface-600 block mb-2" />
             </div>
-            <button
-              type="submit"
-              disabled={loading || !phone.trim()}
-              className="px-6 py-3 bg-brand-500 hover:bg-brand-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors shrink-0"
-            >
-              {loading ? <i className="fas fa-spinner fa-spin" /> : 'Look up'}
-            </button>
-          </form>
+          )}
 
           {error && (
             <p className="mt-4 text-red-400 text-sm">{error}</p>
           )}
 
-          {searched && orders.length === 0 && !error && (
-            <div className="mt-6 text-center py-8">
+          {!loading && !error && orders.length === 0 && (
+            <div className="text-center py-8">
               <i className="fas fa-inbox text-3xl text-surface-600 mb-3 block" />
-              <p className="text-surface-400 text-sm">No orders found for that number.</p>
+              <p className="text-surface-400 text-sm">No orders yet on this device.</p>
             </div>
           )}
 
           {orders.length > 0 && (
-            <div className="mt-6 space-y-3">
-              <p className="text-xs text-surface-500 font-medium">{orders.length} order{orders.length !== 1 ? 's' : ''} found — tap any to view details</p>
+            <div className="space-y-3">
+              <p className="text-xs text-surface-500 font-medium">{orders.length} order{orders.length !== 1 ? 's' : ''} — tap any to view details</p>
               {orders.map(order => {
                 const status = STATUS_META[order.status] || STATUS_META.pending
                 const date = order.createdAt?.toDate?.()
