@@ -181,8 +181,8 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 -mx-6 px-6 pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 md:grid-cols-3 lg:grid-cols-4">
+                {Array(4).fill(0).map((_, i) => <div key={i} className="shrink-0 w-[78%] snap-center sm:w-auto sm:shrink"><SkeletonCard /></div>)}
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-20 text-surface-500">
@@ -190,11 +190,11 @@ export default function HomePage() {
                 <p className="text-base">No phones listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 -mx-6 px-6 pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 md:grid-cols-3 lg:grid-cols-4">
                 {products.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
-                    className="animate-fade-up"
+                    className="shrink-0 w-[78%] snap-center sm:w-auto sm:shrink animate-fade-up"
                     style={{ animationDelay: `${i * 40}ms` }}
                   >
                     <ProductCard product={p} onClick={() => setSelectedProduct(p)} />
@@ -232,8 +232,8 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 -mx-6 px-6 pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 md:grid-cols-3 lg:grid-cols-4">
+                {Array(4).fill(0).map((_, i) => <div key={i} className="shrink-0 w-[78%] snap-center sm:w-auto sm:shrink"><SkeletonCard /></div>)}
               </div>
             ) : gadgets.length === 0 ? (
               <div className="text-center py-20 text-surface-500">
@@ -241,11 +241,11 @@ export default function HomePage() {
                 <p className="text-base">No gadgets listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 -mx-6 px-6 pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 md:grid-cols-3 lg:grid-cols-4">
                 {gadgets.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
-                    className="animate-fade-up"
+                    className="shrink-0 w-[78%] snap-center sm:w-auto sm:shrink animate-fade-up"
                     style={{ animationDelay: `${i * 40}ms` }}
                   >
                     <ProductCard product={p} onClick={() => setSelectedProduct(p)} />
@@ -283,8 +283,8 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 -mx-6 px-6 pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 md:grid-cols-3 lg:grid-cols-4">
+                {Array(4).fill(0).map((_, i) => <div key={i} className="shrink-0 w-[78%] snap-center sm:w-auto sm:shrink"><SkeletonCard /></div>)}
               </div>
             ) : games.length === 0 ? (
               <div className="text-center py-20 text-surface-500">
@@ -292,11 +292,11 @@ export default function HomePage() {
                 <p className="text-base">No games listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 -mx-6 px-6 pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:mx-0 sm:px-0 sm:pb-0 md:grid-cols-3 lg:grid-cols-4">
                 {games.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
-                    className="animate-fade-up"
+                    className="shrink-0 w-[78%] snap-center sm:w-auto sm:shrink animate-fade-up"
                     style={{ animationDelay: `${i * 40}ms` }}
                   >
                     <ProductCard product={p} onClick={() => setSelectedProduct(p)} />
