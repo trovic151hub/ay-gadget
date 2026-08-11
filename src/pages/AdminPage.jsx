@@ -7,6 +7,7 @@ import {
 import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
 import { useScrollLock } from '../hooks/useScrollLock'
+import ProductThumb from '../components/ProductThumb'
 
 const SECTIONS = ['products', 'gadgets', 'games', 'hero', 'orders', 'settings']
 
@@ -838,7 +839,7 @@ export default function AdminPage() {
                                   {(o.items || []).map((item, i) => (
                                     <div key={i} className="flex items-center gap-3 bg-surface-950 border border-surface-800 rounded-lg pr-3 overflow-hidden">
                                       <div className="bg-white p-1 w-10 h-10 flex items-center justify-center flex-shrink-0">
-                                        <img src={item.image || ''} className="w-full h-full object-contain" alt="" />
+                                        <ProductThumb src={item.image} alt="" iconClassName="text-sm text-surface-400" />
                                       </div>
                                       <span className="text-sm font-medium text-surface-300">
                                         {item.name}
@@ -1198,7 +1199,7 @@ function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleIte
                 className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
               >
                 <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
-                  <img src={item.images?.[0] || ''} alt={item.name} className="max-w-full max-h-full object-contain mix-blend-multiply" />
+                  <ProductThumb src={item.images?.[0]} alt={item.name} className="max-w-full max-h-full object-contain mix-blend-multiply" iconClassName="text-3xl text-surface-400" />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
@@ -1450,10 +1451,11 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
           {images.length > 0 && (
             <div className="space-y-4">
               <div className="w-full h-64 bg-white rounded-2xl flex items-center justify-center p-4 border border-surface-800">
-                <img
+                <ProductThumb
                   src={images[activeImg]}
                   alt={item.name}
                   className="max-w-full max-h-full object-contain mix-blend-multiply"
+                  iconClassName="text-4xl text-surface-400"
                 />
               </div>
               {images.length > 1 && (
@@ -1464,7 +1466,7 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
                       onClick={() => setActiveImg(i)}
                       className={`w-16 h-16 flex-shrink-0 rounded-xl bg-white p-1 border-2 transition-all ${i === activeImg ? 'border-brand-500 shadow-glow' : 'border-transparent opacity-60 hover:opacity-100'}`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" />
+                      <ProductThumb src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" iconClassName="text-lg text-surface-400" />
                     </button>
                   ))}
                 </div>

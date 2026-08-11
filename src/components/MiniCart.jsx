@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext'
 import { useNavigate } from 'react-router-dom'
 import { useNotification } from '../context/NotificationContext'
 import { useScrollLock } from '../hooks/useScrollLock'
+import ProductThumb from './ProductThumb'
 
 export default function MiniCart() {
   const { cartOpen, setCartOpen, cartItems, cartSubtotal, removeFromCart, changeQuantity, cartCount } = useCart()
@@ -88,10 +89,7 @@ export default function MiniCart() {
               <div key={item.id} className="flex gap-4 p-3 rounded-2xl bg-surface-800 border border-surface-700/30 group">
                 {/* Image */}
                 <div className="w-20 h-20 bg-surface-700/50 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
-                  {item.image
-                    ? <img src={item.image} alt={item.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
-                    : <i className="fas fa-image text-surface-600 text-xl" />
-                  }
+                  <ProductThumb src={item.image} alt={item.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
                 </div>
 
                 {/* Info */}

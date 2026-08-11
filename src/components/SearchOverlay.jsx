@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, getDocs } from 'firebase/firestore'
 import { useScrollLock } from '../hooks/useScrollLock'
+import ProductThumb from './ProductThumb'
 
 export default function SearchOverlay({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -150,10 +151,7 @@ export default function SearchOverlay({ onClose }) {
                     >
                       {/* Thumbnail */}
                       <div className="w-14 h-14 rounded-xl bg-surface-800 border border-surface-700/50 flex items-center justify-center shrink-0 overflow-hidden p-1.5 group-hover:border-surface-600 transition-colors">
-                        {image
-                          ? <img src={image} alt={product.name} className="w-full h-full object-contain" />
-                          : <i className="fas fa-image text-surface-600" />
-                        }
+                        <ProductThumb src={image} alt={product.name} iconClassName="text-surface-600" />
                       </div>
 
                       {/* Info */}

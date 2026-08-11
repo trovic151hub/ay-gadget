@@ -7,6 +7,7 @@ import NotificationContainer from '../components/NotificationContainer'
 import Footer from '../components/Footer'
 import { Link } from 'react-router-dom'
 import { useScrollLock } from '../hooks/useScrollLock'
+import ProductThumb from '../components/ProductThumb'
 
 const LAGOS_LGA_FEES = {
   "Agege": 3000, "Ajeromi-Ifelodun": 3000, "Alimosho": 3000, "Amuwo-Odofin": 3000,
@@ -422,10 +423,7 @@ export default function CartPage() {
                   {cartItems.map(item => (
                     <div key={item.id} className="flex gap-4 bg-surface-900 border border-surface-700/50 p-4 md:p-5 rounded-[24px] group">
                       <div className="w-20 h-20 sm:w-28 sm:h-28 bg-surface-800 rounded-2xl flex-shrink-0 flex items-center justify-center p-2 overflow-hidden">
-                        {item.image || item.images?.[0]
-                          ? <img src={item.image || item.images?.[0]} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
-                          : <i className="fas fa-image text-surface-600 text-2xl" />
-                        }
+                        <ProductThumb src={item.image || item.images?.[0]} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" iconClassName="text-2xl text-surface-600" />
                       </div>
                       <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
                         <div className="flex justify-between gap-3">
@@ -654,10 +652,7 @@ export default function CartPage() {
                   {cartItems.map(item => (
                     <div key={item.id} className="flex gap-3 items-center">
                       <div className="w-14 h-14 bg-surface-800 border border-surface-700/50 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden p-1.5">
-                        {item.image
-                          ? <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
-                          : <i className="fas fa-image text-surface-600 text-sm" />
-                        }
+                        <ProductThumb src={item.image} alt={item.name} iconClassName="text-sm text-surface-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-white line-clamp-1 leading-tight">{item.name}</p>

@@ -1,6 +1,7 @@
 import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
 import { useScrollLock } from '../hooks/useScrollLock'
+import ProductThumb from './ProductThumb'
 
 const CONDITION_STYLES = {
   'New': 'bg-green-50 text-green-700',
@@ -45,11 +46,12 @@ export default function ProductModal({ product, onClose }) {
               </span>
             )}
           </div>
-          {image ? (
-            <img src={image} alt={product.name} className="w-full h-full object-contain max-h-[400px] mix-blend-multiply drop-shadow-xl" />
-          ) : (
-            <i className="fas fa-image text-6xl text-surface-200" />
-          )}
+          <ProductThumb
+            src={image}
+            alt={product.name}
+            className="w-full h-full object-contain max-h-[400px] mix-blend-multiply drop-shadow-xl"
+            iconClassName="text-6xl text-surface-200"
+          />
         </div>
 
         {/* Details Section */}

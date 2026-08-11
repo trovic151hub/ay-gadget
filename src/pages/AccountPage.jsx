@@ -8,6 +8,7 @@ import NotificationContainer from '../components/NotificationContainer'
 import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
 import { useScrollLock } from '../hooks/useScrollLock'
+import ProductThumb from '../components/ProductThumb'
 
 const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered']
 
@@ -109,10 +110,7 @@ function OrderModal({ order, onClose }) {
                 {order.items.map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-surface-800 border border-surface-700/50 overflow-hidden flex items-center justify-center shrink-0 p-1">
-                      {item.image || item.images?.[0]
-                        ? <img src={item.image || item.images?.[0]} alt={item.name} className="w-full h-full object-contain" />
-                        : <i className="fas fa-image text-surface-600 text-sm" />
-                      }
+                      <ProductThumb src={item.image || item.images?.[0]} alt={item.name} iconClassName="text-sm text-surface-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium truncate">{item.name}</p>
@@ -264,10 +262,7 @@ export default function AccountPage() {
                 {cartItems.map(item => (
                   <div key={item.id} className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-surface-800 border border-surface-700/50 overflow-hidden flex items-center justify-center shrink-0">
-                      {item.image
-                        ? <img src={item.image} alt={item.name} className="w-full h-full object-contain p-1" />
-                        : <i className="fas fa-image text-surface-600" />
-                      }
+                      <ProductThumb src={item.image} alt={item.name} className="w-full h-full object-contain p-1" iconClassName="text-surface-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium truncate">{item.name}</p>

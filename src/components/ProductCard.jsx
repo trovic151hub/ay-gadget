@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
 
@@ -10,6 +11,7 @@ const CONDITION_STYLES = {
 export default function ProductCard({ product, onClick }) {
   const { addToCart } = useCart()
   const { showNotification } = useNotification()
+  const [imageFailed, setImageFailed] = useState(false)
 
   async function handleAddToCart(e) {
     e.stopPropagation()
@@ -17,7 +19,7 @@ export default function ProductCard({ product, onClick }) {
     showNotification(`${product.name} added to cart`, 'success')
   }
 
-  const image = product.images?.[0] || product.image || ''
+  const image = !imageFailed && (product.images?.[0] || product.image || '')
 
   return (
     <div
@@ -33,6 +35,7 @@ export default function ProductCard({ product, onClick }) {
           <img
             src={image}
             alt={product.name}
+            onError={() => setImageFailed(true)}
             className="w-full h-full object-contain p-5 group-hover:scale-105 transition-transform duration-500 ease-out relative z-0"
           />
         ) : (
@@ -41,23 +44,19 @@ export default function ProductCard({ product, onClick }) {
           </div>
         )}
 
-        {/* Brand badge */}
-        {product.brand && (
-          <div className="absolute top-3 left-3 z-20">
-            <span className="bg-surface-900/80 backdrop-blur-sm text-surface-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-surface-700/50">
+        {/* Brand + condition badges */}
+        <div className="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-start gap-1.5">
+          {product.brand && (
+            <span className="max-w-full truncate bg-surface-900/80 backdrop-blur-sm text-surface-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-surface-700/50">
               {product.brand}
             </span>
-          </div>
-        )}
-
-        {/* Condition badge */}
-        {product.condition && (
-          <div className="absolute top-3 right-3 z-20">
-            <span className={`backdrop-blur-sm text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border ${CONDITION_STYLES[product.condition] || 'bg-surface-900/80 text-surface-300 border-surface-700/50'}`}>
+          )}
+          {product.condition && (
+            <span className={`max-w-full truncate backdrop-blur-sm text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border ${CONDITION_STYLES[product.condition] || 'bg-surface-900/80 text-surface-300 border-surface-700/50'}`}>
               {product.condition}
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Add to cart — slides in on hover */}
         <button
