@@ -27,7 +27,7 @@ export default function ProductCard({ product, onClick }) {
       className="group relative bg-surface-900 rounded-[20px] overflow-hidden cursor-pointer border border-surface-700/50 hover:border-brand-500/30 flex flex-col h-full transition-all duration-300 hover:shadow-[0_24px_48px_rgba(0,0,0,0.5)]"
     >
       {/* Image area */}
-      <div className="relative overflow-hidden bg-surface-800 h-52 flex items-center justify-center">
+      <div className="relative overflow-hidden bg-surface-800 h-56 sm:h-52 flex items-center justify-center">
         {/* Subtle top gradient */}
         <div className="absolute inset-0 bg-gradient-to-b from-brand-500/5 to-transparent pointer-events-none z-10" />
 
@@ -36,7 +36,7 @@ export default function ProductCard({ product, onClick }) {
             src={image}
             alt={product.name}
             onError={() => setImageFailed(true)}
-            className="w-full h-full object-contain p-5 group-hover:scale-105 transition-transform duration-500 ease-out relative z-0"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out relative z-0"
           />
         ) : (
           <div className="text-surface-600 z-0">
@@ -44,19 +44,23 @@ export default function ProductCard({ product, onClick }) {
           </div>
         )}
 
-        {/* Brand + condition badges */}
-        <div className="absolute top-3 left-3 right-3 z-20 flex flex-wrap items-start gap-1.5">
-          {product.brand && (
-            <span className="max-w-full truncate bg-surface-900/80 backdrop-blur-sm text-surface-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-surface-700/50">
+        {/* Brand badge */}
+        {product.brand && (
+          <div className="absolute top-3 left-3 z-20 max-w-[45%]">
+            <span className="block truncate bg-surface-900/80 backdrop-blur-sm text-surface-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-surface-700/50">
               {product.brand}
             </span>
-          )}
-          {product.condition && (
-            <span className={`max-w-full truncate backdrop-blur-sm text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border ${CONDITION_STYLES[product.condition] || 'bg-surface-900/80 text-surface-300 border-surface-700/50'}`}>
+          </div>
+        )}
+
+        {/* Condition badge */}
+        {product.condition && (
+          <div className="absolute top-3 right-3 z-20 max-w-[45%]">
+            <span className={`block truncate backdrop-blur-sm text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border ${CONDITION_STYLES[product.condition] || 'bg-surface-900/80 text-surface-300 border-surface-700/50'}`}>
               {product.condition}
             </span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Add to cart — slides in on hover */}
         <button

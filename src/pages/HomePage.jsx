@@ -181,7 +181,7 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : products.length === 0 ? (
@@ -190,7 +190,7 @@ export default function HomePage() {
                 <p className="text-base">No phones listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {products.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
@@ -232,7 +232,7 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : gadgets.length === 0 ? (
@@ -241,7 +241,7 @@ export default function HomePage() {
                 <p className="text-base">No gadgets listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {gadgets.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
@@ -283,7 +283,7 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : games.length === 0 ? (
@@ -292,7 +292,7 @@ export default function HomePage() {
                 <p className="text-base">No games listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                 {games.slice(0, 4).map((p, i) => (
                   <div
                     key={p.id}
