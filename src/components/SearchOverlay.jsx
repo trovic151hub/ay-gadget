@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { db } from '../firebase'
 import { collection, getDocs } from 'firebase/firestore'
+import { useScrollLock } from '../hooks/useScrollLock'
 
 export default function SearchOverlay({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -11,10 +12,7 @@ export default function SearchOverlay({ onClose }) {
   const inputRef = useRef(null)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
+  useScrollLock(true)
 
   useEffect(() => {
     inputRef.current?.focus()

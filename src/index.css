@@ -45,13 +45,6 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .scrollbar-hide {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
 }
 
 @keyframes slideIn {
@@ -81,7 +74,14 @@
   animation: shimmer 1.5s infinite;
 }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+/* Hide scrollbars everywhere (iOS Safari, other WebKit, Firefox, old
+   Edge/IE) while leaving scrolling itself fully functional -- applies to
+   the page and to any internally-scrollable container (modals, the admin
+   dashboard, drawers, etc). */
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}

@@ -6,6 +6,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import NotificationContainer from '../components/NotificationContainer'
 import Footer from '../components/Footer'
 import { Link } from 'react-router-dom'
+import { useScrollLock } from '../hooks/useScrollLock'
 
 const LAGOS_LGA_FEES = {
   "Agege": 3000, "Ajeromi-Ifelodun": 3000, "Alimosho": 3000, "Amuwo-Odofin": 3000,
@@ -97,14 +98,7 @@ export default function CartPage() {
     window.scrollTo(0, 0)
   }, [step])
 
-  useEffect(() => {
-    if (showLocationModal) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => { document.body.style.overflow = '' }
-  }, [showLocationModal])
+  useScrollLock(showLocationModal)
 
   // wa.me sends the user (or their WhatsApp app) away from the tab. Only
   // treat the order as "done" once they've actually left and come back —

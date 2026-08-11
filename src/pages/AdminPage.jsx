@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore'
 import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
+import { useScrollLock } from '../hooks/useScrollLock'
 
 const SECTIONS = ['products', 'gadgets', 'games', 'hero', 'orders', 'settings']
 
@@ -42,6 +43,7 @@ export default function AdminPage() {
   })
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const contentRef = useRef(null)
+  useScrollLock(mobileNavOpen)
   const [products, setProducts] = useState([])
   const [gadgets, setGadgets] = useState([])
   const [games, setGames] = useState([])
@@ -1242,6 +1244,7 @@ function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleIte
 }
 
 function ConfirmModal({ message, onConfirm, onCancel, confirming }) {
+  useScrollLock(true)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md transition-opacity" onClick={onCancel} />
@@ -1275,6 +1278,7 @@ function ConfirmModal({ message, onConfirm, onCancel, confirming }) {
 }
 
 function FormModal({ title, onClose, onSave, saving, children }) {
+  useScrollLock(true)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-surface-950/80 backdrop-blur-md transition-opacity" onClick={onClose} />
@@ -1418,10 +1422,7 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
   const [activeImg, setActiveImg] = useState(0)
   const images = item.images?.filter(Boolean) || []
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
+  useScrollLock(true)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

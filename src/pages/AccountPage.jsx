@@ -7,6 +7,7 @@ import MiniCart from '../components/MiniCart'
 import NotificationContainer from '../components/NotificationContainer'
 import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
+import { useScrollLock } from '../hooks/useScrollLock'
 
 const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered']
 
@@ -21,10 +22,7 @@ const STATUS_META = {
 function OrderModal({ order, onClose }) {
   const [copied, setCopied] = useState(false)
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
+  useScrollLock(true)
 
   const status = STATUS_META[order.status] || STATUS_META.pending
   const date = order.createdAt?.toDate?.()

@@ -135,7 +135,7 @@ export default function ProductsPage() {
         {/* Tabs + Search */}
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
           {/* Tabs */}
-          <div className="flex gap-1 p-1 bg-surface-900 border border-surface-700/50 rounded-2xl overflow-x-auto scrollbar-hide max-w-full">
+          <div className="flex gap-1 p-1 bg-surface-900 border border-surface-700/50 rounded-2xl overflow-x-auto max-w-full">
             {TABS.map(tab => (
               <button
                 key={tab.value}

@@ -1,5 +1,6 @@
 import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
+import { useScrollLock } from '../hooks/useScrollLock'
 
 const CONDITION_STYLES = {
   'New': 'bg-green-50 text-green-700',
@@ -10,6 +11,8 @@ const CONDITION_STYLES = {
 export default function ProductModal({ product, onClose }) {
   const { addToCart } = useCart()
   const { showNotification } = useNotification()
+
+  useScrollLock(true)
 
   async function handleAddToCart() {
     await addToCart(product)

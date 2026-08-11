@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import SearchOverlay from './SearchOverlay'
+import { useScrollLock } from '../hooks/useScrollLock'
 
 const NAV_LINKS = [
   { label: 'Phones', to: '/products?tab=products' },
@@ -28,8 +29,17 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const location = useLocation()
 
+  useScrollLock(menuOpen)
+
   return (
     <>
+      {menuOpen && (
+        <div
+          onClick={() => setMenuOpen(false)}
+          className="md:hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm"
+        />
+      )}
+
       <header className="bg-surface-950/95 backdrop-blur-md fixed w-full z-40 top-0 border-b border-surface-800">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-6 h-20">
 

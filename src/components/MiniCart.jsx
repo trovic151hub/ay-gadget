@@ -2,11 +2,14 @@ import { useEffect } from 'react'
 import { useCart } from '../context/CartContext'
 import { useNavigate } from 'react-router-dom'
 import { useNotification } from '../context/NotificationContext'
+import { useScrollLock } from '../hooks/useScrollLock'
 
 export default function MiniCart() {
   const { cartOpen, setCartOpen, cartItems, cartSubtotal, removeFromCart, changeQuantity, cartCount } = useCart()
   const { showNotification } = useNotification()
   const navigate = useNavigate()
+
+  useScrollLock(cartOpen)
 
   useEffect(() => {
     function onKey(e) {
