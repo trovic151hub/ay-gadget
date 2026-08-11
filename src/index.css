@@ -11,6 +11,12 @@
 
   html {
     scroll-behavior: smooth;
+    /* Off-canvas drawers (MiniCart, SearchOverlay, mobile nav) are
+       position:fixed + transform:translateX(100%) when closed — some
+       browsers still count their untransformed width toward the page's
+       scrollable area, causing horizontal scroll on mobile even though
+       they're visually offscreen. This is the standard fix. */
+    overflow-x: hidden;
   }
 
   body {
@@ -19,6 +25,7 @@
     -moz-osx-font-smoothing: grayscale;
     background-color: #0A0F1E;
     color: #f8fafc;
+    overflow-x: hidden;
   }
 }
 
@@ -37,6 +44,13 @@
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 

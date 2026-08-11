@@ -135,12 +135,12 @@ export default function ProductsPage() {
         {/* Tabs + Search */}
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
           {/* Tabs */}
-          <div className="flex gap-1 p-1 bg-surface-900 border border-surface-700/50 rounded-2xl">
+          <div className="flex gap-1 p-1 bg-surface-900 border border-surface-700/50 rounded-2xl overflow-x-auto scrollbar-hide max-w-full">
             {TABS.map(tab => (
               <button
                 key={tab.value}
                 onClick={() => handleTabChange(tab.value)}
-                className={`px-7 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                className={`shrink-0 px-4 sm:px-7 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
                   activeTab === tab.value
                     ? 'bg-brand-500 text-white shadow-sm'
                     : 'text-surface-400 hover:text-white'
