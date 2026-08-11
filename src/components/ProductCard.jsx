@@ -62,10 +62,10 @@ export default function ProductCard({ product, onClick }) {
           </div>
         )}
 
-        {/* Add to cart — slides in on hover */}
+        {/* Add to cart — slides in on hover (desktop only; mobile has its own button below) */}
         <button
           onClick={handleAddToCart}
-          className="absolute bottom-3 right-3 z-20 w-11 h-11 bg-brand-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-brand-400 transition-all opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 duration-300 hover:scale-110"
+          className="hidden md:flex absolute bottom-3 right-3 z-20 w-11 h-11 bg-brand-500 text-white rounded-full items-center justify-center shadow-lg hover:bg-brand-400 transition-all opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 duration-300 hover:scale-110"
         >
           <i className="fas fa-cart-plus text-sm" />
         </button>
