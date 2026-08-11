@@ -230,6 +230,14 @@ export default function CartPage() {
     if (!addressLocked) { showNotification('Please confirm shipping address first', 'warning'); return }
     if (!cartItems.length) { showNotification('Your cart is empty', 'warning'); return }
 
+    // iOS Safari only allows window.open() to succeed as a direct,
+    // synchronous result of the click — any await before it (like the
+    // Firestore write below) breaks that and the popup gets silently
+    // blocked, even though Android/Chrome are lenient about it. Opening a
+    // blank tab here, before any await, keeps the user-gesture intact; we
+    // fill in the real WhatsApp URL once the order + message are ready.
+    const waWindow = window.open('', '_blank')
+
     setPlacingOrder(true)
     try {
       const orderRef = await addDoc(collection(db, 'orders'), {
@@ -275,9 +283,15 @@ export default function CartPage() {
         `I'd like to complete payment and delivery for this order. Thank you! 🙏`
       ].join('\n')
 
-      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank')
+      const waUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`
+      if (waWindow) {
+        waWindow.location.href = waUrl
+      } else {
+        window.location.href = waUrl
+      }
       setStep('whatsapp')
     } catch (err) {
+      if (waWindow) waWindow.close()
       showNotification(err.message || 'Could not start your order. Please try again.', 'error')
     } finally {
       setPlacingOrder(false)
