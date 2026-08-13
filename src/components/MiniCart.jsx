@@ -79,9 +79,9 @@ export default function MiniCart() {
               <p className="text-surface-500 text-sm">Add something to get started.</p>
               <button
                 onClick={() => { navigate('/products'); setCartOpen(false) }}
-                className="mt-6 text-brand-500 hover:text-brand-400 font-semibold text-sm transition-colors"
+                className="mt-6 text-brand-500 hover:text-brand-400 font-semibold text-sm transition-colors inline-flex items-center gap-2"
               >
-                Browse products →
+                Browse products <i className="fas fa-arrow-right text-xs" />
               </button>
             </div>
           ) : (

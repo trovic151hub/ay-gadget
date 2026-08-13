@@ -254,28 +254,28 @@ export default function CartPage() {
 
       const itemsText = cartItems.map(i => `- ${i.name} (x${i.quantity}) — ₦${(i.price * i.quantity).toLocaleString()}`).join('\n')
       const message = [
-        `*🛒 New Order*`,
-        `*🧾 Order Ref:* ${orderRef.id.slice(-6).toUpperCase()}`,
+        `*NEW ORDER*`,
+        `*Order Ref:* ${orderRef.id.slice(-6).toUpperCase()}`,
         '',
-        `*👤 Customer Details*`,
+        `*CUSTOMER DETAILS*`,
         `- Name: ${form.firstName} ${form.lastName}`,
         `- Phone: ${form.areaCode}${form.phone}`,
         `- Email: ${form.email}`,
         '',
-        `*📍 Delivery Info*`,
+        `*DELIVERY INFO*`,
         `- State: ${form.state}`,
         `- LGA: ${form.lga}`,
         `- Address: ${form.street}`,
         '',
-        `*📦 Order Items*`,
+        `*ORDER ITEMS*`,
         itemsText,
         '',
-        `*💰 Payment Summary*`,
+        `*PAYMENT SUMMARY*`,
         `- Subtotal: ₦${cartSubtotal.toLocaleString()}`,
         `- Delivery Fee: ${shippingFee > 0 ? `₦${shippingFee.toLocaleString()}` : 'To be confirmed'}`,
         `- Total: ₦${total.toLocaleString()}`,
         '',
-        `I'd like to complete payment and delivery for this order. Thank you! 🙏`
+        `I'd like to complete payment and delivery for this order. Thank you!`
       ].join('\n')
 
       const waUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(message)}`
