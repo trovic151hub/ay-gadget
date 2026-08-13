@@ -9,15 +9,16 @@ import Footer from '../components/Footer'
 import { useCart } from '../context/CartContext'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from '../components/ProductThumb'
+import { X, XCircle, Clock, Settings, Truck, CheckCircle2, MapPin, Check, Copy, ShoppingBag, Loader2, Inbox, ChevronRight } from 'lucide-react'
 
 const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered']
 
 const STATUS_META = {
-  pending:    { bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/20', dot: 'bg-yellow-400', label: 'Pending',    icon: 'fa-clock' },
-  processing: { bg: 'bg-blue-500/15',   text: 'text-blue-400',   border: 'border-blue-500/20',   dot: 'bg-blue-400',   label: 'Processing', icon: 'fa-gear' },
-  shipped:    { bg: 'bg-brand-500/15',  text: 'text-brand-400',  border: 'border-brand-500/20',  dot: 'bg-brand-400',  label: 'Shipped',    icon: 'fa-truck-fast' },
-  delivered:  { bg: 'bg-green-500/15',  text: 'text-green-400',  border: 'border-green-500/20',  dot: 'bg-green-400',  label: 'Delivered',  icon: 'fa-circle-check' },
-  cancelled:  { bg: 'bg-red-500/15',    text: 'text-red-400',    border: 'border-red-500/20',    dot: 'bg-red-400',    label: 'Cancelled',  icon: 'fa-circle-xmark' },
+  pending:    { bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/20', dot: 'bg-yellow-400', label: 'Pending',    icon: Clock },
+  processing: { bg: 'bg-blue-500/15',   text: 'text-blue-400',   border: 'border-blue-500/20',   dot: 'bg-blue-400',   label: 'Processing', icon: Settings },
+  shipped:    { bg: 'bg-brand-500/15',  text: 'text-brand-400',  border: 'border-brand-500/20',  dot: 'bg-brand-400',  label: 'Shipped',    icon: Truck },
+  delivered:  { bg: 'bg-green-500/15',  text: 'text-green-400',  border: 'border-green-500/20',  dot: 'bg-green-400',  label: 'Delivered',  icon: CheckCircle2 },
+  cancelled:  { bg: 'bg-red-500/15',    text: 'text-red-400',    border: 'border-red-500/20',    dot: 'bg-red-400',    label: 'Cancelled',  icon: XCircle },
 }
 
 function OrderModal({ order, onClose }) {
@@ -60,7 +61,7 @@ function OrderModal({ order, onClose }) {
               {status.label}
             </span>
             <button onClick={onClose} className="w-8 h-8 rounded-xl bg-surface-800 hover:bg-surface-700 flex items-center justify-center text-surface-400 hover:text-white transition-colors">
-              <i className="fas fa-xmark text-sm" />
+              <X size={14} />
             </button>
           </div>
         </div>
@@ -81,7 +82,7 @@ function OrderModal({ order, onClose }) {
                     <div key={step} className="flex items-center flex-1 last:flex-none">
                       <div className="flex flex-col items-center gap-1.5">
                         <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${done ? `${meta.dot} border-transparent` : 'bg-surface-800 border-surface-700'}`}>
-                          <i className={`fas ${meta.icon} text-[10px] ${done ? 'text-white' : 'text-surface-600'}`} />
+                          <meta.icon size={10} className={done ? 'text-white' : 'text-surface-600'} />
                         </div>
                         <span className={`text-[9px] font-bold text-center leading-tight ${active ? meta.text : done ? 'text-surface-400' : 'text-surface-600'}`}>
                           {meta.label}
@@ -97,7 +98,7 @@ function OrderModal({ order, onClose }) {
             </div>
           ) : (
             <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3">
-              <i className="fas fa-circle-xmark text-red-400" />
+              <XCircle size={16} className="text-red-400" />
               <p className="text-red-400 text-sm font-semibold">This order has been cancelled.</p>
             </div>
           )}
@@ -110,7 +111,7 @@ function OrderModal({ order, onClose }) {
                 {order.items.map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-surface-800 border border-surface-700/50 overflow-hidden flex items-center justify-center shrink-0 p-1">
-                      <ProductThumb src={item.image || item.images?.[0]} alt={item.name} iconClassName="text-sm text-surface-600" />
+                      <ProductThumb src={item.image || item.images?.[0]} alt={item.name} iconSize={14} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium truncate">{item.name}</p>
@@ -131,7 +132,7 @@ function OrderModal({ order, onClose }) {
               <p className="text-xs font-bold text-surface-500 uppercase tracking-widest mb-3">Delivery Address</p>
               <div className="bg-surface-800 border border-surface-700/50 rounded-2xl p-4 flex gap-3">
                 <div className="w-8 h-8 bg-brand-500/10 border border-brand-500/20 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
-                  <i className="fas fa-location-dot text-brand-500 text-xs" />
+                  <MapPin size={12} className="text-brand-500" />
                 </div>
                 <div>
                   <p className="text-white text-sm font-semibold">{order.address.name}</p>
@@ -171,7 +172,7 @@ function OrderModal({ order, onClose }) {
               >
                 <span className="text-surface-300 text-sm font-mono truncate">{order.reference}</span>
                 <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded-lg transition-all ${copied ? 'bg-green-500/15 text-green-400 border border-green-500/20' : 'bg-surface-700 text-surface-400 group-hover:text-white border border-surface-600'}`}>
-                  {copied ? <><i className="fas fa-check mr-1" />Copied</> : <><i className="fas fa-copy mr-1" />Copy</>}
+                  {copied ? <span className="inline-flex items-center gap-1"><Check size={12} />Copied</span> : <span className="inline-flex items-center gap-1"><Copy size={12} />Copy</span>}
                 </span>
               </button>
             </div>
@@ -250,7 +251,7 @@ export default function AccountPage() {
 
           {cartCount === 0 ? (
             <div className="text-center py-8">
-              <i className="fas fa-bag-shopping text-3xl text-surface-600 mb-3 block" />
+              <ShoppingBag size={30} className="text-surface-600 mb-3 mx-auto" />
               <p className="text-surface-500 text-sm">Your cart is empty.</p>
               <Link to="/products" className="inline-block mt-4 text-brand-500 font-semibold text-sm hover:text-brand-400 transition-colors">
                 Browse products
@@ -262,7 +263,7 @@ export default function AccountPage() {
                 {cartItems.map(item => (
                   <div key={item.id} className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-surface-800 border border-surface-700/50 overflow-hidden flex items-center justify-center shrink-0">
-                      <ProductThumb src={item.image} alt={item.name} className="w-full h-full object-contain p-1" iconClassName="text-surface-600" />
+                      <ProductThumb src={item.image} alt={item.name} className="w-full h-full object-contain p-1" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-white text-sm font-medium truncate">{item.name}</p>
@@ -297,7 +298,7 @@ export default function AccountPage() {
 
           {loading && (
             <div className="text-center py-8">
-              <i className="fas fa-spinner fa-spin text-2xl text-surface-600 block mb-2" />
+              <Loader2 size={24} className="text-surface-600 mb-2 mx-auto animate-spin" />
             </div>
           )}
 
@@ -307,7 +308,7 @@ export default function AccountPage() {
 
           {!loading && !error && orders.length === 0 && (
             <div className="text-center py-8">
-              <i className="fas fa-inbox text-3xl text-surface-600 mb-3 block" />
+              <Inbox size={30} className="text-surface-600 mb-3 mx-auto" />
               <p className="text-surface-400 text-sm">No orders yet on this device.</p>
             </div>
           )}
@@ -328,7 +329,7 @@ export default function AccountPage() {
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`w-9 h-9 rounded-xl ${status.bg} border ${status.border} flex items-center justify-center shrink-0`}>
-                          <i className={`fas ${status.icon} ${status.text} text-sm`} />
+                          <status.icon size={14} className={status.text} />
                         </div>
                         <div className="min-w-0">
                           <p className="text-white font-semibold text-sm">Order #{order.id.slice(-6).toUpperCase()}</p>
@@ -345,7 +346,7 @@ export default function AccountPage() {
                             {status.label}
                           </span>
                         </div>
-                        <i className="fas fa-chevron-right text-surface-600 group-hover:text-surface-400 text-xs transition-colors" />
+                        <ChevronRight size={12} className="text-surface-600 group-hover:text-surface-400 transition-colors" />
                       </div>
                     </div>
                   </button>

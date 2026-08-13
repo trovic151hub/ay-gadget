@@ -8,19 +8,20 @@ import MiniCart from '../components/MiniCart'
 import NotificationContainer from '../components/NotificationContainer'
 import Footer from '../components/Footer'
 import ProductModal from '../components/ProductModal'
+import { Package, PlaneTakeoff, CheckCircle2, Gamepad2, Truck, ShieldCheck, Headphones, RotateCcw, Award, MessageCircle, MapPin, ArrowRight, PackageOpen, Plug } from 'lucide-react'
 
 const CATEGORIES = [
-  { label: 'New Phones', icon: 'fa-box', desc: 'Brand new sealed phones with full manufacturer warranty.' },
-  { label: 'UK-Used Phones', icon: 'fa-plane-departure', desc: 'Premium pre-owned phones imported from the UK, tested and trusted.' },
-  { label: 'Nigeria-Used Phones', icon: 'fa-check-circle', desc: 'Locally used phones verified by our expert technicians.' },
-  { label: 'Video Games', icon: 'fa-gamepad', desc: 'Consoles, titles, and gaming accessories for every platform.' },
+  { label: 'New Phones', icon: Package, desc: 'Brand new sealed phones with full manufacturer warranty.' },
+  { label: 'UK-Used Phones', icon: PlaneTakeoff, desc: 'Premium pre-owned phones imported from the UK, tested and trusted.' },
+  { label: 'Nigeria-Used Phones', icon: CheckCircle2, desc: 'Locally used phones verified by our expert technicians.' },
+  { label: 'Video Games', icon: Gamepad2, desc: 'Consoles, titles, and gaming accessories for every platform.' },
 ]
 
 const TRUST_BADGES = [
-  { icon: 'fa-truck-fast', title: 'Fast Delivery', desc: 'Across all 36 states in Nigeria' },
-  { icon: 'fa-shield-halved', title: '100% Secure', desc: 'Verified and trusted products' },
-  { icon: 'fa-headset', title: '24/7 Support', desc: 'Always here to help you' },
-  { icon: 'fa-rotate-left', title: 'Easy Returns', desc: '7-day return policy' },
+  { icon: Truck, title: 'Fast Delivery', desc: 'Across all 36 states in Nigeria' },
+  { icon: ShieldCheck, title: '100% Secure', desc: 'Verified and trusted products' },
+  { icon: Headphones, title: '24/7 Support', desc: 'Always here to help you' },
+  { icon: RotateCcw, title: 'Easy Returns', desc: '7-day return policy' },
 ]
 
 function SkeletonCard() {
@@ -95,7 +96,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-7 text-center hover:border-brand-500/30 transition-colors">
               <div className="w-12 h-12 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-award text-brand-500 text-sm" />
+                <Award size={14} className="text-brand-500" />
               </div>
               <h3 className="font-bold font-display text-white text-lg mb-2">Verified Condition</h3>
               <p className="text-surface-400 text-sm leading-relaxed">
@@ -105,7 +106,7 @@ export default function HomePage() {
             </div>
             <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-7 text-center hover:border-brand-500/30 transition-colors">
               <div className="w-12 h-12 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-4">
-                <i className="fab fa-whatsapp text-brand-500 text-sm" />
+                <MessageCircle size={14} className="text-brand-500" />
               </div>
               <h3 className="font-bold font-display text-white text-lg mb-2">Real Human Support</h3>
               <p className="text-surface-400 text-sm leading-relaxed">
@@ -115,7 +116,7 @@ export default function HomePage() {
             </div>
             <div className="bg-surface-900 border border-surface-700/50 rounded-2xl p-7 text-center hover:border-brand-500/30 transition-colors">
               <div className="w-12 h-12 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-location-dot text-brand-500 text-sm" />
+                <MapPin size={14} className="text-brand-500" />
               </div>
               <h3 className="font-bold font-display text-white text-lg mb-2">Built for Lagos</h3>
               <p className="text-surface-400 text-sm leading-relaxed">
@@ -145,7 +146,7 @@ export default function HomePage() {
                 className="group bg-surface-900 border border-surface-700/50 hover:border-brand-500/30 rounded-2xl p-7 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
               >
                 <div className="w-14 h-14 bg-surface-800 group-hover:bg-brand-500/15 border border-surface-700/50 group-hover:border-brand-500/30 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300">
-                  <i className={`fas ${cat.icon} text-xl text-surface-400 group-hover:text-brand-500 transition-colors duration-300`} />
+                  <cat.icon size={20} className="text-surface-400 group-hover:text-brand-500 transition-colors duration-300" />
                 </div>
                 <h3 className="text-white font-bold text-lg font-display tracking-tight mb-2">{cat.label}</h3>
                 <p className="text-surface-400 text-sm leading-relaxed">{cat.desc}</p>
@@ -176,7 +177,7 @@ export default function HomePage() {
                 href="/products?tab=products"
                 className="group inline-flex items-center gap-2 text-brand-500 font-semibold hover:text-brand-400 transition-colors text-sm"
               >
-                View All <i className="fas fa-arrow-right group-hover:translate-x-1 transition-transform" />
+                View All <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
 
@@ -186,7 +187,7 @@ export default function HomePage() {
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-20 text-surface-500">
-                <i className="fas fa-box-open text-4xl mb-4 block opacity-30" />
+                <PackageOpen size={36} className="mb-4 mx-auto opacity-30" />
                 <p className="text-base">No phones listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
@@ -227,7 +228,7 @@ export default function HomePage() {
                 href="/products?tab=gadgets"
                 className="group inline-flex items-center gap-2 text-brand-500 font-semibold hover:text-brand-400 transition-colors text-sm"
               >
-                Explore All <i className="fas fa-arrow-right group-hover:translate-x-1 transition-transform" />
+                Explore All <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
 
@@ -237,7 +238,7 @@ export default function HomePage() {
               </div>
             ) : gadgets.length === 0 ? (
               <div className="text-center py-20 text-surface-500">
-                <i className="fas fa-plug text-4xl mb-4 block opacity-30" />
+                <Plug size={36} className="mb-4 mx-auto opacity-30" />
                 <p className="text-base">No gadgets listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
@@ -278,7 +279,7 @@ export default function HomePage() {
                 href="/products?tab=games"
                 className="group inline-flex items-center gap-2 text-brand-500 font-semibold hover:text-brand-400 transition-colors text-sm"
               >
-                Explore All <i className="fas fa-arrow-right group-hover:translate-x-1 transition-transform" />
+                Explore All <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </a>
             </div>
 
@@ -288,7 +289,7 @@ export default function HomePage() {
               </div>
             ) : games.length === 0 ? (
               <div className="text-center py-20 text-surface-500">
-                <i className="fas fa-gamepad text-4xl mb-4 block opacity-30" />
+                <Gamepad2 size={36} className="mb-4 mx-auto opacity-30" />
                 <p className="text-base">No games listed yet. Add some from the admin panel.</p>
               </div>
             ) : (
@@ -314,7 +315,7 @@ export default function HomePage() {
               {TRUST_BADGES.map((b, i) => (
                 <div key={i} className="text-center flex flex-col items-center">
                   <div className="w-12 h-12 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mb-4 text-brand-500">
-                    <i className={`fas ${b.icon} text-lg`} />
+                    <b.icon size={18} />
                   </div>
                   <h4 className="font-bold text-white font-display mb-1 text-sm">{b.title}</h4>
                   <p className="text-surface-500 text-xs leading-relaxed">{b.desc}</p>

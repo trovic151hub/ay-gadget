@@ -8,6 +8,13 @@ import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePass
 import { useNavigate } from 'react-router-dom'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from '../components/ProductThumb'
+import {
+  Smartphone, Headphones, Gamepad2, Images, ShoppingBag, TriangleAlert, UserCog,
+  Zap, X, ShieldCheck, Power, Menu, Plus, Video, Pencil, Trash2, Search, PackageOpen,
+  Clock, Mail, Phone, MessageCircle, MapPin, CreditCard, Copy, ChevronDown, Lock,
+  AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, UserPlus, Users, RotateCw, User,
+  Link2, CirclePlus, Image, ExternalLink
+} from 'lucide-react'
 
 const SECTIONS = ['products', 'gadgets', 'games', 'hero', 'orders', 'settings']
 
@@ -388,23 +395,23 @@ export default function AdminPage() {
   const visibleOrders = filteredOrders.slice(0, orderLimit)
 
   const stats = [
-    { label: 'Products', section: 'products', value: products.length, icon: 'fa-mobile-screen-button', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { label: 'Gadgets', section: 'gadgets', value: gadgets.length, icon: 'fa-headphones', color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Games', section: 'games', value: games.length, icon: 'fa-gamepad', color: 'text-orange-400', bg: 'bg-orange-500/10' },
-    { label: 'Hero Slides', section: 'hero', value: heroSlides.length, icon: 'fa-images', color: 'text-pink-400', bg: 'bg-pink-500/10' },
-    { label: 'Orders', section: 'orders', value: orders.length, icon: 'fa-bag-shopping', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: 'Products', section: 'products', value: products.length, icon: Smartphone, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { label: 'Gadgets', section: 'gadgets', value: gadgets.length, icon: Headphones, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'Games', section: 'games', value: games.length, icon: Gamepad2, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+    { label: 'Hero Slides', section: 'hero', value: heroSlides.length, icon: Images, color: 'text-pink-400', bg: 'bg-pink-500/10' },
+    { label: 'Orders', section: 'orders', value: orders.length, icon: ShoppingBag, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     ...(followUpOrderIds.size > 0
-      ? [{ label: 'Needs Follow-up', section: 'orders', value: followUpOrderIds.size, icon: 'fa-triangle-exclamation', color: 'text-red-400', bg: 'bg-red-500/10' }]
+      ? [{ label: 'Needs Follow-up', section: 'orders', value: followUpOrderIds.size, icon: TriangleAlert, color: 'text-red-400', bg: 'bg-red-500/10' }]
       : [])
   ]
 
   const NAV_ITEMS = [
-    { id: 'products', icon: 'fa-mobile-screen-button', label: 'Smartphones' },
-    { id: 'gadgets', icon: 'fa-headphones', label: 'Accessories' },
-    { id: 'games', icon: 'fa-gamepad', label: 'Games' },
-    { id: 'hero', icon: 'fa-images', label: 'Hero Slides' },
-    { id: 'orders', icon: 'fa-bag-shopping', label: 'Orders' },
-    { id: 'settings', icon: 'fa-users-gear', label: 'Admin Settings' }
+    { id: 'products', icon: Smartphone, label: 'Smartphones' },
+    { id: 'gadgets', icon: Headphones, label: 'Accessories' },
+    { id: 'games', icon: Gamepad2, label: 'Games' },
+    { id: 'hero', icon: Images, label: 'Hero Slides' },
+    { id: 'orders', icon: ShoppingBag, label: 'Orders' },
+    { id: 'settings', icon: UserCog, label: 'Admin Settings' }
   ]
 
   return (
@@ -430,7 +437,7 @@ export default function AdminPage() {
         <div className="p-6 border-b border-surface-800 flex items-center justify-between">
           <a href="/" className="flex items-center gap-3 group">
             <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white group-hover:bg-brand-400 transition-colors shadow-glow">
-              <i className="fas fa-bolt text-sm" />
+              <Zap size={14} />
             </div>
             <div>
               <h1 className="text-lg font-bold font-display text-white tracking-tight leading-none">AY&apos;s Store</h1>
@@ -441,7 +448,7 @@ export default function AdminPage() {
             onClick={() => setMobileNavOpen(false)}
             className="md:hidden w-8 h-8 rounded-lg bg-surface-800 text-surface-400 hover:text-white flex items-center justify-center transition-colors"
           >
-            <i className="fas fa-times text-sm" />
+            <X size={14} />
           </button>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -456,7 +463,7 @@ export default function AdminPage() {
                   : 'text-surface-400 hover:bg-surface-800 hover:text-white'
               }`}
             >
-              <i className={`fas ${item.icon} w-5 text-center ${section === item.id ? 'text-white' : 'text-surface-500'}`} />
+              <item.icon size={18} className={`shrink-0 ${section === item.id ? 'text-white' : 'text-surface-500'}`} />
               <span className="flex-1">{item.label}</span>
               {item.id === 'orders' && followUpOrderIds.size > 0 && (
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${section === item.id ? 'bg-white/20 text-white' : 'bg-red-500/15 text-red-400'}`}>
@@ -469,7 +476,7 @@ export default function AdminPage() {
         <div className="p-4 border-t border-surface-800">
           <div className="bg-surface-800 rounded-xl p-4 mb-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-surface-700 flex items-center justify-center text-surface-300 flex-shrink-0">
-              <i className="fas fa-user-shield" />
+              <ShieldCheck size={16} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-white truncate">{user?.email}</p>
@@ -480,7 +487,7 @@ export default function AdminPage() {
             onClick={() => signOut(auth).then(() => navigate('/login'))}
             className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-surface-400 bg-surface-800 hover:bg-red-500/10 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/20"
           >
-            <i className="fas fa-power-off" />
+            <Power size={14} />
             End Session
           </button>
         </div>
@@ -496,7 +503,7 @@ export default function AdminPage() {
               className="md:hidden w-9 h-9 bg-surface-800 rounded-xl flex items-center justify-center text-surface-300 hover:text-white transition-colors flex-shrink-0"
               aria-label="Open menu"
             >
-              <i className="fas fa-bars text-base" />
+              <Menu size={16} />
             </button>
             <div className="min-w-0">
               <h2 className="text-lg md:text-2xl font-bold font-display text-white capitalize tracking-tight truncate">
@@ -511,25 +518,25 @@ export default function AdminPage() {
             {section === 'products' && (
               <button onClick={() => { setProductForm(emptyProduct); setEditingProductId(null); setProductModal(true) }}
                 className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
-                <i className="fas fa-plus" /> <span className="hidden sm:inline">New Phone</span><span className="sm:hidden">Add</span>
+                <Plus size={14} /> <span className="hidden sm:inline">New Phone</span><span className="sm:hidden">Add</span>
               </button>
             )}
             {section === 'gadgets' && (
               <button onClick={() => { setGadgetForm(emptyProduct); setEditingGadgetId(null); setGadgetModal(true) }}
                 className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
-                <i className="fas fa-plus" /> <span className="hidden sm:inline">New Accessory</span><span className="sm:hidden">Add</span>
+                <Plus size={14} /> <span className="hidden sm:inline">New Accessory</span><span className="sm:hidden">Add</span>
               </button>
             )}
             {section === 'games' && (
               <button onClick={() => { setGameForm(emptyProduct); setEditingGameId(null); setGameModal(true) }}
                 className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
-                <i className="fas fa-plus" /> <span className="hidden sm:inline">New Item</span><span className="sm:hidden">Add</span>
+                <Plus size={14} /> <span className="hidden sm:inline">New Item</span><span className="sm:hidden">Add</span>
               </button>
             )}
             {section === 'hero' && (
               <button onClick={() => { setHeroForm(emptyHero); setEditingHeroId(null); setHeroModal(true) }}
                 className="bg-brand-500 text-white px-4 md:px-5 py-2.5 rounded-full text-sm font-bold hover:bg-brand-400 transition-all shadow-glow transform hover:-translate-y-0.5 flex items-center gap-2">
-                <i className="fas fa-plus" /> <span className="hidden sm:inline">New Slide</span><span className="sm:hidden">Add</span>
+                <Plus size={14} /> <span className="hidden sm:inline">New Slide</span><span className="sm:hidden">Add</span>
               </button>
             )}
           </div>
@@ -545,7 +552,7 @@ export default function AdminPage() {
                 className={`bg-surface-900 border rounded-2xl p-6 shadow-xl flex items-center gap-5 text-left transition-all duration-200 hover:border-surface-600 ${section === s.section ? 'border-brand-500/40 shadow-glow' : 'border-surface-800'}`}
               >
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${s.bg} ${s.color}`}>
-                  <i className={`fas ${s.icon} text-2xl`} />
+                  <s.icon size={24} />
                 </div>
                 <div>
                   <p className="text-3xl font-bold font-display text-white tracking-tight leading-none mb-1">{s.value}</p>
@@ -617,7 +624,7 @@ export default function AdminPage() {
                         ) : (
                           <div className="w-full h-full bg-surface-950 flex items-center justify-center relative">
                             <video src={h.url} className="absolute inset-0 w-full h-full object-cover opacity-50" />
-                            <i className="fas fa-video text-surface-500 text-2xl relative z-10" />
+                            <Video size={24} className="text-surface-500 relative z-10" />
                           </div>
                         )}
                         <div className={`absolute inset-0 border-2 rounded-xl pointer-events-none ${h.active ? 'border-brand-500' : 'border-transparent'}`}></div>
@@ -634,10 +641,10 @@ export default function AdminPage() {
                       </div>
                       <div className="flex flex-col gap-2">
                         <button onClick={() => openEditHero(h)} className="w-10 h-10 rounded-xl bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
-                          <i className="fas fa-pen" />
+                          <Pencil size={16} />
                         </button>
                         <button onClick={() => deleteItem('hero', h.id, 'Delete this hero slide? This cannot be undone.')} className="w-10 h-10 rounded-xl bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors flex items-center justify-center">
-                          <i className="fas fa-trash" />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
@@ -645,7 +652,7 @@ export default function AdminPage() {
                   {!heroSlides.length && (
                     <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-20 px-6">
                       <div className="w-16 h-16 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i className="fas fa-images text-2xl text-surface-500" />
+                        <Images size={24} className="text-surface-500" />
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">No slides configured</h3>
                       <p className="text-surface-400 text-sm">Add hero slides to make a strong first impression.</p>
@@ -685,7 +692,7 @@ export default function AdminPage() {
 
                   {/* Search bar */}
                   <div className="relative">
-                    <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 text-sm pointer-events-none" />
+                    <Search size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none" />
                     <input
                       value={orderSearch}
                       onChange={e => { setOrderSearch(e.target.value); setOrderLimit(10) }}
@@ -694,7 +701,7 @@ export default function AdminPage() {
                     />
                     {orderSearch && (
                       <button onClick={() => { setOrderSearch(''); setOrderLimit(10) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors">
-                        <i className="fas fa-times" />
+                        <X size={16} />
                       </button>
                     )}
                   </div>
@@ -703,7 +710,7 @@ export default function AdminPage() {
                   {filteredOrders.length === 0 ? (
                     <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-20 px-6">
                       <div className="w-16 h-16 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i className={`fas ${orderSearch || orderStatusFilter !== 'all' ? 'fa-search' : 'fa-box-open'} text-2xl text-surface-500`} />
+                        {orderSearch || orderStatusFilter !== 'all' ? <Search size={24} className="text-surface-500" /> : <PackageOpen size={24} className="text-surface-500" />}
                       </div>
                       <h3 className="text-xl font-bold text-white mb-2">
                         {orderSearch || orderStatusFilter !== 'all' ? 'No matching orders' : 'No orders yet'}
@@ -730,13 +737,13 @@ export default function AdminPage() {
                               </span>
                               {followUpOrderIds.has(o.id) && (
                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border bg-red-500/15 text-red-400 border-red-500/20 flex items-center gap-1.5">
-                                  <i className="fas fa-triangle-exclamation" /> Needs Follow-up
+                                  <TriangleAlert size={12} /> Needs Follow-up
                                 </span>
                               )}
                               <span className="text-surface-500 text-sm font-mono">#{o.id.slice(0,8).toUpperCase()}</span>
                               {dateStr && (
                                 <span className="ml-auto text-surface-500 text-xs flex items-center gap-1.5">
-                                  <i className="fas fa-clock text-surface-600" /> {dateStr}
+                                  <Clock size={12} className="text-surface-600" /> {dateStr}
                                 </span>
                               )}
                               <button
@@ -744,7 +751,7 @@ export default function AdminPage() {
                                 className="w-7 h-7 rounded-lg bg-surface-800 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors flex items-center justify-center"
                                 title="Delete order"
                               >
-                                <i className="fas fa-trash text-xs" />
+                                <Trash2 size={12} />
                               </button>
                             </div>
 
@@ -757,17 +764,17 @@ export default function AdminPage() {
                                 <div className="flex flex-wrap items-center gap-2 mt-3">
                                   {o.address?.email && (
                                     <a href={`mailto:${o.address.email}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-800 border border-surface-700 text-surface-300 text-xs font-medium hover:border-brand-500/40 hover:text-white transition-all truncate max-w-[220px]">
-                                      <i className="fas fa-envelope text-surface-500 flex-shrink-0" /> <span className="truncate">{o.address.email}</span>
+                                      <Mail size={12} className="text-surface-500 flex-shrink-0" /> <span className="truncate">{o.address.email}</span>
                                     </a>
                                   )}
                                   {o.address?.phone && (
                                     <a href={`tel:${o.address.phone}`} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-800 border border-surface-700 text-surface-300 text-xs font-medium hover:border-brand-500/40 hover:text-white transition-all">
-                                      <i className="fas fa-phone text-surface-500 flex-shrink-0" /> {o.address.phone}
+                                      <Phone size={12} className="text-surface-500 flex-shrink-0" /> {o.address.phone}
                                     </a>
                                   )}
                                   {o.address?.phone && (
                                     <a href={`https://wa.me/${waPhone}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 text-[#25D366] text-xs font-bold hover:bg-[#25D366]/20 transition-all">
-                                      <i className="fab fa-whatsapp" /> WhatsApp
+                                      <MessageCircle size={12} /> WhatsApp
                                     </a>
                                   )}
                                 </div>
@@ -775,7 +782,7 @@ export default function AdminPage() {
                                 {/* Address */}
                                 <div className="mt-3 p-4 bg-surface-950 rounded-xl border border-surface-800">
                                   <p className="text-sm text-surface-300 font-medium leading-relaxed flex items-start gap-2">
-                                    <i className="fas fa-map-marker-alt text-brand-500 mt-1 flex-shrink-0"></i> {o.address?.full}
+                                    <MapPin size={14} className="text-brand-500 mt-1 flex-shrink-0" /> {o.address?.full}
                                   </p>
                                 </div>
 
@@ -783,7 +790,7 @@ export default function AdminPage() {
                                 <div className="mt-3 flex items-center gap-2 p-3 bg-surface-950 rounded-xl border border-surface-800">
                                   {o.paystackReference ? (
                                     <>
-                                      <i className="fas fa-credit-card text-surface-500 text-xs flex-shrink-0" />
+                                      <CreditCard size={12} className="text-surface-500 flex-shrink-0" />
                                       <span className="text-xs text-surface-500 font-bold uppercase tracking-wider">Paystack Ref:</span>
                                       <span className="text-xs text-surface-300 font-mono truncate flex-1">{o.paystackReference}</span>
                                       <button
@@ -791,12 +798,12 @@ export default function AdminPage() {
                                         className="text-surface-500 hover:text-brand-400 transition-colors flex-shrink-0"
                                         title="Copy reference"
                                       >
-                                        <i className="fas fa-copy text-xs" />
+                                        <Copy size={12} />
                                       </button>
                                     </>
                                   ) : (
                                     <>
-                                      <i className="fab fa-whatsapp text-[#25D366] text-xs flex-shrink-0" />
+                                      <MessageCircle size={12} className="text-[#25D366] flex-shrink-0" />
                                       <span className="text-xs text-surface-500 font-bold uppercase tracking-wider">Payment:</span>
                                       <span className="text-xs text-surface-300 font-medium flex-1">Arranged via WhatsApp</span>
                                     </>
@@ -839,7 +846,7 @@ export default function AdminPage() {
                                   {(o.items || []).map((item, i) => (
                                     <div key={i} className="flex items-center gap-3 bg-surface-950 border border-surface-800 rounded-lg pr-3 overflow-hidden">
                                       <div className="bg-white p-1 w-10 h-10 flex items-center justify-center flex-shrink-0">
-                                        <ProductThumb src={item.image} alt="" iconClassName="text-sm text-surface-400" />
+                                        <ProductThumb src={item.image} alt="" iconSize={14} iconClassName="text-surface-400" />
                                       </div>
                                       <span className="text-sm font-medium text-surface-300">
                                         {item.name}
@@ -865,7 +872,7 @@ export default function AdminPage() {
                             onClick={() => setOrderLimit(prev => prev + 10)}
                             className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-800 border border-surface-700 text-white font-bold text-sm hover:bg-surface-700 hover:border-surface-600 transition-all"
                           >
-                            <i className="fas fa-chevron-down" /> Load More
+                            <ChevronDown size={16} /> Load More
                           </button>
                         </div>
                       )}
@@ -881,7 +888,7 @@ export default function AdminPage() {
                   {/* Current admin card */}
                   <div className="bg-surface-900 border border-surface-800 rounded-2xl p-6 flex items-center gap-5">
                     <div className="w-14 h-14 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center justify-center flex-shrink-0">
-                      <i className="fas fa-user-shield text-brand-400 text-xl" />
+                      <ShieldCheck size={20} className="text-brand-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-white text-lg truncate">{user?.email}</p>
@@ -893,7 +900,7 @@ export default function AdminPage() {
                   <div className="bg-surface-900 border border-surface-800 rounded-2xl overflow-hidden">
                     <div className="px-6 py-5 border-b border-surface-800 flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center">
-                        <i className="fas fa-lock text-amber-400" />
+                        <Lock size={16} className="text-amber-400" />
                       </div>
                       <div>
                         <h3 className="font-bold text-white text-base">Change Password</h3>
@@ -903,12 +910,12 @@ export default function AdminPage() {
                     <div className="p-6 space-y-4">
                       {changePwError && (
                         <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-medium">
-                          <i className="fas fa-circle-exclamation flex-shrink-0" /> {changePwError}
+                          <AlertCircle size={16} className="flex-shrink-0" /> {changePwError}
                         </div>
                       )}
                       {changePwSuccess && (
                         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm font-medium">
-                          <i className="fas fa-circle-check flex-shrink-0" /> {changePwSuccess}
+                          <CheckCircle2 size={16} className="flex-shrink-0" /> {changePwSuccess}
                         </div>
                       )}
                       <div className="relative">
@@ -921,7 +928,7 @@ export default function AdminPage() {
                           className="w-full h-12 px-5 pr-12 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
                         />
                         <button type="button" onClick={() => setShowCurrPw(v => !v)} className="absolute right-4 top-[34px] text-surface-500 hover:text-white transition-colors">
-                          <i className={`fas ${showCurrPw ? 'fa-eye-slash' : 'fa-eye'}`} />
+                          {showCurrPw ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
                       <div className="relative">
@@ -934,7 +941,7 @@ export default function AdminPage() {
                           className="w-full h-12 px-5 pr-12 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
                         />
                         <button type="button" onClick={() => setShowChangePw(v => !v)} className="absolute right-4 top-[34px] text-surface-500 hover:text-white transition-colors">
-                          <i className={`fas ${showChangePw ? 'fa-eye-slash' : 'fa-eye'}`} />
+                          {showChangePw ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
                       <div>
@@ -952,7 +959,7 @@ export default function AdminPage() {
                         disabled={changingPw}
                         className="w-full h-12 rounded-2xl bg-brand-500 text-white font-bold text-sm hover:bg-brand-400 hover:shadow-glow transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-brand-500 disabled:hover:-translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-2"
                       >
-                        {changingPw ? <><i className="fas fa-circle-notch fa-spin" /> Updating…</> : <><i className="fas fa-lock" /> Update Password</>}
+                        {changingPw ? <><Loader2 size={16} className="animate-spin" /> Updating…</> : <><Lock size={16} /> Update Password</>}
                       </button>
                     </div>
                   </div>
@@ -961,7 +968,7 @@ export default function AdminPage() {
                   <div className="bg-surface-900 border border-surface-800 rounded-2xl overflow-hidden">
                     <div className="px-6 py-5 border-b border-surface-800 flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                        <i className="fas fa-user-plus text-blue-400" />
+                        <UserPlus size={16} className="text-blue-400" />
                       </div>
                       <div>
                         <h3 className="font-bold text-white text-base">Create New Admin</h3>
@@ -971,12 +978,12 @@ export default function AdminPage() {
                     <div className="p-6 space-y-4">
                       {createAdminError && (
                         <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-medium">
-                          <i className="fas fa-circle-exclamation flex-shrink-0" /> {createAdminError}
+                          <AlertCircle size={16} className="flex-shrink-0" /> {createAdminError}
                         </div>
                       )}
                       {createAdminSuccess && (
                         <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm font-medium">
-                          <i className="fas fa-circle-check flex-shrink-0" /> {createAdminSuccess}
+                          <CheckCircle2 size={16} className="flex-shrink-0" /> {createAdminSuccess}
                         </div>
                       )}
                       <div>
@@ -999,7 +1006,7 @@ export default function AdminPage() {
                           className="w-full h-12 px-5 pr-12 rounded-2xl bg-surface-950 border border-surface-800 text-white text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700"
                         />
                         <button type="button" onClick={() => setShowNewPw(v => !v)} className="absolute right-4 top-[34px] text-surface-500 hover:text-white transition-colors">
-                          <i className={`fas ${showNewPw ? 'fa-eye-slash' : 'fa-eye'}`} />
+                          {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                       </div>
                       <div>
@@ -1017,7 +1024,7 @@ export default function AdminPage() {
                         disabled={creatingAdmin}
                         className="w-full h-12 rounded-2xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-blue-500 disabled:hover:-translate-y-0 flex items-center justify-center gap-2"
                       >
-                        {creatingAdmin ? <><i className="fas fa-circle-notch fa-spin" /> Creating…</> : <><i className="fas fa-user-plus" /> Create Admin</>}
+                        {creatingAdmin ? <><Loader2 size={16} className="animate-spin" /> Creating…</> : <><UserPlus size={16} /> Create Admin</>}
                       </button>
                     </div>
                   </div>
@@ -1027,7 +1034,7 @@ export default function AdminPage() {
                     <div className="px-6 py-5 border-b border-surface-800 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                          <i className="fas fa-users text-purple-400" />
+                          <Users size={16} className="text-purple-400" />
                         </div>
                         <div>
                           <h3 className="font-bold text-white text-base">All Admins</h3>
@@ -1035,7 +1042,7 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <button onClick={fetchAdmins} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center" title="Refresh">
-                        <i className="fas fa-rotate-right text-sm" />
+                        <RotateCw size={14} />
                       </button>
                     </div>
                     <div className="divide-y divide-surface-800">
@@ -1049,7 +1056,7 @@ export default function AdminPage() {
                         return (
                           <div key={a.id} className="px-6 py-4 flex items-center gap-4">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isSelf ? 'bg-brand-500/15 border border-brand-500/30' : 'bg-surface-800'}`}>
-                              <i className={`fas fa-user text-sm ${isSelf ? 'text-brand-400' : 'text-surface-500'}`} />
+                              <User size={14} className={isSelf ? 'text-brand-400' : 'text-surface-500'} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -1066,7 +1073,7 @@ export default function AdminPage() {
                                 className="w-8 h-8 rounded-lg bg-surface-800 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors flex items-center justify-center flex-shrink-0"
                                 title="Remove admin"
                               >
-                                <i className="fas fa-trash text-xs" />
+                                <Trash2 size={12} />
                               </button>
                             )}
                           </div>
@@ -1167,7 +1174,7 @@ function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleIte
     <div className="space-y-6">
       {/* Search bar */}
       <div className="relative">
-        <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 text-sm pointer-events-none" />
+        <Search size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-surface-500 pointer-events-none" />
         <input
           value={search}
           onChange={e => { setSearch(e.target.value); setLimit(9) }}
@@ -1176,7 +1183,7 @@ function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleIte
         />
         {search && (
           <button onClick={() => { setSearch(''); setLimit(9) }} className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors">
-            <i className="fas fa-times" />
+            <X size={16} />
           </button>
         )}
       </div>
@@ -1184,7 +1191,7 @@ function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleIte
       {filteredItems.length === 0 ? (
         <div className="text-center bg-surface-900 border border-surface-800 rounded-3xl py-16 px-6">
           <div className="w-14 h-14 bg-surface-800 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-search text-xl text-surface-500" />
+            <Search size={20} className="text-surface-500" />
           </div>
           <h3 className="text-lg font-bold text-white mb-1">No results for "{search}"</h3>
           <p className="text-surface-400 text-sm">Try a different name or brand.</p>
@@ -1199,7 +1206,7 @@ function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleIte
                 className="bg-surface-900 border border-surface-800 rounded-2xl p-5 shadow-lg flex gap-5 group hover:border-brand-500/40 hover:shadow-glow transition-all cursor-pointer"
               >
                 <div className="w-24 h-24 bg-white rounded-xl flex-shrink-0 p-1 flex items-center justify-center">
-                  <ProductThumb src={item.images?.[0]} alt={item.name} className="max-w-full max-h-full object-contain mix-blend-multiply" iconClassName="text-3xl text-surface-400" />
+                  <ProductThumb src={item.images?.[0]} alt={item.name} className="max-w-full max-h-full object-contain mix-blend-multiply" iconSize={30} iconClassName="text-surface-400" />
                 </div>
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
                   <div>
@@ -1213,10 +1220,10 @@ function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleIte
                     <p className="text-brand-400 font-bold font-display text-lg leading-none tracking-tight">₦{Number(item.price).toLocaleString()}</p>
                     <div className="flex gap-2">
                       <button onClick={e => { e.stopPropagation(); onEdit(item) }} className="w-8 h-8 rounded-lg bg-surface-800 text-surface-300 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
-                        <i className="fas fa-pen text-sm" />
+                        <Pencil size={14} />
                       </button>
                       <button onClick={e => { e.stopPropagation(); onDelete(item) }} className="w-8 h-8 rounded-lg bg-surface-800 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/20 border border-transparent transition-colors flex items-center justify-center">
-                        <i className="fas fa-trash text-sm" />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
@@ -1234,7 +1241,7 @@ function CatalogSection({ search, setSearch, setLimit, filteredItems, visibleIte
                 onClick={onLoadMore}
                 className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-800 border border-surface-700 text-white font-bold text-sm hover:bg-surface-700 hover:border-surface-600 transition-all"
               >
-                <i className="fas fa-chevron-down" /> Load More
+                <ChevronDown size={16} /> Load More
               </button>
             </div>
           )}
@@ -1252,7 +1259,7 @@ function ConfirmModal({ message, onConfirm, onCancel, confirming }) {
       <div className="relative bg-surface-900 border border-surface-700 rounded-[32px] w-full max-w-sm shadow-2xl z-10 animate-slide-in">
         <div className="p-8 text-center">
           <div className="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto mb-5">
-            <i className="fas fa-triangle-exclamation text-xl" />
+            <TriangleAlert size={20} />
           </div>
           <h3 className="font-bold text-xl font-display text-white tracking-tight mb-2">Are you sure?</h3>
           <p className="text-surface-400 text-sm">{message}</p>
@@ -1268,7 +1275,7 @@ function ConfirmModal({ message, onConfirm, onCancel, confirming }) {
           >
             {confirming ? (
               <span className="flex items-center justify-center gap-2">
-                <i className="fas fa-circle-notch fa-spin" /> Deleting...
+                <Loader2 size={16} className="animate-spin" /> Deleting...
               </span>
             ) : 'Delete'}
           </button>
@@ -1287,7 +1294,7 @@ function FormModal({ title, onClose, onSave, saving, children }) {
         <div className="flex justify-between items-center p-8 border-b border-surface-800">
           <h3 className="font-bold text-2xl font-display text-white tracking-tight">{title}</h3>
           <button onClick={onClose} className="w-10 h-10 rounded-full bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center">
-            <i className="fas fa-times text-lg" />
+            <X size={18} />
           </button>
         </div>
         <div className="p-8 overflow-y-auto space-y-6 flex-1">
@@ -1300,7 +1307,7 @@ function FormModal({ title, onClose, onSave, saving, children }) {
           <button onClick={onSave} disabled={saving} className="flex-1 bg-brand-500 text-white py-4 rounded-2xl font-bold hover:bg-brand-400 hover:shadow-glow transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:bg-brand-500 disabled:hover:-translate-y-0 disabled:hover:shadow-none">
             {saving ? (
               <span className="flex items-center justify-center gap-2">
-                <i className="fas fa-circle-notch fa-spin" /> Saving...
+                <Loader2 size={16} className="animate-spin" /> Saving...
               </span>
             ) : 'Save Details'}
           </button>
@@ -1347,19 +1354,19 @@ function ItemForm({ form, setForm }) {
           {form.images.map((img, i) => (
             <div key={i} className="flex gap-3">
               <div className="relative flex-1">
-                <i className="fas fa-link absolute left-4 top-1/2 -translate-y-1/2 text-surface-600 text-sm" />
+                <Link2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-600" />
                 <input value={img} onChange={e => handleImageChange(i, e.target.value)} placeholder="https://..." className="w-full h-12 pl-10 pr-4 rounded-xl bg-surface-900 border border-surface-700 text-white text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
               </div>
               {form.images.length > 1 && (
                 <button onClick={() => removeImageField(i)} className="w-12 h-12 rounded-xl bg-surface-900 text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center justify-center">
-                  <i className="fas fa-times" />
+                  <X size={16} />
                 </button>
               )}
             </div>
           ))}
         </div>
         <button onClick={addImageField} className="mt-4 text-brand-500 text-sm font-bold hover:text-brand-400 flex items-center gap-2 transition-colors">
-          <i className="fas fa-plus-circle" /> Add another image
+          <CirclePlus size={14} /> Add another image
         </button>
       </div>
     </>
@@ -1401,17 +1408,17 @@ function HeroForm({ form, setForm }) {
         <div className="grid grid-cols-2 gap-4 mb-4">
           <label className={`cursor-pointer border-2 rounded-xl p-4 flex items-center gap-3 transition-colors ${form.type === 'image' ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'border-surface-800 bg-surface-900 text-surface-500 hover:border-surface-700'}`}>
             <input type="radio" name="type" value="image" checked={form.type === 'image'} onChange={handleChange} className="sr-only" />
-            <i className="fas fa-image text-xl" />
+            <Image size={20} />
             <span className="font-bold text-sm">Image</span>
           </label>
           <label className={`cursor-pointer border-2 rounded-xl p-4 flex items-center gap-3 transition-colors ${form.type === 'video' ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'border-surface-800 bg-surface-900 text-surface-500 hover:border-surface-700'}`}>
             <input type="radio" name="type" value="video" checked={form.type === 'video'} onChange={handleChange} className="sr-only" />
-            <i className="fas fa-video text-xl" />
+            <Video size={20} />
             <span className="font-bold text-sm">Video</span>
           </label>
         </div>
         <div className="relative">
-          <i className="fas fa-link absolute left-4 top-1/2 -translate-y-1/2 text-surface-600 text-sm" />
+          <Link2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-600" />
           <input name="url" value={form.url} onChange={handleChange} placeholder="https://..." className="w-full h-12 pl-10 pr-4 rounded-xl bg-surface-900 border border-surface-700 text-white text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
         </div>
       </div>
@@ -1442,7 +1449,7 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
             <span className="text-xs text-surface-600 font-mono">{item.id.slice(0, 10)}…</span>
           </div>
           <button onClick={onClose} className="w-10 h-10 rounded-full bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700 transition-colors flex items-center justify-center flex-shrink-0">
-            <i className="fas fa-times text-lg" />
+            <X size={18} />
           </button>
         </div>
 
@@ -1455,7 +1462,8 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
                   src={images[activeImg]}
                   alt={item.name}
                   className="max-w-full max-h-full object-contain mix-blend-multiply"
-                  iconClassName="text-4xl text-surface-400"
+                  iconSize={36}
+                  iconClassName="text-surface-400"
                 />
               </div>
               {images.length > 1 && (
@@ -1466,7 +1474,7 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
                       onClick={() => setActiveImg(i)}
                       className={`w-16 h-16 flex-shrink-0 rounded-xl bg-white p-1 border-2 transition-all ${i === activeImg ? 'border-brand-500 shadow-glow' : 'border-transparent opacity-60 hover:opacity-100'}`}
                     >
-                      <ProductThumb src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" iconClassName="text-lg text-surface-400" />
+                      <ProductThumb src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" iconSize={18} iconClassName="text-surface-400" />
                     </button>
                   ))}
                 </div>
@@ -1503,7 +1511,7 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
                       <span className="text-[10px] text-surface-600 font-bold w-4">{i + 1}</span>
                       <p className="text-xs text-surface-400 truncate flex-1 font-mono">{img}</p>
                       <a href={img} target="_blank" rel="noreferrer" className="text-brand-500 hover:text-brand-400 text-xs flex-shrink-0">
-                        <i className="fas fa-external-link-alt" />
+                        <ExternalLink size={12} />
                       </a>
                     </div>
                   ))}
@@ -1519,13 +1527,13 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
             onClick={onDelete}
             className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 font-bold text-sm transition-all"
           >
-            <i className="fas fa-trash" /> Delete
+            <Trash2 size={14} /> Delete
           </button>
           <button
             onClick={onEdit}
             className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-brand-500 text-white font-bold text-sm hover:bg-brand-400 hover:shadow-glow transition-all transform hover:-translate-y-0.5"
           >
-            <i className="fas fa-pen" /> Edit Product
+            <Pencil size={14} /> Edit Product
           </button>
         </div>
       </div>

@@ -8,6 +8,7 @@ import Footer from '../components/Footer'
 import { Link } from 'react-router-dom'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from '../components/ProductThumb'
+import { ChevronDown, Check, MessageCircle, Zap, ChevronRight, ShoppingBag, X, Lock, Truck, Loader2, MapPinned, Mail, ArrowRight } from 'lucide-react'
 
 const LAGOS_LGA_FEES = {
   "Agege": 3000, "Ajeromi-Ifelodun": 3000, "Alimosho": 3000, "Amuwo-Odofin": 3000,
@@ -52,7 +53,7 @@ function CustomSelect({ value, onChange, options, placeholder = 'Select...' }) {
         <span className={selectedLabel ? 'text-white' : 'text-surface-500 font-normal text-sm'}>
           {selectedLabel || placeholder}
         </span>
-        <i className={`fas fa-chevron-down text-surface-500 text-xs transition-transform duration-200 ${open ? 'rotate-180 text-brand-500' : ''}`} />
+        <ChevronDown size={12} className={`text-surface-500 transition-transform duration-200 ${open ? 'rotate-180 text-brand-500' : ''}`} />
       </button>
 
       {open && (
@@ -66,7 +67,7 @@ function CustomSelect({ value, onChange, options, placeholder = 'Select...' }) {
                 className={`w-full text-left px-5 py-3.5 text-sm font-medium transition-colors flex items-center justify-between gap-3 ${value === opt.value ? 'bg-brand-500/15 text-brand-400' : 'text-surface-300 hover:bg-surface-700/70 hover:text-white'}`}
               >
                 {opt.label}
-                {value === opt.value && <i className="fas fa-check text-brand-500 text-[10px]" />}
+                {value === opt.value && <Check size={10} className="text-brand-500" />}
               </button>
             ))}
           </div>
@@ -309,7 +310,7 @@ export default function CartPage() {
         <NotificationContainer />
         <div className="text-center bg-surface-900 border border-surface-700/50 p-8 md:p-12 rounded-[32px] max-w-lg mx-auto w-full animate-fade-up">
           <div className="w-24 h-24 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
-            <i className="fab fa-whatsapp text-green-400 text-4xl" />
+            <MessageCircle size={36} className="text-green-400" />
           </div>
           <h2 className="text-3xl font-bold font-display text-white tracking-tight mb-4">Continue on WhatsApp</h2>
           <p className="text-surface-400 text-lg mb-10 max-w-sm mx-auto leading-relaxed">
@@ -332,7 +333,7 @@ export default function CartPage() {
         <NotificationContainer />
         <div className="text-center bg-surface-900 border border-surface-700/50 p-8 md:p-12 rounded-[32px] max-w-lg mx-auto w-full animate-fade-up">
           <div className="w-24 h-24 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
-            <i className="fas fa-check text-green-400 text-4xl" />
+            <Check size={36} className="text-green-400" />
           </div>
           <h2 className="text-3xl font-bold font-display text-white tracking-tight mb-4">
             {CHECKOUT_VIA_WHATSAPP ? 'Order Received!' : 'Order Successful!'}
@@ -361,7 +362,7 @@ export default function CartPage() {
       <nav className="bg-surface-900 border-b border-surface-700/50 h-20 flex items-center justify-between px-6 sticky top-0 z-40">
         <Link to="/" className="text-xl font-bold text-white font-display tracking-tight flex items-center gap-2 group">
           <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white group-hover:bg-brand-400 transition-colors">
-            <i className="fas fa-bolt text-sm" />
+            <Zap size={14} />
           </div>
           AY&apos;s Store
         </Link>
@@ -382,14 +383,14 @@ export default function CartPage() {
             }
             return (
               <span key={s} className="flex items-center gap-3">
-                {i > 0 && <i className="fas fa-chevron-right text-[10px] text-surface-600" />}
+                {i > 0 && <ChevronRight size={10} className="text-surface-600" />}
                 <button
                   onClick={handleStepClick}
                   disabled={!clickable}
                   className={`flex items-center gap-2 transition-colors ${active ? 'text-brand-500' : done ? 'text-surface-300' : 'text-surface-600'} ${clickable ? 'hover:text-white cursor-pointer' : 'cursor-default'}`}
                 >
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-colors ${active ? 'bg-brand-500 border-brand-500 text-white' : done ? 'bg-surface-700 border-surface-700 text-white' : 'bg-transparent border-surface-700 text-surface-600'}`}>
-                    {done ? <i className="fas fa-check text-[10px]" /> : i + 1}
+                    {done ? <Check size={10} /> : i + 1}
                   </span>
                   {STEP_LABELS[s]}
                 </button>
@@ -410,7 +411,7 @@ export default function CartPage() {
               {cartItems.length === 0 ? (
                 <div className="bg-surface-900 border border-surface-700/50 rounded-[32px] p-10 md:p-16 text-center">
                   <div className="w-24 h-24 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <i className="fas fa-bag-shopping text-4xl text-surface-600" />
+                    <ShoppingBag size={36} className="text-surface-600" />
                   </div>
                   <p className="text-xl font-semibold text-white mb-2">Your bag is empty</p>
                   <p className="text-surface-500 mb-8">Time to fill it up with amazing tech.</p>
@@ -423,7 +424,7 @@ export default function CartPage() {
                   {cartItems.map(item => (
                     <div key={item.id} className="flex gap-4 bg-surface-900 border border-surface-700/50 p-4 md:p-5 rounded-[24px] group">
                       <div className="w-20 h-20 sm:w-28 sm:h-28 bg-surface-800 rounded-2xl flex-shrink-0 flex items-center justify-center p-2 overflow-hidden">
-                        <ProductThumb src={item.image || item.images?.[0]} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" iconClassName="text-2xl text-surface-600" />
+                        <ProductThumb src={item.image || item.images?.[0]} alt={item.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" iconSize={24} />
                       </div>
                       <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
                         <div className="flex justify-between gap-3">
@@ -432,7 +433,7 @@ export default function CartPage() {
                             onClick={() => removeFromCart(item.id)}
                             className="text-surface-600 hover:text-red-400 transition-colors p-1 shrink-0 mt-0.5"
                           >
-                            <i className="fas fa-xmark" />
+                            <X size={16} />
                           </button>
                         </div>
                         <div className="flex justify-between items-center mt-3">
@@ -528,7 +529,7 @@ export default function CartPage() {
                         <div className="w-full h-14 px-5 rounded-2xl bg-surface-800 border border-surface-700/60 flex items-center justify-between gap-3 cursor-not-allowed">
                           <span className="text-white font-medium">Lagos</span>
                           <span className="flex items-center gap-1.5 text-xs font-semibold text-brand-500 bg-brand-500/10 border border-brand-500/20 rounded-lg px-2.5 py-1">
-                            <i className="fas fa-lock text-[9px]" />
+                            <Lock size={9} />
                             Only
                           </span>
                         </div>
@@ -575,7 +576,7 @@ export default function CartPage() {
                     <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center gap-3">
                         <div className="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center">
-                          <i className="fas fa-check text-white text-[10px]" />
+                          <Check size={10} className="text-white" />
                         </div>
                         <h3 className="font-bold text-xl font-display tracking-tight text-white">Shipping details</h3>
                       </div>
@@ -596,14 +597,14 @@ export default function CartPage() {
                     <div className="border border-brand-500/60 bg-brand-500/[0.06] rounded-2xl p-5">
                       <div className="flex items-center gap-4">
                         <div className="w-11 h-11 bg-brand-500/15 border border-brand-500/30 rounded-xl flex items-center justify-center text-brand-500">
-                          <i className="fas fa-truck-fast" />
+                          <Truck size={16} />
                         </div>
                         <div className="flex-1">
                           <p className="font-bold text-white">Standard Delivery</p>
                           <p className="text-surface-400 text-sm mt-0.5">₦{shippingFee.toLocaleString()}</p>
                         </div>
                         <div className="w-5 h-5 rounded-full bg-brand-500 flex items-center justify-center shrink-0">
-                          <i className="fas fa-check text-white text-[9px]" />
+                          <Check size={9} className="text-white" />
                         </div>
                       </div>
                     </div>
@@ -615,7 +616,7 @@ export default function CartPage() {
                       <h3 className="font-bold text-xl font-display tracking-tight text-white mb-6">3. Finish on WhatsApp</h3>
                       <div className="p-5 rounded-2xl border border-green-500/20 bg-green-500/[0.06] flex items-center gap-4">
                         <div className="w-11 h-11 rounded-full bg-green-500/15 flex items-center justify-center shrink-0">
-                          <i className="fab fa-whatsapp text-green-400 text-xl" />
+                          <MessageCircle size={20} className="text-green-400" />
                         </div>
                         <p className="text-surface-300 text-sm leading-relaxed">
                           We'll open WhatsApp with your order details filled in. Our team will confirm payment and delivery with you directly there.
@@ -652,7 +653,7 @@ export default function CartPage() {
                   {cartItems.map(item => (
                     <div key={item.id} className="flex gap-3 items-center">
                       <div className="w-14 h-14 bg-surface-800 border border-surface-700/50 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden p-1.5">
-                        <ProductThumb src={item.image} alt={item.name} iconClassName="text-sm text-surface-600" />
+                        <ProductThumb src={item.image} alt={item.name} iconSize={14} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm text-white line-clamp-1 leading-tight">{item.name}</p>
@@ -687,11 +688,11 @@ export default function CartPage() {
                   >
                     {placingOrder ? (
                       <>
-                        <i className="fas fa-circle-notch fa-spin" /> Starting order...
+                        <Loader2 size={16} className="animate-spin" /> Starting order...
                       </>
                     ) : (
                       <>
-                        <i className="fab fa-whatsapp" /> Continue on WhatsApp
+                        <MessageCircle size={16} /> Continue on WhatsApp
                       </>
                     )}
                   </button>
@@ -703,7 +704,7 @@ export default function CartPage() {
                   >
                     {placingOrder ? (
                       <span className="flex items-center justify-center gap-2">
-                        <i className="fas fa-circle-notch fa-spin" /> Confirming payment...
+                        <Loader2 size={16} className="animate-spin" /> Confirming payment...
                       </span>
                     ) : (
                       `Pay ₦${total.toLocaleString()}`
@@ -712,7 +713,7 @@ export default function CartPage() {
                 )}
 
                 <div className="mt-4 flex items-center justify-center gap-2 text-surface-600 text-xs">
-                  <i className={CHECKOUT_VIA_WHATSAPP ? 'fab fa-whatsapp' : 'fas fa-lock'} />
+                  {CHECKOUT_VIA_WHATSAPP ? <MessageCircle size={14} /> : <Lock size={14} />}
                   <span>{CHECKOUT_VIA_WHATSAPP ? "We'll finalize payment with you on WhatsApp" : 'Payments are secure and encrypted'}</span>
                 </div>
               </div>
@@ -731,7 +732,7 @@ export default function CartPage() {
             {!outsideLagos ? (
               <>
                 <div className="w-14 h-14 bg-brand-500/10 border border-brand-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <i className="fas fa-map-location-dot text-brand-500 text-2xl" />
+                  <MapPinned size={24} className="text-brand-500" />
                 </div>
                 <h3 className="text-2xl font-bold font-display text-white tracking-tight text-center mb-3">
                   Are you in Lagos?
@@ -757,7 +758,7 @@ export default function CartPage() {
             ) : (
               <>
                 <div className="w-14 h-14 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <i className="fas fa-truck text-yellow-500 text-2xl" />
+                  <Truck size={24} className="text-yellow-500" />
                 </div>
                 <h3 className="text-2xl font-bold font-display text-white tracking-tight text-center mb-3">
                   Delivery not available yet
@@ -774,13 +775,13 @@ export default function CartPage() {
                     className="flex items-center gap-4 bg-green-500/10 border border-green-500/20 hover:border-green-500/40 rounded-2xl px-5 py-4 transition-all group"
                   >
                     <div className="w-10 h-10 bg-green-500/15 rounded-xl flex items-center justify-center shrink-0">
-                      <i className="fab fa-whatsapp text-green-400 text-xl" />
+                      <MessageCircle size={20} className="text-green-400" />
                     </div>
                     <div>
                       <p className="text-xs text-surface-500 font-medium mb-0.5">Chat on WhatsApp</p>
                       <p className="text-white font-bold text-sm group-hover:text-green-400 transition-colors">+{ADMIN_WHATSAPP}</p>
                     </div>
-                    <i className="fas fa-arrow-right text-surface-600 group-hover:text-green-400 text-xs ml-auto transition-colors" />
+                    <ArrowRight size={12} className="text-surface-600 group-hover:text-green-400 ml-auto transition-colors" />
                   </a>
 
                   <a
@@ -788,13 +789,13 @@ export default function CartPage() {
                     className="flex items-center gap-4 bg-surface-800 border border-surface-700/50 hover:border-surface-600 rounded-2xl px-5 py-4 transition-all group"
                   >
                     <div className="w-10 h-10 bg-surface-700 rounded-xl flex items-center justify-center shrink-0">
-                      <i className="fas fa-envelope text-surface-300 text-base" />
+                      <Mail size={16} className="text-surface-300" />
                     </div>
                     <div>
                       <p className="text-xs text-surface-500 font-medium mb-0.5">Send an Email</p>
                       <p className="text-white font-bold text-sm group-hover:text-brand-500 transition-colors">{ADMIN_EMAIL}</p>
                     </div>
-                    <i className="fas fa-arrow-right text-surface-600 group-hover:text-brand-500 text-xs ml-auto transition-colors" />
+                    <ArrowRight size={12} className="text-surface-600 group-hover:text-brand-500 ml-auto transition-colors" />
                   </a>
                 </div>
 

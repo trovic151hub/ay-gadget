@@ -8,6 +8,7 @@ import MiniCart from '../components/MiniCart'
 import NotificationContainer from '../components/NotificationContainer'
 import Footer from '../components/Footer'
 import ProductModal from '../components/ProductModal'
+import { Home, ChevronRight, Search, X, ChevronDown } from 'lucide-react'
 
 function SkeletonCard() {
   return (
@@ -123,10 +124,10 @@ export default function ProductsPage() {
 
         {/* Breadcrumb */}
         <nav className="text-xs text-surface-500 mb-8 flex items-center gap-2">
-          <a href="/" className="hover:text-brand-500 transition-colors">
-            <i className="fas fa-home" /> Home
+          <a href="/" className="hover:text-brand-500 transition-colors inline-flex items-center gap-1">
+            <Home size={12} /> Home
           </a>
-          <i className="fas fa-chevron-right text-[10px]" />
+          <ChevronRight size={10} />
           <span className="text-surface-300 font-semibold">
             {TAB_META[activeTab].crumb}
           </span>
@@ -153,7 +154,7 @@ export default function ProductsPage() {
 
           {/* Search */}
           <div className="relative w-full lg:w-80">
-            <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-surface-500 text-sm" />
+            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -165,7 +166,7 @@ export default function ProductsPage() {
                 onClick={() => setSearch('')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-white transition-colors"
               >
-                <i className="fas fa-times text-xs" />
+                <X size={12} />
               </button>
             )}
           </div>
@@ -196,7 +197,7 @@ export default function ProductsPage() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-32 flex flex-col items-center">
             <div className="w-20 h-20 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mb-6">
-              <i className="fas fa-search text-2xl text-surface-500" />
+              <Search size={24} className="text-surface-500" />
             </div>
             <h3 className="text-xl font-bold font-display text-white mb-2">
               {search || conditionFilter !== 'all' ? 'No results found' : 'Nothing here yet'}
@@ -236,7 +237,7 @@ export default function ProductsPage() {
                   onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
                   className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-surface-900 border border-surface-700/50 text-white font-bold text-sm hover:bg-surface-800 hover:border-surface-600 transition-all"
                 >
-                  <i className="fas fa-chevron-down" /> See More
+                  <ChevronDown size={16} /> See More
                 </button>
               </div>
             )}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { auth } from '../firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useNavigate } from 'react-router-dom'
+import { Zap, Fingerprint, AlertCircle, Mail, Lock, Eye, EyeOff, Loader2, Shield } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -37,7 +38,7 @@ export default function LoginPage() {
       <header className="relative z-10 p-6 flex justify-between items-center">
         <a href="/" className="text-xl font-bold text-white font-display tracking-tight flex items-center gap-2 group">
           <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white group-hover:bg-brand-400 transition-colors">
-            <i className="fas fa-bolt text-sm" />
+            <Zap size={14} />
           </div>
           AY&apos;s Store
         </a>
@@ -48,7 +49,7 @@ export default function LoginPage() {
           
           <div className="text-center mb-10">
             <div className="w-16 h-16 bg-surface-900 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-surface-800 shadow-xl shadow-black/50 text-brand-500">
-              <i className="fas fa-fingerprint text-2xl" />
+              <Fingerprint size={24} />
             </div>
             <h1 className="text-3xl font-bold font-display text-white tracking-tight">Admin Gateway</h1>
             <p className="text-surface-400 text-sm mt-3">Enter your credentials to access the command center.</p>
@@ -57,7 +58,7 @@ export default function LoginPage() {
           <div className="bg-surface-900/50 backdrop-blur-xl rounded-[32px] border border-surface-800 p-8 shadow-2xl">
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-medium mb-6 flex items-center gap-3">
-                <i className="fas fa-exclamation-circle" />
+                <AlertCircle size={16} className="shrink-0" />
                 {error}
               </div>
             )}
@@ -66,7 +67,7 @@ export default function LoginPage() {
               <div>
                 <label className="block text-sm font-bold text-surface-300 mb-2 uppercase tracking-wider text-[10px]">Administrator Email</label>
                 <div className="relative">
-                  <i className="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-surface-500" />
+                  <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500" />
                   <input
                     type="email"
                     value={email}
@@ -81,7 +82,7 @@ export default function LoginPage() {
               <div>
                 <label className="block text-sm font-bold text-surface-300 mb-2 uppercase tracking-wider text-[10px]">Access Password</label>
                 <div className="relative">
-                  <i className="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-surface-500" />
+                  <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-500" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -96,7 +97,7 @@ export default function LoginPage() {
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-300 transition-colors"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
@@ -108,7 +109,7 @@ export default function LoginPage() {
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <i className="fas fa-circle-notch fa-spin" /> Authenticating...
+                    <Loader2 size={16} className="animate-spin" /> Authenticating...
                   </span>
                 ) : (
                   'Authorize Access'
@@ -118,7 +119,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-sm font-medium text-surface-600 mt-8">
-            <i className="fas fa-shield-alt mr-2 text-surface-700" />
+            <Shield size={14} className="mr-2 text-surface-700 inline-block align-[-2px]" />
             Restricted area. Authorized personnel only.
           </p>
         </div>

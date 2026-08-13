@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Zap, Play, Pause } from 'lucide-react'
 
 const FALLBACK_BG = [
   'from-brand-900/50 via-surface-900 to-surface-950',
@@ -163,7 +164,7 @@ export default function HeroSlider({ slides }) {
                   ) : (
                     <div className={`w-full h-full bg-gradient-to-br ${FALLBACK_BG[i % FALLBACK_BG.length]} flex items-center justify-center`}>
                       <div className="text-center">
-                        <i className="fas fa-bolt text-5xl text-brand-500/40 mb-3 block" />
+                        <Zap size={48} className="text-brand-500/40 mb-3 block mx-auto" />
                         <p className="text-white/20 text-sm font-medium">AY&apos;s Store</p>
                       </div>
                     </div>
@@ -194,7 +195,7 @@ export default function HeroSlider({ slides }) {
             onClick={() => setPaused(v => !v)}
             className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors border border-white/15"
           >
-            <i className={`fas ${paused ? 'fa-play' : 'fa-pause'} text-[10px]`} />
+            {paused ? <Play size={10} /> : <Pause size={10} />}
           </button>
         </div>
       )}

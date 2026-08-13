@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useNotification } from '../context/NotificationContext'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from './ProductThumb'
+import { X, ShoppingBag, ArrowRight } from 'lucide-react'
 
 export default function MiniCart() {
   const { cartOpen, setCartOpen, cartItems, cartSubtotal, removeFromCart, changeQuantity, cartCount } = useCart()
@@ -64,7 +65,7 @@ export default function MiniCart() {
             onClick={() => setCartOpen(false)}
             className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-800 border border-surface-700/50 text-surface-400 hover:text-white hover:border-surface-600 transition-all"
           >
-            <i className="fas fa-times text-sm" />
+            <X size={14} />
           </button>
         </div>
 
@@ -73,7 +74,7 @@ export default function MiniCart() {
           {cartItems.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center py-16">
               <div className="w-20 h-20 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mb-5">
-                <i className="fas fa-bag-shopping text-3xl text-surface-600" />
+                <ShoppingBag size={30} className="text-surface-600" />
               </div>
               <p className="text-white font-semibold text-base mb-1">Your cart is empty</p>
               <p className="text-surface-500 text-sm">Add something to get started.</p>
@@ -81,7 +82,7 @@ export default function MiniCart() {
                 onClick={() => { navigate('/products'); setCartOpen(false) }}
                 className="mt-6 text-brand-500 hover:text-brand-400 font-semibold text-sm transition-colors inline-flex items-center gap-2"
               >
-                Browse products <i className="fas fa-arrow-right text-xs" />
+                Browse products <ArrowRight size={12} />
               </button>
             </div>
           ) : (
@@ -100,7 +101,7 @@ export default function MiniCart() {
                       onClick={() => removeFromCart(item.id)}
                       className="text-surface-600 hover:text-red-400 transition-colors p-0.5 shrink-0"
                     >
-                      <i className="fas fa-xmark text-xs" />
+                      <X size={12} />
                     </button>
                   </div>
 

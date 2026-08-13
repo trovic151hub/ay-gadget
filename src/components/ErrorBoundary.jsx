@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import { Link } from 'react-router-dom'
+import { TriangleAlert, Home } from 'lucide-react'
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -21,7 +22,7 @@ export default class ErrorBoundary extends Component {
         <div className="min-h-screen bg-surface-950 flex items-center justify-center px-6 text-center">
           <div>
             <div className="w-16 h-16 bg-surface-800 border border-surface-700/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <i className="fas fa-triangle-exclamation text-2xl text-brand-500" />
+              <TriangleAlert size={24} className="text-brand-500" />
             </div>
             <h1 className="text-2xl font-bold font-display text-white mb-3">Something went wrong</h1>
             <p className="text-surface-400 text-sm max-w-sm mx-auto mb-8">
@@ -32,7 +33,7 @@ export default class ErrorBoundary extends Component {
               onClick={() => this.setState({ hasError: false })}
               className="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-400 text-white font-bold px-8 py-3 rounded-full transition-colors"
             >
-              <i className="fas fa-house text-sm" /> Go Home
+              <Home size={14} /> Go Home
             </Link>
           </div>
         </div>

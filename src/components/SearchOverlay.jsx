@@ -4,6 +4,7 @@ import { db } from '../firebase'
 import { collection, getDocs } from 'firebase/firestore'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from './ProductThumb'
+import { Search, X, Loader2, Frown, ArrowRight } from 'lucide-react'
 
 export default function SearchOverlay({ onClose }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -75,7 +76,7 @@ export default function SearchOverlay({ onClose }) {
       >
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-4">
-            <i className="fas fa-search text-brand-500 text-xl shrink-0" />
+            <Search size={20} className="text-brand-500 shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -89,7 +90,7 @@ export default function SearchOverlay({ onClose }) {
               className="w-10 h-10 rounded-xl bg-surface-800 hover:bg-surface-700 flex items-center justify-center text-surface-400 hover:text-white transition-colors shrink-0"
               aria-label="Close search"
             >
-              <i className="fas fa-xmark" />
+              <X size={16} />
             </button>
           </div>
         </div>
@@ -106,7 +107,7 @@ export default function SearchOverlay({ onClose }) {
           {!searchQuery.trim() && !loading && (
             <div className="text-center py-20">
               <div className="w-16 h-16 rounded-2xl bg-surface-800 border border-surface-700/50 flex items-center justify-center mx-auto mb-5">
-                <i className="fas fa-search text-surface-500 text-xl" />
+                <Search size={20} className="text-surface-500" />
               </div>
               <p className="text-white font-semibold text-lg mb-2">Search the store</p>
               <p className="text-surface-500 text-sm">Find phones, gadgets and accessories across all categories.</p>
@@ -116,7 +117,7 @@ export default function SearchOverlay({ onClose }) {
           {/* Loading */}
           {loading && (
             <div className="flex items-center justify-center py-20">
-              <i className="fas fa-spinner fa-spin text-brand-500 text-2xl" />
+              <Loader2 size={24} className="text-brand-500 animate-spin" />
             </div>
           )}
 
@@ -124,7 +125,7 @@ export default function SearchOverlay({ onClose }) {
           {showEmpty && (
             <div className="text-center py-20">
               <div className="w-16 h-16 rounded-2xl bg-surface-800 border border-surface-700/50 flex items-center justify-center mx-auto mb-5">
-                <i className="fas fa-face-frown text-surface-500 text-xl" />
+                <Frown size={20} className="text-surface-500" />
               </div>
               <p className="text-white font-semibold text-lg mb-2">No results found</p>
               <p className="text-surface-500 text-sm">
@@ -151,7 +152,7 @@ export default function SearchOverlay({ onClose }) {
                     >
                       {/* Thumbnail */}
                       <div className="w-14 h-14 rounded-xl bg-surface-800 border border-surface-700/50 flex items-center justify-center shrink-0 overflow-hidden p-1.5 group-hover:border-surface-600 transition-colors">
-                        <ProductThumb src={image} alt={product.name} iconClassName="text-surface-600" />
+                        <ProductThumb src={image} alt={product.name} />
                       </div>
 
                       {/* Info */}
@@ -178,7 +179,7 @@ export default function SearchOverlay({ onClose }) {
                       {/* Price */}
                       <div className="shrink-0 text-right">
                         <p className="text-brand-500 font-bold text-sm">₦{price.toLocaleString()}</p>
-                        <i className="fas fa-arrow-right text-surface-600 group-hover:text-surface-400 text-xs transition-colors" />
+                        <ArrowRight size={12} className="text-surface-600 group-hover:text-surface-400 transition-colors ml-auto" />
                       </div>
                     </button>
                   )

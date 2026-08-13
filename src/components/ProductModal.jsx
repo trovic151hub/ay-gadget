@@ -2,6 +2,7 @@ import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from './ProductThumb'
+import { X, ShoppingCart } from 'lucide-react'
 
 const CONDITION_STYLES = {
   'New': 'bg-green-50 text-green-700',
@@ -29,7 +30,7 @@ export default function ProductModal({ product, onClose }) {
       <div className="relative bg-white rounded-[32px] w-full max-w-4xl shadow-2xl z-10 overflow-hidden flex flex-col md:flex-row max-h-[90vh] animate-slide-in">
         
         <button onClick={onClose} className="absolute top-4 right-4 z-20 w-10 h-10 bg-surface-100 hover:bg-surface-200 rounded-full flex items-center justify-center text-surface-600 transition-colors">
-          <i className="fas fa-times text-lg" />
+          <X size={18} />
         </button>
 
         {/* Image Section */}
@@ -50,7 +51,8 @@ export default function ProductModal({ product, onClose }) {
             src={image}
             alt={product.name}
             className="w-full h-full object-contain max-h-[400px] mix-blend-multiply drop-shadow-xl"
-            iconClassName="text-6xl text-surface-200"
+            iconSize={60}
+            iconClassName="text-surface-200"
           />
         </div>
 
@@ -72,7 +74,7 @@ export default function ProductModal({ product, onClose }) {
                 onClick={handleAddToCart}
                 className="bg-surface-950 text-white px-8 py-4 rounded-2xl font-bold hover:bg-brand-500 hover:shadow-glow transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3 w-full sm:w-auto"
               >
-                <i className="fas fa-cart-plus text-lg" />
+                <ShoppingCart size={18} />
                 Add to Cart
               </button>
             </div>

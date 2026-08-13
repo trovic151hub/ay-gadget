@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import SearchOverlay from './SearchOverlay'
 import { useScrollLock } from '../hooks/useScrollLock'
+import { Zap, Search, ShoppingBag, User, X, Menu } from 'lucide-react'
 
 const NAV_LINKS = [
   { label: 'Phones', to: '/products?tab=products' },
@@ -49,7 +50,7 @@ export default function Navbar() {
             className="text-2xl font-bold text-white font-display tracking-tight flex items-center gap-2 group"
           >
             <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center text-white group-hover:bg-brand-400 transition-colors">
-              <i className="fas fa-bolt text-sm" />
+              <Zap size={14} />
             </div>
             AY&apos;s Store
           </Link>
@@ -85,7 +86,7 @@ export default function Navbar() {
               className="text-surface-400 hover:text-white transition-colors"
               aria-label="Search"
             >
-              <i className="fas fa-search text-lg" />
+              <Search size={18} />
             </button>
 
             {/* Cart */}
@@ -94,7 +95,7 @@ export default function Navbar() {
               className="relative text-surface-400 hover:text-white transition-colors group"
               aria-label="Open cart"
             >
-              <i className="fas fa-bag-shopping text-xl" />
+              <ShoppingBag size={20} />
               {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-brand-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-glow">
                   {cartCount}
@@ -108,7 +109,7 @@ export default function Navbar() {
               className="text-surface-400 hover:text-white transition-colors"
               aria-label="My Account"
             >
-              <i className="far fa-user text-xl" />
+              <User size={20} />
             </Link>
 
             {/* Mobile menu toggle */}
@@ -117,7 +118,7 @@ export default function Navbar() {
               className="md:hidden text-surface-400 hover:text-white transition-colors"
               aria-label="Toggle menu"
             >
-              <i className={`fas ${menuOpen ? 'fa-times' : 'fa-bars'} text-xl`} />
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
@@ -148,7 +149,7 @@ export default function Navbar() {
                 onClick={() => { setMenuOpen(false); setSearchOpen(true) }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-surface-400 hover:text-white hover:bg-surface-800/50 transition-colors"
               >
-                <i className="fas fa-search text-base" />
+                <Search size={16} />
                 Search
               </button>
               <Link
@@ -156,7 +157,7 @@ export default function Navbar() {
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-surface-400 hover:text-white hover:bg-surface-800/50 transition-colors"
               >
-                <i className="far fa-user text-base" />
+                <User size={16} />
                 My Account
               </Link>
             </div>
