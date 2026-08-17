@@ -3,6 +3,7 @@ import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from './ProductThumb'
+import VideoPlayer from './VideoPlayer'
 import { X, ShoppingCart, PlayCircle } from 'lucide-react'
 
 const CONDITION_STYLES = {
@@ -57,7 +58,7 @@ export default function ProductModal({ product, onClose }) {
               )}
             </div>
             {active?.type === 'video' ? (
-              <video src={active.url} controls playsInline className="w-full h-full object-contain" />
+              <VideoPlayer src={active.url} className="w-full h-full" />
             ) : (
               <ProductThumb
                 src={active?.url}

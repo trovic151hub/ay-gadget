@@ -8,6 +8,7 @@ import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, updatePass
 import { useNavigate } from 'react-router-dom'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from '../components/ProductThumb'
+import VideoPlayer from '../components/VideoPlayer'
 import {
   Smartphone, Headphones, Gamepad2, Images, ShoppingBag, TriangleAlert, UserCog,
   Zap, X, ShieldCheck, Power, Menu, Plus, Video, Pencil, Trash2, Search, PackageOpen,
@@ -1557,7 +1558,7 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
             <div className="space-y-4">
               <div className="w-full h-64 bg-white rounded-2xl flex items-center justify-center p-4 border border-surface-800 overflow-hidden">
                 {active.type === 'video' ? (
-                  <video src={active.url} controls playsInline className="max-w-full max-h-full" />
+                  <VideoPlayer src={active.url} className="w-full h-full" />
                 ) : (
                   <ProductThumb
                     src={active.url}
