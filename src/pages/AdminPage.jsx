@@ -1364,7 +1364,7 @@ function ItemForm({ form, setForm }) {
       <div><label className={labelClass}>Description</label><textarea name="description" value={form.description} onChange={handleChange} rows={4} placeholder="Product details..." className="w-full p-5 rounded-2xl bg-surface-950 border border-surface-800 text-white font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700 placeholder:font-normal resize-none" /></div>
       
       <div className="bg-surface-950 p-6 rounded-2xl border border-surface-800">
-        <label className={`${labelClass} mb-4 flex items-center justify-between`}>
+        <label className={`${labelClass} mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1`}>
           <span>Images</span>
           <span className="text-[10px] text-surface-600 normal-case font-normal">Upload a file or paste an HTTPS link</span>
         </label>
@@ -1398,7 +1398,7 @@ function ItemForm({ form, setForm }) {
       </div>
 
       <div className="bg-surface-950 p-6 rounded-2xl border border-surface-800">
-        <label className={`${labelClass} mb-4 flex items-center justify-between`}>
+        <label className={`${labelClass} mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-1`}>
           <span>Videos</span>
           <span className="text-[10px] text-surface-600 normal-case font-normal">Optional — upload a file or paste an HTTPS link</span>
         </label>
