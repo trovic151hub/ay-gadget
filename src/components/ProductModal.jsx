@@ -42,8 +42,8 @@ export default function ProductModal({ product, onClose }) {
         </button>
 
         {/* Image Section */}
-        <div className="md:w-1/2 bg-surface-50 flex flex-col min-h-[220px] md:min-h-0">
-          <div className="flex-1 p-5 md:p-8 flex items-center justify-center relative">
+        <div className="md:w-1/2 bg-surface-50 flex flex-col">
+          <div className="h-64 sm:h-80 md:h-auto md:flex-1 shrink-0 p-5 md:p-8 flex items-center justify-center relative overflow-hidden">
             <div className="absolute top-6 left-6 z-10 flex flex-wrap gap-2 max-w-[70%]">
               {product.brand && (
                 <span className="bg-white shadow-sm text-surface-800 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
@@ -57,19 +57,19 @@ export default function ProductModal({ product, onClose }) {
               )}
             </div>
             {active?.type === 'video' ? (
-              <video src={active.url} controls className="w-full h-full max-h-[400px] object-contain" />
+              <video src={active.url} controls playsInline className="w-full h-full object-contain" />
             ) : (
               <ProductThumb
                 src={active?.url}
                 alt={product.name}
-                className="w-full h-full object-contain max-h-[400px] mix-blend-multiply drop-shadow-xl"
+                className="w-full h-full object-contain mix-blend-multiply drop-shadow-xl"
                 iconSize={60}
                 iconClassName="text-surface-200"
               />
             )}
           </div>
           {media.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto p-5 pt-0 md:px-8 md:pb-8">
+            <div className="flex gap-3 overflow-x-auto p-5 pt-3 md:px-8 md:pb-8 shrink-0">
               {media.map((m, i) => (
                 <button
                   key={i}
