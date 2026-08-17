@@ -13,8 +13,9 @@ import {
   Zap, X, ShieldCheck, Power, Menu, Plus, Video, Pencil, Trash2, Search, PackageOpen,
   Clock, Mail, Phone, MessageCircle, MapPin, CreditCard, Copy, ChevronDown, Lock,
   AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, UserPlus, Users, RotateCw, User,
-  Link2, CirclePlus, Image, ExternalLink
+  Link2, CirclePlus, Image, ExternalLink, Upload
 } from 'lucide-react'
+import { uploadToCloudinary } from '../lib/cloudinary'
 
 const SECTIONS = ['products', 'gadgets', 'games', 'hero', 'orders', 'settings']
 
@@ -1318,6 +1319,9 @@ function FormModal({ title, onClose, onSave, saving, children }) {
 }
 
 function ItemForm({ form, setForm }) {
+  const [uploadingIndex, setUploadingIndex] = useState(null)
+  const [uploadError, setUploadError] = useState('')
+
   function handleChange(e) { setForm(prev => ({ ...prev, [e.target.name]: e.target.value })) }
   function handleImageChange(i, val) {
     const imgs = [...form.images]
@@ -1326,6 +1330,20 @@ function ItemForm({ form, setForm }) {
   }
   function addImageField() { setForm(prev => ({ ...prev, images: [...prev.images, ''] })) }
   function removeImageField(i) { setForm(prev => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) })) }
+
+  async function handleFileUpload(i, file) {
+    if (!file) return
+    setUploadingIndex(i)
+    setUploadError('')
+    try {
+      const url = await uploadToCloudinary(file)
+      handleImageChange(i, url)
+    } catch (err) {
+      setUploadError(err.message || 'Upload failed. Please try again.')
+    } finally {
+      setUploadingIndex(null)
+    }
+  }
 
   const labelClass = "block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider"
   const inputClass = "w-full h-14 px-5 rounded-2xl bg-surface-950 border border-surface-800 text-white font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all placeholder:text-surface-700 placeholder:font-normal"
@@ -1347,8 +1365,8 @@ function ItemForm({ form, setForm }) {
       
       <div className="bg-surface-950 p-6 rounded-2xl border border-surface-800">
         <label className={`${labelClass} mb-4 flex items-center justify-between`}>
-          <span>Media URLs</span>
-          <span className="text-[10px] text-surface-600 normal-case font-normal">(HTTPS links required)</span>
+          <span>Media</span>
+          <span className="text-[10px] text-surface-600 normal-case font-normal">Upload a file or paste an HTTPS link</span>
         </label>
         <div className="space-y-3">
           {form.images.map((img, i) => (
@@ -1357,14 +1375,24 @@ function ItemForm({ form, setForm }) {
                 <Link2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-600" />
                 <input value={img} onChange={e => handleImageChange(i, e.target.value)} placeholder="https://..." className="w-full h-12 pl-10 pr-4 rounded-xl bg-surface-900 border border-surface-700 text-white text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
               </div>
+              <label className="w-12 h-12 rounded-xl bg-surface-900 border border-surface-700 text-surface-400 hover:text-white hover:border-brand-500/40 transition-colors flex items-center justify-center cursor-pointer shrink-0">
+                {uploadingIndex === i ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => { handleFileUpload(i, e.target.files[0]); e.target.value = '' }}
+                />
+              </label>
               {form.images.length > 1 && (
-                <button onClick={() => removeImageField(i)} className="w-12 h-12 rounded-xl bg-surface-900 text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center justify-center">
+                <button onClick={() => removeImageField(i)} className="w-12 h-12 rounded-xl bg-surface-900 text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center justify-center shrink-0">
                   <X size={16} />
                 </button>
               )}
             </div>
           ))}
         </div>
+        {uploadError && <p className="mt-3 text-xs font-semibold text-red-400">{uploadError}</p>}
         <button onClick={addImageField} className="mt-4 text-brand-500 text-sm font-bold hover:text-brand-400 flex items-center gap-2 transition-colors">
           <CirclePlus size={14} /> Add another image
         </button>
@@ -1374,9 +1402,26 @@ function ItemForm({ form, setForm }) {
 }
 
 function HeroForm({ form, setForm }) {
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+
   function handleChange(e) {
     const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setForm(prev => ({ ...prev, [e.target.name]: val }))
+  }
+
+  async function handleFileUpload(file) {
+    if (!file) return
+    setUploading(true)
+    setUploadError('')
+    try {
+      const url = await uploadToCloudinary(file)
+      setForm(prev => ({ ...prev, url }))
+    } catch (err) {
+      setUploadError(err.message || 'Upload failed. Please try again.')
+    } finally {
+      setUploading(false)
+    }
   }
   
   const labelClass = "block text-xs font-bold text-surface-400 mb-2 uppercase tracking-wider"
@@ -1417,10 +1462,22 @@ function HeroForm({ form, setForm }) {
             <span className="font-bold text-sm">Video</span>
           </label>
         </div>
-        <div className="relative">
-          <Link2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-600" />
-          <input name="url" value={form.url} onChange={handleChange} placeholder="https://..." className="w-full h-12 pl-10 pr-4 rounded-xl bg-surface-900 border border-surface-700 text-white text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <Link2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-600" />
+            <input name="url" value={form.url} onChange={handleChange} placeholder="https://... or upload a file" className="w-full h-12 pl-10 pr-4 rounded-xl bg-surface-900 border border-surface-700 text-white text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
+          </div>
+          <label className="w-12 h-12 rounded-xl bg-surface-900 border border-surface-700 text-surface-400 hover:text-white hover:border-brand-500/40 transition-colors flex items-center justify-center cursor-pointer shrink-0">
+            {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+            <input
+              type="file"
+              accept={form.type === 'video' ? 'video/*' : 'image/*'}
+              className="hidden"
+              onChange={e => { handleFileUpload(e.target.files[0]); e.target.value = '' }}
+            />
+          </label>
         </div>
+        {uploadError && <p className="mt-3 text-xs font-semibold text-red-400">{uploadError}</p>}
       </div>
     </>
   )
