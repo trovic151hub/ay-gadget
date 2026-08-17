@@ -13,7 +13,7 @@ import {
   Zap, X, ShieldCheck, Power, Menu, Plus, Video, Pencil, Trash2, Search, PackageOpen,
   Clock, Mail, Phone, MessageCircle, MapPin, CreditCard, Copy, ChevronDown, Lock,
   AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, UserPlus, Users, RotateCw, User,
-  Link2, CirclePlus, Image, ExternalLink, Upload
+  Link2, CirclePlus, Image, ExternalLink, Upload, PlayCircle
 } from 'lucide-react'
 import { uploadToCloudinary } from '../lib/cloudinary'
 
@@ -29,7 +29,7 @@ const STATUS_CONFIG = {
 }
 
 const CONDITIONS = ['New', 'UK-Used', 'Nigeria-Used']
-const emptyProduct = { name: '', brand: '', condition: 'New', description: '', price: '', images: [''] }
+const emptyProduct = { name: '', brand: '', condition: 'New', description: '', price: '', images: [''], videos: [''] }
 const emptyHero = { headline: '', subheadline: '', cta_primary_text: '', cta_secondary_text: '', type: 'image', url: '', active: true }
 
 // An order still sitting at 'pending' this long probably means the customer
@@ -262,7 +262,7 @@ export default function AdminPage() {
 
   async function handleSaveProduct() {
     setSaving(true)
-    const data = { ...productForm, price: Number(productForm.price), images: productForm.images.filter(Boolean), updatedAt: serverTimestamp() }
+    const data = { ...productForm, price: Number(productForm.price), images: productForm.images.filter(Boolean), videos: productForm.videos.filter(Boolean), updatedAt: serverTimestamp() }
     if (editingProductId) {
       await updateDoc(doc(db, 'products', editingProductId), data)
     } else {
@@ -277,7 +277,7 @@ export default function AdminPage() {
 
   async function handleSaveGadget() {
     setSaving(true)
-    const data = { ...gadgetForm, price: Number(gadgetForm.price), images: gadgetForm.images.filter(Boolean), updatedAt: serverTimestamp() }
+    const data = { ...gadgetForm, price: Number(gadgetForm.price), images: gadgetForm.images.filter(Boolean), videos: gadgetForm.videos.filter(Boolean), updatedAt: serverTimestamp() }
     if (editingGadgetId) {
       await updateDoc(doc(db, 'gadgets', editingGadgetId), data)
     } else {
@@ -292,7 +292,7 @@ export default function AdminPage() {
 
   async function handleSaveGame() {
     setSaving(true)
-    const data = { ...gameForm, price: Number(gameForm.price), images: gameForm.images.filter(Boolean), updatedAt: serverTimestamp() }
+    const data = { ...gameForm, price: Number(gameForm.price), images: gameForm.images.filter(Boolean), videos: gameForm.videos.filter(Boolean), updatedAt: serverTimestamp() }
     if (editingGameId) {
       await updateDoc(doc(db, 'games', editingGameId), data)
     } else {
@@ -341,19 +341,19 @@ export default function AdminPage() {
   }
 
   function openEditProduct(p) {
-    setProductForm({ name: p.name || '', brand: p.brand || '', condition: p.condition || 'New', description: p.description || '', price: p.price || '', images: p.images?.length ? p.images : [''] })
+    setProductForm({ name: p.name || '', brand: p.brand || '', condition: p.condition || 'New', description: p.description || '', price: p.price || '', images: p.images?.length ? p.images : [''], videos: p.videos?.length ? p.videos : [''] })
     setEditingProductId(p.id)
     setProductModal(true)
   }
 
   function openEditGadget(g) {
-    setGadgetForm({ name: g.name || '', brand: g.brand || '', condition: g.condition || 'New', description: g.description || '', price: g.price || '', images: g.images?.length ? g.images : [''] })
+    setGadgetForm({ name: g.name || '', brand: g.brand || '', condition: g.condition || 'New', description: g.description || '', price: g.price || '', images: g.images?.length ? g.images : [''], videos: g.videos?.length ? g.videos : [''] })
     setEditingGadgetId(g.id)
     setGadgetModal(true)
   }
 
   function openEditGame(g) {
-    setGameForm({ name: g.name || '', brand: g.brand || '', condition: g.condition || 'New', description: g.description || '', price: g.price || '', images: g.images?.length ? g.images : [''] })
+    setGameForm({ name: g.name || '', brand: g.brand || '', condition: g.condition || 'New', description: g.description || '', price: g.price || '', images: g.images?.length ? g.images : [''], videos: g.videos?.length ? g.videos : [''] })
     setEditingGameId(g.id)
     setGameModal(true)
   }
@@ -1319,29 +1319,29 @@ function FormModal({ title, onClose, onSave, saving, children }) {
 }
 
 function ItemForm({ form, setForm }) {
-  const [uploadingIndex, setUploadingIndex] = useState(null)
+  const [uploading, setUploading] = useState(null) // `${field}-${index}` while that slot is uploading
   const [uploadError, setUploadError] = useState('')
 
   function handleChange(e) { setForm(prev => ({ ...prev, [e.target.name]: e.target.value })) }
-  function handleImageChange(i, val) {
-    const imgs = [...form.images]
-    imgs[i] = val
-    setForm(prev => ({ ...prev, images: imgs }))
+  function handleMediaChange(field, i, val) {
+    const items = [...form[field]]
+    items[i] = val
+    setForm(prev => ({ ...prev, [field]: items }))
   }
-  function addImageField() { setForm(prev => ({ ...prev, images: [...prev.images, ''] })) }
-  function removeImageField(i) { setForm(prev => ({ ...prev, images: prev.images.filter((_, idx) => idx !== i) })) }
+  function addMediaField(field) { setForm(prev => ({ ...prev, [field]: [...prev[field], ''] })) }
+  function removeMediaField(field, i) { setForm(prev => ({ ...prev, [field]: prev[field].filter((_, idx) => idx !== i) })) }
 
-  async function handleFileUpload(i, file) {
+  async function handleFileUpload(field, i, file) {
     if (!file) return
-    setUploadingIndex(i)
+    setUploading(`${field}-${i}`)
     setUploadError('')
     try {
       const url = await uploadToCloudinary(file)
-      handleImageChange(i, url)
+      handleMediaChange(field, i, url)
     } catch (err) {
       setUploadError(err.message || 'Upload failed. Please try again.')
     } finally {
-      setUploadingIndex(null)
+      setUploading(null)
     }
   }
 
@@ -1365,7 +1365,7 @@ function ItemForm({ form, setForm }) {
       
       <div className="bg-surface-950 p-6 rounded-2xl border border-surface-800">
         <label className={`${labelClass} mb-4 flex items-center justify-between`}>
-          <span>Media</span>
+          <span>Images</span>
           <span className="text-[10px] text-surface-600 normal-case font-normal">Upload a file or paste an HTTPS link</span>
         </label>
         <div className="space-y-3">
@@ -1373,30 +1373,65 @@ function ItemForm({ form, setForm }) {
             <div key={i} className="flex gap-3">
               <div className="relative flex-1">
                 <Link2 size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-600" />
-                <input value={img} onChange={e => handleImageChange(i, e.target.value)} placeholder="https://..." className="w-full h-12 pl-10 pr-4 rounded-xl bg-surface-900 border border-surface-700 text-white text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
+                <input value={img} onChange={e => handleMediaChange('images', i, e.target.value)} placeholder="https://..." className="w-full h-12 pl-10 pr-4 rounded-xl bg-surface-900 border border-surface-700 text-white text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
               </div>
               <label className="w-12 h-12 rounded-xl bg-surface-900 border border-surface-700 text-surface-400 hover:text-white hover:border-brand-500/40 transition-colors flex items-center justify-center cursor-pointer shrink-0">
-                {uploadingIndex === i ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                {uploading === `images-${i}` ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                 <input
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={e => { handleFileUpload(i, e.target.files[0]); e.target.value = '' }}
+                  onChange={e => { handleFileUpload('images', i, e.target.files[0]); e.target.value = '' }}
                 />
               </label>
               {form.images.length > 1 && (
-                <button onClick={() => removeImageField(i)} className="w-12 h-12 rounded-xl bg-surface-900 text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center justify-center shrink-0">
+                <button onClick={() => removeMediaField('images', i)} className="w-12 h-12 rounded-xl bg-surface-900 text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center justify-center shrink-0">
                   <X size={16} />
                 </button>
               )}
             </div>
           ))}
         </div>
-        {uploadError && <p className="mt-3 text-xs font-semibold text-red-400">{uploadError}</p>}
-        <button onClick={addImageField} className="mt-4 text-brand-500 text-sm font-bold hover:text-brand-400 flex items-center gap-2 transition-colors">
+        <button onClick={() => addMediaField('images')} className="mt-4 text-brand-500 text-sm font-bold hover:text-brand-400 flex items-center gap-2 transition-colors">
           <CirclePlus size={14} /> Add another image
         </button>
       </div>
+
+      <div className="bg-surface-950 p-6 rounded-2xl border border-surface-800">
+        <label className={`${labelClass} mb-4 flex items-center justify-between`}>
+          <span>Videos</span>
+          <span className="text-[10px] text-surface-600 normal-case font-normal">Optional — upload a file or paste an HTTPS link</span>
+        </label>
+        <div className="space-y-3">
+          {form.videos.map((vid, i) => (
+            <div key={i} className="flex gap-3">
+              <div className="relative flex-1">
+                <Video size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-600" />
+                <input value={vid} onChange={e => handleMediaChange('videos', i, e.target.value)} placeholder="https://..." className="w-full h-12 pl-10 pr-4 rounded-xl bg-surface-900 border border-surface-700 text-white text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all" />
+              </div>
+              <label className="w-12 h-12 rounded-xl bg-surface-900 border border-surface-700 text-surface-400 hover:text-white hover:border-brand-500/40 transition-colors flex items-center justify-center cursor-pointer shrink-0">
+                {uploading === `videos-${i}` ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={e => { handleFileUpload('videos', i, e.target.files[0]); e.target.value = '' }}
+                />
+              </label>
+              {form.videos.length > 1 && (
+                <button onClick={() => removeMediaField('videos', i)} className="w-12 h-12 rounded-xl bg-surface-900 text-surface-500 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center justify-center shrink-0">
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <button onClick={() => addMediaField('videos')} className="mt-4 text-brand-500 text-sm font-bold hover:text-brand-400 flex items-center gap-2 transition-colors">
+          <CirclePlus size={14} /> Add another video
+        </button>
+      </div>
+
+      {uploadError && <p className="text-xs font-semibold text-red-400">{uploadError}</p>}
     </>
   )
 }
@@ -1484,8 +1519,14 @@ function HeroForm({ form, setForm }) {
 }
 
 function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
-  const [activeImg, setActiveImg] = useState(0)
+  const [activeIdx, setActiveIdx] = useState(0)
   const images = item.images?.filter(Boolean) || []
+  const videos = item.videos?.filter(Boolean) || []
+  const media = [
+    ...images.map(url => ({ url, type: 'image' })),
+    ...videos.map(url => ({ url, type: 'video' })),
+  ]
+  const active = media[activeIdx]
 
   useScrollLock(true)
 
@@ -1512,26 +1553,36 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
 
         {/* Body */}
         <div className="overflow-y-auto flex-1 p-8 space-y-8">
-          {images.length > 0 && (
+          {media.length > 0 && (
             <div className="space-y-4">
-              <div className="w-full h-64 bg-white rounded-2xl flex items-center justify-center p-4 border border-surface-800">
-                <ProductThumb
-                  src={images[activeImg]}
-                  alt={item.name}
-                  className="max-w-full max-h-full object-contain mix-blend-multiply"
-                  iconSize={36}
-                  iconClassName="text-surface-400"
-                />
+              <div className="w-full h-64 bg-white rounded-2xl flex items-center justify-center p-4 border border-surface-800 overflow-hidden">
+                {active.type === 'video' ? (
+                  <video src={active.url} controls className="max-w-full max-h-full" />
+                ) : (
+                  <ProductThumb
+                    src={active.url}
+                    alt={item.name}
+                    className="max-w-full max-h-full object-contain mix-blend-multiply"
+                    iconSize={36}
+                    iconClassName="text-surface-400"
+                  />
+                )}
               </div>
-              {images.length > 1 && (
+              {media.length > 1 && (
                 <div className="flex gap-3 overflow-x-auto pb-1">
-                  {images.map((img, i) => (
+                  {media.map((m, i) => (
                     <button
                       key={i}
-                      onClick={() => setActiveImg(i)}
-                      className={`w-16 h-16 flex-shrink-0 rounded-xl bg-white p-1 border-2 transition-all ${i === activeImg ? 'border-brand-500 shadow-glow' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                      onClick={() => setActiveIdx(i)}
+                      className={`relative w-16 h-16 flex-shrink-0 rounded-xl bg-white p-1 border-2 transition-all ${i === activeIdx ? 'border-brand-500 shadow-glow' : 'border-transparent opacity-60 hover:opacity-100'}`}
                     >
-                      <ProductThumb src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" iconSize={18} iconClassName="text-surface-400" />
+                      {m.type === 'video' ? (
+                        <div className="w-full h-full bg-surface-800 rounded-lg flex items-center justify-center">
+                          <PlayCircle size={20} className="text-surface-400" />
+                        </div>
+                      ) : (
+                        <ProductThumb src={m.url} alt="" className="w-full h-full object-contain mix-blend-multiply" iconSize={18} iconClassName="text-surface-400" />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -1559,15 +1610,16 @@ function ProductDetailModal({ item, collection, onClose, onEdit, onDelete }) {
               </div>
             )}
 
-            {images.length > 0 && (
+            {media.length > 0 && (
               <div className="bg-surface-950 rounded-2xl p-5 border border-surface-800">
-                <p className="text-xs font-bold text-surface-500 uppercase tracking-widest mb-3">Media URLs ({images.length})</p>
+                <p className="text-xs font-bold text-surface-500 uppercase tracking-widest mb-3">Media URLs ({media.length})</p>
                 <div className="space-y-2">
-                  {images.map((img, i) => (
+                  {media.map((m, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <span className="text-[10px] text-surface-600 font-bold w-4">{i + 1}</span>
-                      <p className="text-xs text-surface-400 truncate flex-1 font-mono">{img}</p>
-                      <a href={img} target="_blank" rel="noreferrer" className="text-brand-500 hover:text-brand-400 text-xs flex-shrink-0">
+                      {m.type === 'video' && <Video size={11} className="text-surface-500 flex-shrink-0" />}
+                      <p className="text-xs text-surface-400 truncate flex-1 font-mono">{m.url}</p>
+                      <a href={m.url} target="_blank" rel="noreferrer" className="text-brand-500 hover:text-brand-400 text-xs flex-shrink-0">
                         <ExternalLink size={12} />
                       </a>
                     </div>

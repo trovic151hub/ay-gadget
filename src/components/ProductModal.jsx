@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { useCart } from '../context/CartContext'
 import { useNotification } from '../context/NotificationContext'
 import { useScrollLock } from '../hooks/useScrollLock'
 import ProductThumb from './ProductThumb'
-import { X, ShoppingCart } from 'lucide-react'
+import { X, ShoppingCart, PlayCircle } from 'lucide-react'
 
 const CONDITION_STYLES = {
   'New': 'bg-green-50 text-green-700',
@@ -13,6 +14,7 @@ const CONDITION_STYLES = {
 export default function ProductModal({ product, onClose }) {
   const { addToCart } = useCart()
   const { showNotification } = useNotification()
+  const [activeIdx, setActiveIdx] = useState(0)
 
   useScrollLock(true)
 
@@ -22,7 +24,13 @@ export default function ProductModal({ product, onClose }) {
     onClose()
   }
 
-  const image = product.images?.[0] || product.image || ''
+  const images = product.images?.filter(Boolean) || (product.image ? [product.image] : [])
+  const videos = product.videos?.filter(Boolean) || []
+  const media = [
+    ...images.map(url => ({ url, type: 'image' })),
+    ...videos.map(url => ({ url, type: 'video' })),
+  ]
+  const active = media[activeIdx]
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -34,26 +42,51 @@ export default function ProductModal({ product, onClose }) {
         </button>
 
         {/* Image Section */}
-        <div className="md:w-1/2 bg-surface-50 p-5 md:p-8 flex items-center justify-center min-h-[220px] md:min-h-0 relative">
-          <div className="absolute top-6 left-6 z-10 flex flex-wrap gap-2 max-w-[70%]">
-            {product.brand && (
-              <span className="bg-white shadow-sm text-surface-800 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-                {product.brand}
-              </span>
-            )}
-            {product.condition && (
-              <span className={`shadow-sm text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${CONDITION_STYLES[product.condition] || 'bg-white text-surface-800'}`}>
-                {product.condition}
-              </span>
+        <div className="md:w-1/2 bg-surface-50 flex flex-col min-h-[220px] md:min-h-0">
+          <div className="flex-1 p-5 md:p-8 flex items-center justify-center relative">
+            <div className="absolute top-6 left-6 z-10 flex flex-wrap gap-2 max-w-[70%]">
+              {product.brand && (
+                <span className="bg-white shadow-sm text-surface-800 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                  {product.brand}
+                </span>
+              )}
+              {product.condition && (
+                <span className={`shadow-sm text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${CONDITION_STYLES[product.condition] || 'bg-white text-surface-800'}`}>
+                  {product.condition}
+                </span>
+              )}
+            </div>
+            {active?.type === 'video' ? (
+              <video src={active.url} controls className="w-full h-full max-h-[400px] object-contain" />
+            ) : (
+              <ProductThumb
+                src={active?.url}
+                alt={product.name}
+                className="w-full h-full object-contain max-h-[400px] mix-blend-multiply drop-shadow-xl"
+                iconSize={60}
+                iconClassName="text-surface-200"
+              />
             )}
           </div>
-          <ProductThumb
-            src={image}
-            alt={product.name}
-            className="w-full h-full object-contain max-h-[400px] mix-blend-multiply drop-shadow-xl"
-            iconSize={60}
-            iconClassName="text-surface-200"
-          />
+          {media.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto p-5 pt-0 md:px-8 md:pb-8">
+              {media.map((m, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveIdx(i)}
+                  className={`relative w-16 h-16 flex-shrink-0 rounded-xl bg-white p-1 border-2 transition-all ${i === activeIdx ? 'border-brand-500 shadow-glow' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                >
+                  {m.type === 'video' ? (
+                    <div className="w-full h-full bg-surface-100 rounded-lg flex items-center justify-center">
+                      <PlayCircle size={20} className="text-surface-400" />
+                    </div>
+                  ) : (
+                    <ProductThumb src={m.url} alt="" className="w-full h-full object-contain mix-blend-multiply" iconSize={18} iconClassName="text-surface-400" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Details Section */}
