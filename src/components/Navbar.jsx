@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import SearchOverlay from './SearchOverlay'
@@ -31,6 +31,17 @@ export default function Navbar() {
   const location = useLocation()
 
   useScrollLock(menuOpen)
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <>
@@ -83,10 +94,13 @@ export default function Navbar() {
             {/* Search */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="text-surface-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-surface-400 hover:text-white transition-colors"
               aria-label="Search"
             >
               <Search size={18} />
+              <kbd className="hidden md:inline-block text-[10px] font-bold text-surface-500 border border-surface-700 rounded-md px-1.5 py-0.5">
+                ⌘K
+              </kbd>
             </button>
 
             {/* Cart */}
