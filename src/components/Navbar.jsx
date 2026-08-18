@@ -12,8 +12,6 @@ const NAV_LINKS = [
   { label: 'Games', to: '/products?tab=games' },
 ]
 
-const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent)
-
 function isActive(link, location) {
   const [path, qs] = link.to.split('?')
   if (location.pathname !== path) return false
@@ -96,13 +94,10 @@ export default function Navbar() {
             {/* Search */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-2 text-surface-400 hover:text-white transition-colors"
+              className="text-surface-400 hover:text-white transition-colors"
               aria-label="Search"
             >
               <Search size={18} />
-              <kbd className="hidden md:inline-block text-[10px] font-bold text-surface-500 border border-surface-700 rounded-md px-1.5 py-0.5">
-                {isMac ? '⌘K' : 'Ctrl K'}
-              </kbd>
             </button>
 
             {/* Cart */}
