@@ -12,6 +12,8 @@ const NAV_LINKS = [
   { label: 'Games', to: '/products?tab=games' },
 ]
 
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent)
+
 function isActive(link, location) {
   const [path, qs] = link.to.split('?')
   if (location.pathname !== path) return false
@@ -99,7 +101,7 @@ export default function Navbar() {
             >
               <Search size={18} />
               <kbd className="hidden md:inline-block text-[10px] font-bold text-surface-500 border border-surface-700 rounded-md px-1.5 py-0.5">
-                ⌘K
+                {isMac ? '⌘K' : 'Ctrl K'}
               </kbd>
             </button>
 
